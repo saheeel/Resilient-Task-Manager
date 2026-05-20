@@ -26,6 +26,8 @@ export interface Task {
   status: TaskStatus;
   priority: Priority;
   assignedTo: string[]; // Array of User IDs
+  assignedById?: string;
+  assignedByName?: string;
   dueDate?: string; // ISO date string
   remarks?: string;
   attachments?: string[]; 
@@ -74,7 +76,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const dbUpdateUser = useMutation(api.users.update);
   
   const sendPushNotification = useAction(api.pushActions.sendNotification);
-  const notifyManagers = useAction(api.pushActions.notifyManagers);
+  const notifyAdmins = useAction(api.pushActions.notifyAdmins);
 
   // Trigger Convex Auto-Seeding if table is empty
   useEffect(() => {
@@ -137,6 +139,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       status: t.status as TaskStatus,
       priority: t.priority as Priority,
       assignedTo: t.assignedTo,
+      assignedById: t.assignedById,
+      assignedByName: t.assignedByName,
       dueDate: t.dueDate,
       remarks: t.remarks,
       attachments: t.attachments,
@@ -153,6 +157,16 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [dbTasksRaw]);
 
   const addTask = (taskData: Omit<Task, 'id'>) => {
+    const assignmentMetadata = currentUser && currentUser.role !== 'employee'
+      ? {
+          assignedById: currentUser.id,
+          assignedByName: currentUser.name,
+        }
+      : {
+          assignedById: taskData.assignedById,
+          assignedByName: taskData.assignedByName,
+        };
+
     dbAddTask({
       title: taskData.title,
       description: taskData.description,
@@ -160,6 +174,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       status: taskData.status,
       priority: taskData.priority,
       assignedTo: taskData.assignedTo,
+      assignedById: assignmentMetadata.assignedById,
+      assignedByName: assignmentMetadata.assignedByName,
       dueDate: taskData.dueDate,
       remarks: taskData.remarks,
       attachments: taskData.attachments,
@@ -171,7 +187,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         sendPushNotification({
           userId,
           title: "New Task Assigned! 🚀",
-          body: `${taskData.title}\nPriority: ${taskData.priority.toUpperCase()}`,
+          body: `${taskData.title}\nPriority: ${taskData.priority.toUpperCase()}${taskData.assignedByName ? `\nAssigned by: ${taskData.assignedByName}` : ''}`,
           url: "/"
         }).catch((err) => console.error("Push notification action trigger error:", err));
       });
@@ -185,15 +201,15 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       ...details,
     });
 
-    // Fire push notification to all managers when an employee completes a task
+    // Fire push notification to all admin-side users when an employee completes a task
     if (status === 'completed' && currentUser && currentUser.role === 'employee') {
       const completedTask = mappedDbTasks.find(t => t.id === taskId);
       if (completedTask) {
-        notifyManagers({
+        notifyAdmins({
           taskTitle: completedTask.title,
           employeeName: currentUser.name,
           taskId,
-        }).catch((err: any) => console.error('Manager notification error:', err));
+        }).catch((err: any) => console.error('Admin notification error:', err));
       }
     }
   };
@@ -212,8 +228,16 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const editTask = (taskId: string, updatedFields: Partial<Task>) => {
     const { id, ...fields } = updatedFields;
+    const assignmentMetadata = currentUser && currentUser.role !== 'employee'
+      ? {
+          assignedById: currentUser.id,
+          assignedByName: currentUser.name,
+        }
+      : {};
+
     dbUpdateTask({
       id: taskId as any,
+      ...assignmentMetadata,
       ...fields,
     });
   };

@@ -55,7 +55,7 @@ const NotificationListener: React.FC = () => {
         if ('Notification' in window && Notification.permission === 'granted') {
           try {
             const notification = new Notification("New Task Assigned! 🚀", {
-              body: `${task.title}\nPriority: ${task.priority.toUpperCase()}`,
+              body: `${task.title}\nPriority: ${task.priority.toUpperCase()}${task.assignedByName ? `\nAssigned by: ${task.assignedByName}` : ''}`,
               icon: '/resilientlogo.svg',
               badge: '/resilientlogo.svg',
               vibrate: [200, 100, 200],

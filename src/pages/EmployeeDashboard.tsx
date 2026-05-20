@@ -150,44 +150,21 @@ const EmployeeDashboard: React.FC = () => {
         </div>
       </header>
 
-      <div className="mb-8 flex flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 shadow-sm sm:flex-row sm:items-center">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          {t('employeeDashboard.sortMyWork')}
-        </span>
-        <div className="flex flex-wrap gap-2">
-          <button
-            id="sort-default"
-            onClick={() => setSortBy('default')}
-            className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
-              sortBy === 'default'
-                ? 'bg-slate-900 text-white shadow-sm'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
-            }`}
+      <div className="mb-6 flex items-center justify-end">
+        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm">
+          <label htmlFor="employee-sort" className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            {t('employeeDashboard.sortMyWork')}
+          </label>
+          <select
+            id="employee-sort"
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value as 'default' | 'priority' | 'dueDate')}
+            className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 outline-none transition-colors focus:border-slate-400"
           >
-            {t('employeeDashboard.originalOrder')}
-          </button>
-          <button
-            id="sort-priority"
-            onClick={() => setSortBy('priority')}
-            className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
-              sortBy === 'priority'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            {t('employeeDashboard.priorityFirst')}
-          </button>
-          <button
-            id="sort-duedate"
-            onClick={() => setSortBy('dueDate')}
-            className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
-              sortBy === 'dueDate'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            {t('employeeDashboard.dueDateSoon')}
-          </button>
+            <option value="default">{t('employeeDashboard.originalOrder')}</option>
+            <option value="priority">{t('employeeDashboard.priorityFirst')}</option>
+            <option value="dueDate">{t('employeeDashboard.dueDateSoon')}</option>
+          </select>
         </div>
       </div>
 
@@ -232,11 +209,16 @@ const EmployeeDashboard: React.FC = () => {
                     <h3 className="mb-2 text-lg font-semibold text-slate-900">{task.title}</h3>
                     <p className="line-clamp-2 text-sm leading-6 text-slate-500">{taskPreview(task)}</p>
                   </div>
-                  {task.status === 'in_progress' && <StatusBadge status={task.status} />}
+                  <StatusBadge status={task.status} />
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2.5">
                   {renderPriorityBadge(task.priority)}
+                  {task.assignedByName && (
+                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
+                      {t('common.assignedBy')}: {task.assignedByName}
+                    </span>
+                  )}
                   {task.dueDate && (
                     <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
                       {t('employeeDashboard.dueOn', {
@@ -275,6 +257,11 @@ const EmployeeDashboard: React.FC = () => {
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-2.5">
                   {renderPriorityBadge(task.priority)}
+                  {task.assignedByName && (
+                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
+                      {t('common.assignedBy')}: {task.assignedByName}
+                    </span>
+                  )}
                   {task.dueDate && (
                     <span className="rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700">
                       {upcomingDueLabel(task)}

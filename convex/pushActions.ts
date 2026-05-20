@@ -60,16 +60,15 @@ export const sendNotification = action({
   }
 });
 
-// Notify all managers (fan-out) — called when an employee completes a task
-export const notifyManagers = action({
+// Notify all admin-side users (fan-out) when an employee completes a task
+export const notifyAdmins = action({
   args: {
     taskTitle: v.string(),
     employeeName: v.string(),
     taskId: v.string(),
   },
   handler: async (ctx: any, args: any) => {
-    // Get all manager IDs
-    const managerIds: string[] = await ctx.runQuery(api.pushMutations.getManagerIds);
+    const adminIds: string[] = await ctx.runQuery(api.pushMutations.getAdminIds);
 
     const payload = JSON.stringify({
       title: "✅ Task Completed",
@@ -77,8 +76,8 @@ export const notifyManagers = action({
       url: `/task/${args.taskId}`,
     });
 
-    for (const managerId of managerIds) {
-      const subscriptions = await ctx.runQuery(api.pushMutations.getSubscriptions, { userId: managerId });
+    for (const adminId of adminIds) {
+      const subscriptions = await ctx.runQuery(api.pushMutations.getSubscriptions, { userId: adminId });
       for (const sub of subscriptions) {
         try {
           const pushSubscription = {
@@ -87,7 +86,7 @@ export const notifyManagers = action({
           };
           await webpush.sendNotification(pushSubscription, payload);
         } catch (error: any) {
-          console.error("Failed to notify manager:", sub.endpoint, error);
+          console.error("Failed to notify admin:", sub.endpoint, error);
           if (error.statusCode === 410 || error.statusCode === 404) {
             await ctx.runMutation(api.pushMutations.removeSubscription, { id: sub._id });
           }

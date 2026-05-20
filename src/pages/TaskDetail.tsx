@@ -183,6 +183,13 @@ const TaskDetail: React.FC = () => {
             </span>
           </div>
 
+          {task.assignedByName && (
+            <div className="flex items-start gap-2 text-sm text-slate-600">
+              <span className="font-semibold text-slate-900 shrink-0 min-w-[100px]">{t('common.assignedBy')}:</span>
+              <span className="font-medium text-slate-800">{task.assignedByName}</span>
+            </div>
+          )}
+
           {task.status === 'could_not_complete' && (
             <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
               <span className="font-semibold shrink-0 min-w-[100px]">{t('taskDetail.incompleteAt')}:</span>

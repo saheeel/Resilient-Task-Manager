@@ -42,13 +42,13 @@ export const removeSubscription = mutation({
   }
 });
 
-// Get all manager user IDs (used to fan-out completion notifications)
-export const getManagerIds = query({
+// Get all admin-side user IDs (currently any non-employee role)
+export const getAdminIds = query({
   handler: async (ctx: any) => {
-    const managers = await ctx.db
+    const admins = await ctx.db
       .query("users")
-      .filter((q: any) => q.eq(q.field("role"), "manager"))
+      .filter((q: any) => q.neq(q.field("role"), "employee"))
       .collect();
-    return managers.map((m: any) => m._id as string);
+    return admins.map((admin: any) => admin._id as string);
   }
 });

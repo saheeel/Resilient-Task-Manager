@@ -18,6 +18,8 @@ export default defineSchema({
     status: v.string(), // "open" | "in_progress" | "completed" | "could_not_complete" | "blocked"
     priority: v.string(), // "low" | "medium" | "high"
     assignedTo: v.array(v.string()), // Array of User IDs (string values)
+    assignedById: v.optional(v.string()),
+    assignedByName: v.optional(v.string()),
     dueDate: v.optional(v.string()),
     remarks: v.optional(v.string()),
     attachments: v.optional(v.array(v.string())),

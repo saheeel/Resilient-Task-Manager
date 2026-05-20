@@ -17,6 +17,8 @@ export const create = mutation({
     status: v.string(),
     priority: v.string(),
     assignedTo: v.array(v.string()),
+    assignedById: v.optional(v.string()),
+    assignedByName: v.optional(v.string()),
     dueDate: v.optional(v.string()),
     remarks: v.optional(v.string()),
     attachments: v.optional(v.array(v.string())),
@@ -32,6 +34,8 @@ export const create = mutation({
       status: args.status,
       priority: args.priority,
       assignedTo: args.assignedTo,
+      assignedById: args.assignedById,
+      assignedByName: args.assignedByName,
       dueDate: args.dueDate,
       remarks: args.remarks,
       attachments: args.attachments,
@@ -53,6 +57,8 @@ export const update = mutation({
     status: v.optional(v.string()),
     priority: v.optional(v.string()),
     assignedTo: v.optional(v.array(v.string())),
+    assignedById: v.optional(v.string()),
+    assignedByName: v.optional(v.string()),
     dueDate: v.optional(v.string()),
     remarks: v.optional(v.string()),
     attachments: v.optional(v.array(v.string())),
@@ -99,6 +105,7 @@ export const seed = mutation({
         status: "open",
         priority: "high",
         assignedTo: [annaId],
+        assignedByName: "System Administrator",
         dueDate: new Date().toISOString(),
         createdAt: new Date().toISOString(),
       });
@@ -110,6 +117,7 @@ export const seed = mutation({
         status: "completed",
         priority: "medium",
         assignedTo: [annaId, tomId],
+        assignedByName: "System Administrator",
         completedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
       });
@@ -121,6 +129,7 @@ export const seed = mutation({
         status: "in_progress",
         priority: "low",
         assignedTo: [tomId],
+        assignedByName: "System Administrator",
         createdAt: new Date().toISOString(),
       });
     }

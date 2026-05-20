@@ -117,6 +117,12 @@ const ManageTasks: React.FC = () => {
                 </p>
                 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-xs text-red-950/80">
+                  {task.assignedByName && (
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold">{t('common.assignedBy')}:</span>
+                      <span>{task.assignedByName}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1">
                     <span className="font-semibold">{t('taskDetail.assignedTo')}:</span>
                     <span>
