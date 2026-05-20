@@ -1,19 +1,25 @@
 "use node";
 
+declare const process: any;
+
 import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 // @ts-ignore
 import webpush from "web-push";
 
-const VAPID_PUBLIC_KEY = "BLgD25tF_Y0bXYc-I6KVYTGC_3iHSuXj6MrKBQUsJYuEXxhnWu9UFV8RF-fUnbkAsbDKNzwJxV4rCmsc3Cx3cj4";
-const VAPID_PRIVATE_KEY = "lU0k0Rs2YNqjlgMSOG0TX9mIdXCOBYaAlq1UvEbi3ao";
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 
-webpush.setVapidDetails(
-  "mailto:saheeel@resilient.com",
-  VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY
-);
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    "mailto:saheeel@resilient.com",
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
+  );
+} else {
+  console.warn("Warning: VAPID keys are missing from environment variables. Push alerts will be bypassed.");
+}
 
 // Send Push Notification Action (runs off-thread, can make HTTP calls)
 export const sendNotification = action({

@@ -83,7 +83,11 @@ const NotificationListener: React.FC = () => {
         
         // Wait for notification permission to be granted
         if (Notification.permission === 'granted') {
-          const VAPID_PUBLIC_KEY = "BLgD25tF_Y0bXYc-I6KVYTGC_3iHSuXj6MrKBQUsJYuEXxhnWu9UFV8RF-fUnbkAsbDKNzwJxV4rCmsc3Cx3cj4";
+          const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+          if (!VAPID_PUBLIC_KEY) {
+            console.warn("VITE_VAPID_PUBLIC_KEY environment variable is missing!");
+            return;
+          }
           
           let subscription = await registration.pushManager.getSubscription();
           
