@@ -8,6 +8,9 @@
  * @module
  */
 
+import type * as push from "../push.js";
+import type * as pushActions from "../pushActions.js";
+import type * as pushMutations from "../pushMutations.js";
 import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
 
@@ -18,6 +21,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  push: typeof push;
+  pushActions: typeof pushActions;
+  pushMutations: typeof pushMutations;
   tasks: typeof tasks;
   users: typeof users;
 }>;

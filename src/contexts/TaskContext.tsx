@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 export type Role = 'employee' | 'manager';
@@ -70,6 +70,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const dbAddUser = useMutation(api.users.create);
   const dbUpdateUser = useMutation(api.users.update);
+  
+  const sendPushNotification = useAction(api.pushActions.sendNotification);
 
   // Trigger Convex Auto-Seeding if table is empty
   useEffect(() => {
@@ -156,6 +158,16 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       dueDate: taskData.dueDate,
       remarks: taskData.remarks,
       attachments: taskData.attachments,
+    }).then(() => {
+      // Loop through assignees and fire off background Web Push notifications
+      taskData.assignedTo.forEach((userId) => {
+        sendPushNotification({
+          userId,
+          title: "New Task Assigned! 🚀",
+          body: `${taskData.title}\nPriority: ${taskData.priority.toUpperCase()}`,
+          url: "/"
+        }).catch((err) => console.error("Push notification action trigger error:", err));
+      });
     });
   };
 

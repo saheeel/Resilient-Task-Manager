@@ -29,4 +29,11 @@ export default defineSchema({
     markedIssueAt: v.optional(v.string()),
     startedAt: v.optional(v.string()),
   }),
+
+  pushSubscriptions: defineTable({
+    userId: v.string(),
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+  }).index("by_userId", ["userId"]),
 });
