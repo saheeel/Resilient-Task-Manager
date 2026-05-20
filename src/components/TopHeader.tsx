@@ -10,7 +10,13 @@ const TopHeader: React.FC = () => {
   const isManager = currentUser.role === 'manager';
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-50">
+    <header 
+      className="fixed top-0 left-0 right-0 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-50"
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        height: 'calc(env(safe-area-inset-top, 0px) + 4rem)'
+      }}
+    >
       <div className="flex items-center gap-2">
         <img src="/resilientlogo.svg" alt="Resilient Logo" className="w-6 h-6 object-contain" />
         <span className="font-bold text-slate-900 text-sm tracking-tight">

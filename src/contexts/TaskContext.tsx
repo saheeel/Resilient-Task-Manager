@@ -107,6 +107,20 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }));
   }, [dbUsersRaw]);
 
+  // Keep currentUser synced with database record, and auto-update ID if database is reseeded
+  useEffect(() => {
+    if (!currentUser || mappedDbUsers.length === 0) return;
+    const latestUserRecord = mappedDbUsers.find(
+      u => u.id === currentUser.id || (u.username && u.username === currentUser.username)
+    );
+    if (latestUserRecord) {
+      if (latestUserRecord.id !== currentUser.id || latestUserRecord.role !== currentUser.role) {
+        handleSetCurrentUser(latestUserRecord);
+        console.log("Synchronized session for user:", latestUserRecord.name);
+      }
+    }
+  }, [mappedDbUsers, currentUser]);
+
   // Map Convex database tasks to type-safe Task objects
   const mappedDbTasks = useMemo(() => {
     if (!dbTasksRaw) return [];
