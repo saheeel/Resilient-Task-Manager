@@ -13,6 +13,7 @@ import EditEmployee from './pages/EditEmployee';
 import EmployeeHistory from './pages/EmployeeHistory';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import Login from './pages/Login';
+import NotificationListener from './components/NotificationListener';
 import './index.css';
 
 const AppContent = () => {
@@ -25,6 +26,7 @@ const AppContent = () => {
   return (
     <div className="bg-white min-h-screen pt-20 pb-24 font-sans text-slate-800">
       <TopHeader />
+      <NotificationListener />
       <Routes>
         <Route path="/" element={currentUser.role === 'manager' ? <ManageTasks /> : <EmployeeDashboard />} />
         <Route path="/create" element={<CreateTask />} />
