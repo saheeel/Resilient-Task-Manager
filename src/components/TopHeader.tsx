@@ -1,11 +1,42 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTasks } from '../contexts/TaskContext';
 import { LogOut } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
+import { ensurePushSubscription } from '../lib/pushNotifications';
 
 const TopHeader: React.FC = () => {
   const { currentUser, logout } = useTasks();
   const { language, setLanguage, t } = useLanguage();
+  const savePushSubscription = useMutation(api.pushMutations.subscribe);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(
+    typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
+  );
+
+  useEffect(() => {
+    if (typeof Notification === 'undefined') {
+      setNotificationPermission('unsupported');
+      return;
+    }
+
+    setNotificationPermission(Notification.permission);
+  }, []);
+
+  const handleEnableAlerts = async () => {
+    if (!currentUser || typeof Notification === 'undefined') return;
+
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+
+      if (permission === 'granted') {
+        await ensurePushSubscription(currentUser.id, savePushSubscription);
+      }
+    } catch (error) {
+      console.error('Failed to enable alerts:', error);
+    }
+  };
 
   if (!currentUser) return null;
 
@@ -31,6 +62,16 @@ const TopHeader: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-2">
+        {notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
+          <button
+            type="button"
+            onClick={handleEnableAlerts}
+            className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-100 cursor-pointer"
+          >
+            {t('common.enableAlerts')}
+          </button>
+        )}
+
         <div
           className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 shadow-sm"
           aria-label={t('common.selectLanguage')}

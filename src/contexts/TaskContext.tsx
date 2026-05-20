@@ -187,7 +187,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         sendPushNotification({
           userId,
           title: "New Task Assigned! 🚀",
-          body: `${taskData.title}\nPriority: ${taskData.priority.toUpperCase()}${taskData.assignedByName ? `\nAssigned by: ${taskData.assignedByName}` : ''}`,
+          body: `${taskData.title}\nPriority: ${taskData.priority.toUpperCase()}${assignmentMetadata.assignedByName ? `\nAssigned by: ${assignmentMetadata.assignedByName}` : ''}`,
           url: "/"
         }).catch((err) => console.error("Push notification action trigger error:", err));
       });

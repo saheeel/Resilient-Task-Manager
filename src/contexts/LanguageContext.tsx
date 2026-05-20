@@ -100,6 +100,7 @@ const translations: Record<Language, TranslationTree> = {
       hide: 'Hide',
       show: 'Show',
       historyTomorrowNote: 'Past completed tasks move to the History tab tomorrow.',
+      enableAlerts: 'Enable alerts',
     },
     nav: {
       dashboard: 'Dashboard',
@@ -384,6 +385,7 @@ const translations: Record<Language, TranslationTree> = {
       hide: 'Ausblenden',
       show: 'Anzeigen',
       historyTomorrowNote: 'Fruhere erledigte Aufgaben wechseln morgen in den Verlauf.',
+      enableAlerts: 'Benachrichtigungen aktivieren',
     },
     nav: {
       dashboard: 'Dashboard',
