@@ -7,13 +7,14 @@ import ManageTasks from './pages/ManageTasks';
 import CreateTask from './pages/CreateTask';
 import AddEmployee from './pages/AddEmployee';
 import Settings from './pages/Settings';
-import CalendarView from './pages/CalendarView';
 import EditTask from './pages/EditTask';
 import EditEmployee from './pages/EditEmployee';
 import EmployeeHistory from './pages/EmployeeHistory';
 import EmployeeDashboard from './pages/EmployeeDashboard';
+import CompletedHistory from './pages/CompletedHistory';
 import Login from './pages/Login';
 import NotificationListener from './components/NotificationListener';
+import { LanguageProvider } from './contexts/LanguageContext';
 import './index.css';
 
 const AppContent = () => {
@@ -41,7 +42,8 @@ const AppContent = () => {
         <Route path="/settings" element={<Settings />} />
         <Route path="/settings/employee/:id/edit" element={<EditEmployee />} />
         <Route path="/settings/employee/:id/history" element={<EmployeeHistory />} />
-        <Route path="/calendar" element={<CalendarView />} />
+        {/* Employee: completed tasks history page */}
+        <Route path="/history" element={currentUser.role === 'employee' ? <CompletedHistory /> : <Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <BottomNav />
@@ -51,11 +53,13 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <TaskProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </TaskProvider>
+    <LanguageProvider>
+      <TaskProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </TaskProvider>
+    </LanguageProvider>
   );
 };
 

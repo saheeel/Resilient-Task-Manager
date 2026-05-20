@@ -37,6 +37,8 @@ export interface Task {
   createdAt?: string; // ISO date string when assigned
   markedIssueAt?: string; // ISO date string when reported as issue/incomplete
   startedAt?: string; // ISO date string when employee clicks 'Start Task'
+  recurringDay?: string; // Day name for weekly ("Monday"), day number for monthly ("15")
+  recurringTime?: string; // Time string in HH:MM format ("09:00")
 }
 
 interface TaskContextType {
@@ -72,6 +74,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const dbUpdateUser = useMutation(api.users.update);
   
   const sendPushNotification = useAction(api.pushActions.sendNotification);
+  const notifyManagers = useAction(api.pushActions.notifyManagers);
 
   // Trigger Convex Auto-Seeding if table is empty
   useEffect(() => {
@@ -144,6 +147,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       createdAt: t.createdAt,
       markedIssueAt: t.markedIssueAt,
       startedAt: t.startedAt,
+      recurringDay: t.recurringDay,
+      recurringTime: t.recurringTime,
     }));
   }, [dbTasksRaw]);
 
@@ -158,6 +163,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       dueDate: taskData.dueDate,
       remarks: taskData.remarks,
       attachments: taskData.attachments,
+      recurringDay: taskData.recurringDay,
+      recurringTime: taskData.recurringTime,
     }).then(() => {
       // Loop through assignees and fire off background Web Push notifications
       taskData.assignedTo.forEach((userId) => {
@@ -177,6 +184,18 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       status,
       ...details,
     });
+
+    // Fire push notification to all managers when an employee completes a task
+    if (status === 'completed' && currentUser && currentUser.role === 'employee') {
+      const completedTask = mappedDbTasks.find(t => t.id === taskId);
+      if (completedTask) {
+        notifyManagers({
+          taskTitle: completedTask.title,
+          employeeName: currentUser.name,
+          taskId,
+        }).catch((err: any) => console.error('Manager notification error:', err));
+      }
+    }
   };
 
   const addUser = (name: string, role: Role, username?: string, password?: string, employeeRole?: string) => {

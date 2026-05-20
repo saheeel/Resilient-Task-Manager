@@ -41,3 +41,14 @@ export const removeSubscription = mutation({
     await ctx.db.delete(args.id);
   }
 });
+
+// Get all manager user IDs (used to fan-out completion notifications)
+export const getManagerIds = query({
+  handler: async (ctx: any) => {
+    const managers = await ctx.db
+      .query("users")
+      .filter((q: any) => q.eq(q.field("role"), "manager"))
+      .collect();
+    return managers.map((m: any) => m._id as string);
+  }
+});

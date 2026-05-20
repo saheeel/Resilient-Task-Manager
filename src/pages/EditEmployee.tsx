@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import { ArrowLeft, UserCheck } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const EditEmployee: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { users, updateUser } = useTasks();
+  const { t } = useLanguage();
 
   const user = users.find(u => u.id === id);
 
@@ -28,7 +30,7 @@ const EditEmployee: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !username || !password) {
-      alert("Please fill out all required fields.");
+      alert(t('editEmployee.fillRequiredFields'));
       return;
     }
     
@@ -39,7 +41,7 @@ const EditEmployee: React.FC = () => {
       employeeRole: employeeRole || undefined
     });
     
-    setSuccessMsg(`Employee details updated successfully!`);
+    setSuccessMsg(t('editEmployee.success'));
 
     setTimeout(() => {
       setSuccessMsg('');
@@ -50,12 +52,12 @@ const EditEmployee: React.FC = () => {
   if (!user) {
     return (
       <div className="max-w-xl mx-auto px-4 py-12 text-center">
-        <p className="text-slate-600 font-medium">Employee not found.</p>
+        <p className="text-slate-600 font-medium">{t('editEmployee.employeeNotFound')}</p>
         <button 
           onClick={() => navigate('/settings')} 
           className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-5 py-2 text-sm font-semibold shadow-sm transition-colors mt-6 cursor-pointer"
         >
-          Back to Settings
+          {t('editEmployee.backToSettings')}
         </button>
       </div>
     );
@@ -69,7 +71,7 @@ const EditEmployee: React.FC = () => {
         className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 mb-6 font-medium transition-colors cursor-pointer bg-transparent border-none p-0"
       >
         <ArrowLeft size={16} />
-        Back to Settings
+        {t('editEmployee.backToSettings')}
       </button>
 
       {/* Form Card */}
@@ -79,8 +81,8 @@ const EditEmployee: React.FC = () => {
             <UserCheck size={20} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Edit Employee Details</h1>
-            <p className="text-xs text-slate-500">Update professional details and credentials for {user.name}.</p>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">{t('editEmployee.title')}</h1>
+            <p className="text-xs text-slate-500">{t('editEmployee.subtitle', { name: user.name })}</p>
           </div>
         </div>
         
@@ -93,12 +95,12 @@ const EditEmployee: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              Full Name *
+              {t('addEmployee.fullName')} *
             </label>
             <input 
               type="text" 
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-              placeholder="e.g. Jane Doe"
+              placeholder={t('addEmployee.fullNamePlaceholder')}
               value={name}
               onChange={e => setName(e.target.value)}
               required
@@ -107,12 +109,12 @@ const EditEmployee: React.FC = () => {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              Username *
+              {t('common.username')} *
             </label>
             <input 
               type="text" 
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-              placeholder="e.g. janedoe"
+              placeholder={t('addEmployee.usernamePlaceholder')}
               value={username}
               onChange={e => setUsername(e.target.value)}
               required
@@ -121,12 +123,12 @@ const EditEmployee: React.FC = () => {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              Password *
+              {t('common.password')} *
             </label>
             <input 
               type="text" 
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-              placeholder="Enter password"
+              placeholder={t('login.passwordPlaceholder')}
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
@@ -135,12 +137,12 @@ const EditEmployee: React.FC = () => {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              Employee Role / Title (Optional)
+              {t('addEmployee.employeeRoleTitle')} ({t('common.optional')})
             </label>
             <input 
               type="text" 
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-              placeholder="e.g. Front Desk, Cleaning Staff, Security"
+              placeholder={t('addEmployee.employeeRolePlaceholder')}
               value={employeeRole}
               onChange={e => setEmployeeRole(e.target.value)}
             />
@@ -150,7 +152,7 @@ const EditEmployee: React.FC = () => {
             type="submit" 
             className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer mt-4"
           >
-            Save Changes
+            {t('editEmployee.saveChanges')}
           </button>
         </form>
       </div>

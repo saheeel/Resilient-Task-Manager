@@ -59,3 +59,40 @@ export const sendNotification = action({
     }
   }
 });
+
+// Notify all managers (fan-out) — called when an employee completes a task
+export const notifyManagers = action({
+  args: {
+    taskTitle: v.string(),
+    employeeName: v.string(),
+    taskId: v.string(),
+  },
+  handler: async (ctx: any, args: any) => {
+    // Get all manager IDs
+    const managerIds: string[] = await ctx.runQuery(api.pushMutations.getManagerIds);
+
+    const payload = JSON.stringify({
+      title: "✅ Task Completed",
+      body: `${args.employeeName} completed: ${args.taskTitle}`,
+      url: `/task/${args.taskId}`,
+    });
+
+    for (const managerId of managerIds) {
+      const subscriptions = await ctx.runQuery(api.pushMutations.getSubscriptions, { userId: managerId });
+      for (const sub of subscriptions) {
+        try {
+          const pushSubscription = {
+            endpoint: sub.endpoint,
+            keys: { p256dh: sub.p256dh, auth: sub.auth },
+          };
+          await webpush.sendNotification(pushSubscription, payload);
+        } catch (error: any) {
+          console.error("Failed to notify manager:", sub.endpoint, error);
+          if (error.statusCode === 410 || error.statusCode === 404) {
+            await ctx.runMutation(api.pushMutations.removeSubscription, { id: sub._id });
+          }
+        }
+      }
+    }
+  }
+});

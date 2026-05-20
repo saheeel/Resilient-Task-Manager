@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useTasks } from '../contexts/TaskContext';
 import { ShieldAlert, Lock, User } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Login: React.FC = () => {
   const { setCurrentUser, users } = useTasks();
+  const { language, setLanguage, t } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,7 +22,7 @@ const Login: React.FC = () => {
       if (matchedUser) {
         setCurrentUser(matchedUser);
       } else {
-        setError('Invalid username or password.');
+        setError(t('login.invalidCredentials'));
         setLoading(false);
       }
     }, 500);
@@ -29,6 +31,29 @@ const Login: React.FC = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50 px-4 py-12">
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
+        <div className="mb-6 flex justify-end">
+          <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1">
+            <button
+              type="button"
+              onClick={() => setLanguage('en')}
+              className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors cursor-pointer ${
+                language === 'en' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage('de')}
+              className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors cursor-pointer ${
+                language === 'de' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              DE
+            </button>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <img 
@@ -37,10 +62,10 @@ const Login: React.FC = () => {
             className="w-16 h-16 mx-auto mb-4 object-contain" 
           />
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Resilient Workspace
+            {t('app.workspace')}
           </h1>
           <p className="text-sm text-slate-500 mt-2">
-            Please enter your credentials to access your dashboard.
+            {t('login.subtitle')}
           </p>
         </div>
 
@@ -54,7 +79,7 @@ const Login: React.FC = () => {
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              Username
+              {t('common.username')}
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -63,7 +88,7 @@ const Login: React.FC = () => {
               <input
                 type="text"
                 required
-                placeholder="Enter admin"
+                placeholder={t('login.usernamePlaceholder')}
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white placeholder-slate-400 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors"
@@ -73,7 +98,7 @@ const Login: React.FC = () => {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              Password
+              {t('common.password')}
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -82,7 +107,7 @@ const Login: React.FC = () => {
               <input
                 type="password"
                 required
-                placeholder="Enter password"
+                placeholder={t('login.passwordPlaceholder')}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm bg-white placeholder-slate-400 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors"
@@ -95,7 +120,7 @@ const Login: React.FC = () => {
             disabled={loading}
             className="w-full bg-slate-900 text-white rounded-lg py-2.5 font-semibold text-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition-all disabled:opacity-50 mt-2"
           >
-            {loading ? 'Authenticating...' : 'Sign In'}
+            {loading ? t('login.authenticating') : t('login.signIn')}
           </button>
         </form>
       </div>

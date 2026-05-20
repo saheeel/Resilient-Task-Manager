@@ -2,10 +2,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import { Settings as SettingsIcon, UserPlus, Users, Edit, Eye } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { users } = useTasks();
+  const { t, roleLabel } = useLanguage();
 
   const employees = users.filter(u => u.role === 'employee');
   const managers = users.filter(u => u.role === 'manager');
@@ -19,8 +21,8 @@ const Settings: React.FC = () => {
             <SettingsIcon size={20} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Settings</h1>
-            <p className="text-sm text-slate-500 mt-1">Manage your team and operational preferences.</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('app.systemSettings')}</h1>
+            <p className="text-sm text-slate-500 mt-1">{t('settings.subtitle')}</p>
           </div>
         </div>
         <button 
@@ -28,7 +30,7 @@ const Settings: React.FC = () => {
           className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-colors cursor-pointer border border-slate-200"
         >
           <UserPlus size={18} />
-          Add Employee
+          {t('settings.addEmployee')}
         </button>
       </header>
 
@@ -36,7 +38,7 @@ const Settings: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
           <Users size={18} className="text-slate-700" />
-          <h2 className="font-bold text-slate-900 text-lg tracking-tight">Team Directory</h2>
+          <h2 className="font-bold text-slate-900 text-lg tracking-tight">{t('settings.teamDirectory')}</h2>
         </div>
         
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -44,10 +46,10 @@ const Settings: React.FC = () => {
             <table className="w-full border-collapse text-left text-sm">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
                 <tr>
-                  <th className="px-6 py-3.5">Name</th>
-                  <th className="px-6 py-3.5">Username</th>
-                  <th className="px-6 py-3.5">Role</th>
-                  <th className="px-6 py-3.5 text-right">Actions</th>
+                  <th className="px-6 py-3.5">{t('common.name')}</th>
+                  <th className="px-6 py-3.5">{t('common.username')}</th>
+                  <th className="px-6 py-3.5">{t('common.role')}</th>
+                  <th className="px-6 py-3.5 text-right">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -65,7 +67,7 @@ const Settings: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-amber-100 text-amber-800 uppercase tracking-wider">
-                        Manager
+                        {roleLabel('manager')}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -89,11 +91,11 @@ const Settings: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-slate-500 font-mono text-xs">
-                      {user.username || 'Not set'}
+                      {user.username || t('settings.notSet')}
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800 uppercase tracking-wider">
-                        Employee
+                        {roleLabel('employee')}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -101,14 +103,14 @@ const Settings: React.FC = () => {
                         <button 
                           onClick={() => navigate(`/settings/employee/${user.id}/history`)}
                           className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
-                          title="View Profile & Work History"
+                          title={t('settings.viewProfileHistory')}
                         >
                           <Eye size={16} />
                         </button>
                         <button 
                           onClick={() => navigate(`/settings/employee/${user.id}/edit`)}
                           className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
-                          title="Edit Employee Details"
+                          title={t('settings.editEmployeeDetails')}
                         >
                           <Edit size={16} />
                         </button>
@@ -120,7 +122,7 @@ const Settings: React.FC = () => {
                 {employees.length === 0 && managers.length === 0 && (
                   <tr>
                     <td colSpan={3} className="px-6 py-8 text-center text-slate-500">
-                      No team members found.
+                      {t('settings.noTeamMembersFound')}
                     </td>
                   </tr>
                 )}

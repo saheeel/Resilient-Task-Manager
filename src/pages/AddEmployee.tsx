@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import { ArrowLeft, UserPlus } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const AddEmployee: React.FC = () => {
   const navigate = useNavigate();
   const { addUser } = useTasks();
+  const { t } = useLanguage();
   
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -16,12 +18,12 @@ const AddEmployee: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !username || !password) {
-      alert("Please fill out all fields.");
+      alert(t('addEmployee.fillAllFields'));
       return;
     }
     
     addUser(name, 'employee', username, password, employeeRole || undefined);
-    setSuccessMsg(`Employee ${name} added successfully!`);
+    setSuccessMsg(t('addEmployee.success', { name }));
     
     // Clear form
     setName('');
@@ -42,7 +44,7 @@ const AddEmployee: React.FC = () => {
         className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 mb-6 font-medium transition-colors cursor-pointer bg-transparent border-none p-0"
       >
         <ArrowLeft size={16} />
-        Back to Dashboard
+        {t('addEmployee.backToDashboard')}
       </button>
 
       {/* Form Card */}
@@ -52,8 +54,8 @@ const AddEmployee: React.FC = () => {
             <UserPlus size={20} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Add New Employee</h1>
-            <p className="text-xs text-slate-500">Create credentials for a new team member.</p>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">{t('addEmployee.title')}</h1>
+            <p className="text-xs text-slate-500">{t('addEmployee.subtitle')}</p>
           </div>
         </div>
         
@@ -66,12 +68,12 @@ const AddEmployee: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              Full Name *
+              {t('addEmployee.fullName')} *
             </label>
             <input 
               type="text" 
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-              placeholder="e.g. Jane Doe"
+              placeholder={t('addEmployee.fullNamePlaceholder')}
               value={name}
               onChange={e => setName(e.target.value)}
               required
@@ -80,12 +82,12 @@ const AddEmployee: React.FC = () => {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              Username *
+              {t('common.username')} *
             </label>
             <input 
               type="text" 
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-              placeholder="e.g. janedoe"
+              placeholder={t('addEmployee.usernamePlaceholder')}
               value={username}
               onChange={e => setUsername(e.target.value)}
               required
@@ -94,12 +96,12 @@ const AddEmployee: React.FC = () => {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              Password *
+              {t('common.password')} *
             </label>
             <input 
               type="password" 
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-              placeholder="Enter a secure password"
+              placeholder={t('addEmployee.securePasswordPlaceholder')}
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
@@ -108,12 +110,12 @@ const AddEmployee: React.FC = () => {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              Employee Role / Title (Optional)
+              {t('addEmployee.employeeRoleTitle')} ({t('common.optional')})
             </label>
             <input 
               type="text" 
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-              placeholder="e.g. Front Desk, Cleaning Staff, Security"
+              placeholder={t('addEmployee.employeeRolePlaceholder')}
               value={employeeRole}
               onChange={e => setEmployeeRole(e.target.value)}
             />
@@ -123,7 +125,7 @@ const AddEmployee: React.FC = () => {
             type="submit" 
             className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer mt-4"
           >
-            Register Employee
+            {t('addEmployee.registerEmployee')}
           </button>
         </form>
       </div>

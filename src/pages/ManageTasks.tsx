@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
 import { PlusCircle, CheckCircle, AlertCircle, Edit, Trash2 } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const ManageTasks: React.FC = () => {
   const navigate = useNavigate();
   const { tasks, users, currentUser, deleteTask } = useTasks();
+  const { t, formatDateTime } = useLanguage();
 
   if (!currentUser) return null;
 
@@ -32,8 +34,10 @@ const ManageTasks: React.FC = () => {
       {/* Header */}
       <header className="mb-8 flex justify-between items-center border-b border-slate-150 pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Admin Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-1">Welcome back, {currentUser.name.split(' ')[0]}</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('app.adminDashboard')}</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            {t('manageTasks.welcome', { name: currentUser.name.split(' ')[0] })}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -41,7 +45,7 @@ const ManageTasks: React.FC = () => {
             className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
           >
             <PlusCircle size={18} />
-            New Task
+            {t('manageTasks.newTask')}
           </button>
         </div>
       </header>
@@ -53,7 +57,7 @@ const ManageTasks: React.FC = () => {
             <CheckCircle size={20} />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Completed Tasks</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('manageTasks.completedTasks')}</p>
             <p className="text-2xl font-bold text-slate-900 mt-0.5">{completedToday}</p>
           </div>
         </div>
@@ -63,7 +67,7 @@ const ManageTasks: React.FC = () => {
             <AlertCircle size={20} />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Attention Required</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('manageTasks.attentionRequired')}</p>
             <p className="text-2xl font-bold text-slate-900 mt-0.5">{issues.length}</p>
           </div>
         </div>
@@ -71,7 +75,7 @@ const ManageTasks: React.FC = () => {
 
       {/* Attention Required Section */}
       <div className="mb-8">
-        <h2 className="font-bold text-slate-900 text-lg mb-3 tracking-tight">Attention Required</h2>
+        <h2 className="font-bold text-slate-900 text-lg mb-3 tracking-tight">{t('manageTasks.attentionRequired')}</h2>
         {issues.length > 0 ? (
           <div className="flex flex-col gap-3">
             {issues.map(task => (
@@ -90,47 +94,47 @@ const ManageTasks: React.FC = () => {
                         navigate(`/task/${task.id}/edit`);
                       }}
                       className="p-1 text-slate-500 hover:text-blue-600 hover:bg-red-100 rounded transition-colors border-none bg-transparent cursor-pointer"
-                      title="Edit Task"
+                      title={t('manageTasks.editTask')}
                     >
                       <Edit size={16} />
                     </button>
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm("Are you sure you want to delete this task?")) {
+                        if (confirm(t('common.confirmDeleteTask'))) {
                           deleteTask(task.id);
                         }
                       }}
                       className="p-1 text-slate-500 hover:text-red-600 hover:bg-red-100 rounded transition-colors border-none bg-transparent cursor-pointer"
-                      title="Delete Task"
+                      title={t('manageTasks.deleteTask')}
                     >
                       <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
                 <p className="text-xs text-red-800 mt-2 font-medium bg-white/60 inline-block px-2 py-1 rounded border border-red-100">
-                  Reason: {task.blockReason || 'No reason provided'}
+                  {t('common.reason')}: {task.blockReason || t('manageTasks.noReasonProvided')}
                 </p>
                 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-xs text-red-950/80">
                   <div className="flex items-center gap-1">
-                    <span className="font-semibold">Assigned To:</span>
+                    <span className="font-semibold">{t('taskDetail.assignedTo')}:</span>
                     <span>
                       {task.assignedTo.length > 0 
                         ? task.assignedTo.map(id => users.find(u => u.id === id)?.name).join(', ')
-                        : 'Unassigned'}
+                        : t('common.unassigned')}
                     </span>
                   </div>
                   {task.createdAt && (
                     <div className="flex items-center gap-1">
-                      <span className="font-semibold">• Assigned At:</span>
-                      <span>{new Date(task.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</span>
+                      <span className="font-semibold">• {t('manageTasks.assignedAt')}:</span>
+                      <span>{formatDateTime(task.createdAt, { dateStyle: 'short', timeStyle: 'short' })}</span>
                     </div>
                   )}
                   {task.markedIssueAt && (
                     <div className="flex items-center gap-1 text-red-700 font-semibold bg-red-100/80 px-1.5 py-0.5 rounded border border-red-200/50">
-                      <span>• Marked Incomplete At:</span>
-                      <span>{new Date(task.markedIssueAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</span>
+                      <span>• {t('manageTasks.markedIncompleteAt')}:</span>
+                      <span>{formatDateTime(task.markedIssueAt, { dateStyle: 'short', timeStyle: 'short' })}</span>
                     </div>
                   )}
                 </div>
@@ -138,23 +142,23 @@ const ManageTasks: React.FC = () => {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-slate-500 bg-slate-50 border border-slate-200 p-4 rounded-xl">No blocked tasks or issues.</p>
+          <p className="text-sm text-slate-500 bg-slate-50 border border-slate-200 p-4 rounded-xl">{t('manageTasks.noIssues')}</p>
         )}
       </div>
 
       {/* Active Tasks Table */}
       <div>
-        <h2 className="font-bold text-slate-900 text-lg mb-3 tracking-tight">Active Tasks</h2>
+        <h2 className="font-bold text-slate-900 text-lg mb-3 tracking-tight">{t('manageTasks.activeTasks')}</h2>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {activeTasks.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[600px] border-collapse text-left text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
                   <tr>
-                    <th className="px-5 py-3">Task Title</th>
-                    <th className="px-5 py-3">Assigned Team Members</th>
-                    <th className="px-5 py-3 w-[130px] whitespace-nowrap">Status</th>
-                    <th className="px-5 py-3 text-right">Actions</th>
+                    <th className="px-5 py-3">{t('manageTasks.taskTitle')}</th>
+                    <th className="px-5 py-3">{t('manageTasks.assignedTeamMembers')}</th>
+                    <th className="px-5 py-3 w-[130px] whitespace-nowrap">{t('common.status')}</th>
+                    <th className="px-5 py-3 text-right">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -168,7 +172,7 @@ const ManageTasks: React.FC = () => {
                       <td className="px-5 py-3.5 text-slate-600">
                         {task.assignedTo.length > 0 
                           ? task.assignedTo.map(id => users.find(u => u.id === id)?.name.split(' ')[0]).join(', ')
-                          : 'Unassigned'}
+                          : t('common.unassigned')}
                       </td>
                       <td className="px-5 py-3.5 w-[130px] whitespace-nowrap">
                         <StatusBadge status={task.status} />
@@ -181,19 +185,19 @@ const ManageTasks: React.FC = () => {
                               navigate(`/task/${task.id}/edit`);
                             }}
                             className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
-                            title="Edit Task"
+                            title={t('manageTasks.editTask')}
                           >
                             <Edit size={16} />
                           </button>
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (confirm("Are you sure you want to delete this task?")) {
+                              if (confirm(t('common.confirmDeleteTask'))) {
                                 deleteTask(task.id);
                               }
                             }}
                             className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
-                            title="Delete Task"
+                            title={t('manageTasks.deleteTask')}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -205,24 +209,24 @@ const ManageTasks: React.FC = () => {
               </table>
             </div>
           ) : (
-            <p className="p-6 text-center text-sm text-slate-500">No active tasks right now.</p>
+            <p className="p-6 text-center text-sm text-slate-500">{t('manageTasks.noActiveTasks')}</p>
           )}
         </div>
       </div>
 
       {/* Recently Completed Tasks */}
       <div className="mt-8">
-        <h2 className="font-bold text-slate-900 text-lg mb-3 tracking-tight">Recently Completed</h2>
+        <h2 className="font-bold text-slate-900 text-lg mb-3 tracking-tight">{t('manageTasks.recentlyCompleted')}</h2>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {completedTasks.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[650px] border-collapse text-left text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
                   <tr>
-                    <th className="px-5 py-3">Task Title</th>
-                    <th className="px-5 py-3">Completed By</th>
-                    <th className="px-5 py-3">Completed At</th>
-                    <th className="px-5 py-3">Duration</th>
+                    <th className="px-5 py-3">{t('manageTasks.taskTitle')}</th>
+                    <th className="px-5 py-3">{t('manageTasks.completedBy')}</th>
+                    <th className="px-5 py-3">{t('manageTasks.completedAt')}</th>
+                    <th className="px-5 py-3">{t('manageTasks.duration')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -236,10 +240,10 @@ const ManageTasks: React.FC = () => {
                       <td className="px-5 py-3.5 text-slate-600">
                         {task.assignedTo.length > 0 
                           ? task.assignedTo.map(id => users.find(u => u.id === id)?.name.split(' ')[0]).join(', ')
-                          : 'Unassigned'}
+                          : t('common.unassigned')}
                       </td>
                       <td className="px-5 py-3.5 text-slate-500">
-                        {task.completedAt ? new Date(task.completedAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
+                        {task.completedAt ? formatDateTime(task.completedAt, { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
                       </td>
                       <td className="px-5 py-3.5">
                         {task.startedAt && task.completedAt ? (
@@ -256,7 +260,7 @@ const ManageTasks: React.FC = () => {
               </table>
             </div>
           ) : (
-            <p className="p-6 text-center text-sm text-slate-500">No completed tasks yet.</p>
+            <p className="p-6 text-center text-sm text-slate-500">{t('manageTasks.noCompletedTasks')}</p>
           )}
         </div>
       </div>

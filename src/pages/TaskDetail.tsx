@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
 import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const TaskDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { tasks, updateTaskStatus, currentUser, deleteTask, users } = useTasks();
+  const { t, formatDate, formatDateTime, formatTime, priorityLabel, taskTypeLabel } = useLanguage();
   
   const task = tasks.find(t => t.id === id);
   
@@ -39,12 +41,15 @@ const TaskDetail: React.FC = () => {
   if (!task || !isAuthorized) {
     return (
       <div className="max-w-xl mx-auto px-4 py-12 text-center">
-        <p className="text-slate-600 font-medium">{!task ? "Task not found." : "You don't have permission to view this task."}</p>
+        <p className="text-slate-600 font-medium">
+          {!task ? t('taskDetail.taskNotFound') : t('taskDetail.noPermission')}
+        </p>
+        
         <button 
           onClick={() => navigate(-1)} 
           className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-5 py-2 text-sm font-semibold shadow-sm transition-colors mt-6 cursor-pointer"
         >
-          Go Back
+          {t('common.goBack')}
         </button>
       </div>
     );
@@ -78,7 +83,7 @@ const TaskDetail: React.FC = () => {
 
   const handleBlock = () => {
     if (!comment) {
-      alert("Please provide a reason before marking as incomplete/blocked.");
+      alert(t('taskDetail.provideReason'));
       return;
     }
     updateTaskStatus(task.id, 'could_not_complete', {
@@ -97,7 +102,7 @@ const TaskDetail: React.FC = () => {
           className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0"
         >
           <ArrowLeft size={16} />
-          Back
+          {t('common.back')}
         </button>
         {currentUser.role === 'manager' && (
           <div className="flex gap-2">
@@ -106,11 +111,11 @@ const TaskDetail: React.FC = () => {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer"
             >
               <Edit size={14} />
-              Edit Task
+              {t('taskDetail.editTask')}
             </button>
             <button 
               onClick={() => {
-                if (confirm("Are you sure you want to delete this task?")) {
+                if (confirm(t('common.confirmDeleteTask'))) {
                   deleteTask(task.id);
                   navigate('/');
                 }
@@ -118,7 +123,7 @@ const TaskDetail: React.FC = () => {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-200 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 rounded-lg shadow-sm transition-colors cursor-pointer"
             >
               <Trash2 size={14} />
-              Delete Task
+              {t('taskDetail.deleteTask')}
             </button>
           </div>
         )}
@@ -129,7 +134,7 @@ const TaskDetail: React.FC = () => {
         <div className="flex justify-between items-center gap-4 mb-4">
           <StatusBadge status={task.status} />
           <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
-            {task.type}
+            {taskTypeLabel(task.type)}
           </span>
         </div>
         
@@ -138,22 +143,22 @@ const TaskDetail: React.FC = () => {
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200">
             <AlertCircle size={14} className="text-slate-400" />
-            <span className="capitalize">{task.priority} Priority</span>
+            <span>{t('taskDetail.taskTypePriority', { priority: priorityLabel(task.priority) })}</span>
           </div>
           
           {task.dueDate && (
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200">
               <Calendar size={14} className="text-slate-400" />
-              Due: {new Date(task.dueDate).toLocaleDateString()}
+              {t('common.due')}: {formatDate(task.dueDate)}
               <Clock size={14} className="text-slate-400 ml-1" />
-              {new Date(task.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {formatTime(task.dueDate)}
             </div>
           )}
 
           {task.createdAt && (
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200" title="Time when task was assigned">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200" title={t('taskDetail.assignedAt')}>
               <Clock size={14} className="text-slate-400" />
-              Assigned: {new Date(task.createdAt).toLocaleDateString()} {new Date(task.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {t('common.assigned')}: {formatDateTime(task.createdAt, { dateStyle: 'short', timeStyle: 'short' })}
             </div>
           )}
         </div>
@@ -161,35 +166,35 @@ const TaskDetail: React.FC = () => {
         {/* Timeline & Assignments */}
         <div className="border-t border-slate-100 pt-4 mt-2 mb-6 space-y-3">
           <div className="flex items-start gap-2 text-sm text-slate-600">
-            <span className="font-semibold text-slate-900 shrink-0 min-w-[100px]">Assigned To:</span>
+            <span className="font-semibold text-slate-900 shrink-0 min-w-[100px]">{t('taskDetail.assignedTo')}:</span>
             <span className="font-medium text-slate-800">
               {task.assignedTo.length > 0 
                 ? task.assignedTo.map(id => users.find(u => u.id === id)?.name).join(', ')
-                : 'Unassigned'}
+                : t('common.unassigned')}
             </span>
           </div>
 
           <div className="flex items-start gap-2 text-sm text-slate-600">
-            <span className="font-semibold text-slate-900 shrink-0 min-w-[100px]">Assigned At:</span>
+            <span className="font-semibold text-slate-900 shrink-0 min-w-[100px]">{t('taskDetail.assignedAt')}:</span>
             <span className="font-medium text-slate-800">
               {task.createdAt 
-                ? `${new Date(task.createdAt).toLocaleDateString()} ${new Date(task.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                : 'Not recorded'}
+                ? formatDateTime(task.createdAt, { dateStyle: 'short', timeStyle: 'short' })
+                : t('common.notRecorded')}
             </span>
           </div>
 
           {task.status === 'could_not_complete' && (
             <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
-              <span className="font-semibold shrink-0 min-w-[100px]">Incomplete At:</span>
+              <span className="font-semibold shrink-0 min-w-[100px]">{t('taskDetail.incompleteAt')}:</span>
               <div className="flex flex-col gap-1">
                 <span className="font-bold">
                   {task.markedIssueAt 
-                    ? `${new Date(task.markedIssueAt).toLocaleDateString()} ${new Date(task.markedIssueAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                    : 'Not recorded'}
+                    ? formatDateTime(task.markedIssueAt, { dateStyle: 'short', timeStyle: 'short' })
+                    : t('common.notRecorded')}
                 </span>
                 {task.blockReason && (
                   <span className="text-xs text-red-800 italic mt-0.5">
-                    Reason: "{task.blockReason}"
+                    {t('common.reason')}: "{task.blockReason}"
                   </span>
                 )}
               </div>
@@ -198,30 +203,30 @@ const TaskDetail: React.FC = () => {
 
           {task.startedAt && (
             <div className="flex items-start gap-2 text-sm text-slate-600">
-              <span className="font-semibold text-slate-900 shrink-0 min-w-[100px]">Started At:</span>
+              <span className="font-semibold text-slate-900 shrink-0 min-w-[100px]">{t('taskDetail.startedAt')}:</span>
               <span className="font-medium text-slate-800">
-                {`${new Date(task.startedAt).toLocaleDateString()} ${new Date(task.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                {formatDateTime(task.startedAt, { dateStyle: 'short', timeStyle: 'short' })}
               </span>
             </div>
           )}
 
           {task.status === 'completed' && (
             <div className="flex items-start gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
-              <span className="font-semibold shrink-0 min-w-[100px]">Completed At:</span>
+              <span className="font-semibold shrink-0 min-w-[100px]">{t('taskDetail.completedAt')}:</span>
               <div className="flex flex-col gap-1">
                 <span className="font-bold">
                   {task.completedAt 
-                    ? `${new Date(task.completedAt).toLocaleDateString()} ${new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                    : 'Not recorded'}
+                    ? formatDateTime(task.completedAt, { dateStyle: 'short', timeStyle: 'short' })
+                    : t('common.notRecorded')}
                 </span>
                 {task.startedAt && task.completedAt && (
                   <span className="text-xs text-green-800 font-medium mt-0.5">
-                    Time taken: {formatTimeTaken(task.startedAt, task.completedAt)}
+                    {t('common.timeTaken')}: {formatTimeTaken(task.startedAt, task.completedAt)}
                   </span>
                 )}
                 {task.completionComment && (
                   <span className="text-xs text-green-800 italic mt-0.5">
-                    Note: "{task.completionComment}"
+                    {t('common.note')}: "{task.completionComment}"
                   </span>
                 )}
               </div>
@@ -231,7 +236,7 @@ const TaskDetail: React.FC = () => {
         
         {task.description && (
           <div className="mb-4">
-            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">Description</h3>
+            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('common.description')}</h3>
             <p className="text-sm text-slate-600 bg-slate-50 border border-slate-200 p-4 rounded-xl leading-relaxed">
               {task.description}
             </p>
@@ -240,7 +245,7 @@ const TaskDetail: React.FC = () => {
 
         {task.remarks && (
           <div className="mb-4">
-            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">Remarks / Instructions</h3>
+            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('common.remarks')}</h3>
             <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 p-4 rounded-xl leading-relaxed">
               {task.remarks}
             </p>
@@ -249,7 +254,7 @@ const TaskDetail: React.FC = () => {
 
         {task.proofPhotoUrl && (
           <div className="mb-4">
-            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">Completion Photo Proof</h3>
+            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('taskDetail.completionPhotoProof')}</h3>
             <div className="relative inline-block group cursor-zoom-in" onClick={() => setActiveZoomUrl(task.proofPhotoUrl || null)}>
               <img 
                 src={task.proofPhotoUrl} 
@@ -265,7 +270,7 @@ const TaskDetail: React.FC = () => {
 
         {task.attachments && task.attachments.length > 0 && (
           <div className="mb-4">
-            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">Attachments & Reference Files</h3>
+            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('taskDetail.attachmentsReference')}</h3>
             <div className="flex flex-wrap gap-3">
               {task.attachments.map((url, idx) => {
                 if (isImageFile(url)) {
@@ -291,7 +296,7 @@ const TaskDetail: React.FC = () => {
                     className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
                   >
                     <Paperclip size={16} />
-                    Reference File {idx + 1}
+                    {t('taskDetail.referenceFile', { index: idx + 1 })}
                   </a>
                 );
               })}
@@ -303,16 +308,16 @@ const TaskDetail: React.FC = () => {
       {/* Completion Actions (Visible only for non-finalized tasks) */}
       {task.status !== 'completed' && task.status !== 'could_not_complete' && (
         <div className="bg-white p-6 border border-slate-200 rounded-xl shadow-sm">
-          <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider mb-4">Completion Actions</h3>
+          <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider mb-4">{t('taskDetail.completionActions')}</h3>
           
           <div className="mb-4">
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              Add a comment (optional)
+              {t('taskDetail.addCommentOptional')}
             </label>
             <textarea 
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
               rows={3}
-              placeholder="e.g. Needs more supplies tomorrow..."
+              placeholder={t('taskDetail.commentPlaceholder')}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
@@ -333,7 +338,7 @@ const TaskDetail: React.FC = () => {
                 className="inline-flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 rounded-lg py-2 text-sm font-semibold transition-colors cursor-pointer"
               >
                 <Camera size={18} />
-                Add Completion Photo
+                {t('taskDetail.addCompletionPhoto')}
               </button>
             ) : (
               <div className="relative inline-block mt-1">
@@ -347,7 +352,7 @@ const TaskDetail: React.FC = () => {
                   type="button"
                   onClick={handleRemovePhoto}
                   className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow transition-colors border-none cursor-pointer"
-                  title="Remove Photo"
+                  title={t('taskDetail.removePhoto')}
                 >
                   <X size={12} />
                 </button>
@@ -363,7 +368,7 @@ const TaskDetail: React.FC = () => {
                   className="inline-flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
                 >
                   <Play size={18} className="fill-current" />
-                  Start Task
+                  {t('taskDetail.startTask')}
                 </button>
               ) : (
                 <button 
@@ -371,7 +376,7 @@ const TaskDetail: React.FC = () => {
                   className="inline-flex items-center justify-center gap-2 w-full bg-green-700 hover:bg-green-800 text-white rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
                 >
                   <CheckCircle size={18} />
-                  Mark as Completed
+                  {t('taskDetail.markCompleted')}
                 </button>
               )}
               
@@ -380,23 +385,23 @@ const TaskDetail: React.FC = () => {
                 className="inline-flex items-center justify-center gap-2 w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg py-2.5 font-semibold text-sm transition-colors cursor-pointer"
               >
                 <AlertTriangle size={18} />
-                Cannot Complete
+                {t('taskDetail.cannotComplete')}
               </button>
             </div>
           ) : (
             <div className="space-y-3 pt-4 border-t border-slate-200">
-              <p className="text-xs text-red-700 font-semibold">Please explain why in the comment box above.</p>
+              <p className="text-xs text-red-700 font-semibold">{t('taskDetail.explainIssue')}</p>
               <button 
                 onClick={handleBlock}
                 className="inline-flex items-center justify-center w-full bg-red-700 hover:bg-red-800 text-white rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
               >
-                Submit Issue
+                {t('taskDetail.submitIssue')}
               </button>
               <button 
                 onClick={() => setShowBlockReason(false)}
                 className="inline-flex items-center justify-center w-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 rounded-lg py-2.5 font-semibold text-sm transition-colors cursor-pointer"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           )}

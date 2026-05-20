@@ -28,6 +28,8 @@ export default defineSchema({
     createdAt: v.optional(v.string()),
     markedIssueAt: v.optional(v.string()),
     startedAt: v.optional(v.string()),
+    recurringDay: v.optional(v.string()),
+    recurringTime: v.optional(v.string()),
   }),
 
   pushSubscriptions: defineTable({

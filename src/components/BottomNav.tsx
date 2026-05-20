@@ -1,10 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Settings, Calendar } from 'lucide-react';
+import { LayoutDashboard, Settings, History } from 'lucide-react';
 import { useTasks } from '../contexts/TaskContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const BottomNav: React.FC = () => {
   const { currentUser } = useTasks();
+  const { t } = useLanguage();
 
   if (!currentUser) return null;
 
@@ -17,19 +19,23 @@ const BottomNav: React.FC = () => {
         }`}
       >
         <LayoutDashboard size={20} />
-        <span>Dashboard</span>
-      </NavLink>
-      
-      <NavLink 
-        to="/calendar"
-        className={({ isActive }) => `flex flex-col items-center gap-1 text-xs font-semibold transition-colors ${
-          isActive ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'
-        }`}
-      >
-        <Calendar size={20} />
-        <span>Schedule</span>
+        <span>{t('nav.dashboard')}</span>
       </NavLink>
 
+      {/* Employee: show History tab */}
+      {currentUser.role === 'employee' && (
+        <NavLink 
+          to="/history"
+          className={({ isActive }) => `flex flex-col items-center gap-1 text-xs font-semibold transition-colors ${
+            isActive ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <History size={20} />
+          <span>{t('nav.history')}</span>
+        </NavLink>
+      )}
+
+      {/* Manager: show Settings tab only */}
       {currentUser.role === 'manager' && (
         <NavLink 
           to="/settings"
@@ -38,7 +44,7 @@ const BottomNav: React.FC = () => {
           }`}
         >
           <Settings size={20} />
-          <span>Settings</span>
+          <span>{t('nav.settings')}</span>
         </NavLink>
       )}
     </nav>

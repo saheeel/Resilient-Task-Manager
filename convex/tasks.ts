@@ -21,6 +21,8 @@ export const create = mutation({
     remarks: v.optional(v.string()),
     attachments: v.optional(v.array(v.string())),
     createdAt: v.optional(v.string()),
+    recurringDay: v.optional(v.string()),
+    recurringTime: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     const taskId = await ctx.db.insert("tasks", {
@@ -34,6 +36,8 @@ export const create = mutation({
       remarks: args.remarks,
       attachments: args.attachments,
       createdAt: args.createdAt || new Date().toISOString(),
+      recurringDay: args.recurringDay,
+      recurringTime: args.recurringTime,
     });
     return taskId;
   },
@@ -58,6 +62,8 @@ export const update = mutation({
     proofPhotoUrl: v.optional(v.string()),
     markedIssueAt: v.optional(v.string()),
     startedAt: v.optional(v.string()),
+    recurringDay: v.optional(v.string()),
+    recurringTime: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     const { id, ...fields } = args;
