@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+/* Base HTML styles for clean canvas and horizontal layout lock */
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: #ffffff;
+  color: #1e293b;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  position: relative;
+}
+
+#root {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Bulletproof responsive date/time input bounds for mobile viewports */
+input[type="date"],
+input[type="time"] {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}

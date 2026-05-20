@@ -1,0 +1,222 @@
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+
+export type Role = 'employee' | 'manager';
+export type TaskType = 'daily' | 'weekly' | 'monthly' | 'one-time';
+export type TaskStatus = 'open' | 'in_progress' | 'completed' | 'could_not_complete' | 'blocked';
+export type Priority = 'low' | 'medium' | 'high';
+
+export interface User {
+  id: string;
+  name: string;
+  role: Role;
+  avatarUrl?: string;
+  username?: string;
+  password?: string;
+  employeeRole?: string;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  type: TaskType;
+  status: TaskStatus;
+  priority: Priority;
+  assignedTo: string[]; // Array of User IDs
+  dueDate?: string; // ISO date string
+  remarks?: string;
+  attachments?: string[]; 
+  
+  completedAt?: string;
+  completionComment?: string;
+  blockReason?: string; 
+  proofPhotoUrl?: string; 
+  createdAt?: string; // ISO date string when assigned
+  markedIssueAt?: string; // ISO date string when reported as issue/incomplete
+  startedAt?: string; // ISO date string when employee clicks 'Start Task'
+}
+
+interface TaskContextType {
+  tasks: Task[];
+  users: User[];
+  currentUser: User | null;
+  setCurrentUser: (user: User | null) => void;
+  addTask: (task: Omit<Task, 'id'>) => void;
+  updateTaskStatus: (taskId: string, status: TaskStatus, details?: Partial<Task>) => void;
+  addUser: (name: string, role: Role, username?: string, password?: string, employeeRole?: string) => User;
+  editTask: (taskId: string, updatedFields: Partial<Task>) => void;
+  deleteTask: (taskId: string) => void;
+  updateUser: (userId: string, updatedFields: Partial<User>) => void;
+  logout: () => void;
+  isBackendConnected: boolean;
+}
+
+const TaskContext = createContext<TaskContextType | undefined>(undefined);
+
+export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // Convex Queries and Mutations
+  const dbUsersRaw = useQuery(api.users.list);
+  const dbTasksRaw = useQuery(api.tasks.list);
+  
+  const seedUsers = useMutation(api.users.seed);
+  const seedTasks = useMutation(api.tasks.seed);
+
+  const dbAddTask = useMutation(api.tasks.create);
+  const dbUpdateTask = useMutation(api.tasks.update);
+  const dbRemoveTask = useMutation(api.tasks.remove);
+
+  const dbAddUser = useMutation(api.users.create);
+  const dbUpdateUser = useMutation(api.users.update);
+
+  // Trigger Convex Auto-Seeding if table is empty
+  useEffect(() => {
+    seedUsers().then(() => {
+      seedTasks();
+    });
+  }, [seedUsers, seedTasks]);
+
+  // Session state for tracking active logged-in user profile
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('rtm_current_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const handleSetCurrentUser = (user: User | null) => {
+    if (user) {
+      localStorage.setItem('rtm_current_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('rtm_current_user');
+    }
+    setCurrentUser(user);
+  };
+
+  // Map Convex database users to type-safe User objects
+  const mappedDbUsers = useMemo(() => {
+    if (!dbUsersRaw) return [];
+    return (dbUsersRaw as any[]).map((u: any) => ({
+      id: u._id,
+      name: u.name,
+      role: u.role as Role,
+      avatarUrl: u.avatarUrl,
+      username: u.username,
+      password: u.password,
+      employeeRole: u.employeeRole,
+    }));
+  }, [dbUsersRaw]);
+
+  // Map Convex database tasks to type-safe Task objects
+  const mappedDbTasks = useMemo(() => {
+    if (!dbTasksRaw) return [];
+    return (dbTasksRaw as any[]).map((t: any) => ({
+      id: t._id,
+      title: t.title,
+      description: t.description,
+      type: t.type as TaskType,
+      status: t.status as TaskStatus,
+      priority: t.priority as Priority,
+      assignedTo: t.assignedTo,
+      dueDate: t.dueDate,
+      remarks: t.remarks,
+      attachments: t.attachments,
+      completedAt: t.completedAt,
+      completionComment: t.completionComment,
+      blockReason: t.blockReason,
+      proofPhotoUrl: t.proofPhotoUrl,
+      createdAt: t.createdAt,
+      markedIssueAt: t.markedIssueAt,
+      startedAt: t.startedAt,
+    }));
+  }, [dbTasksRaw]);
+
+  const addTask = (taskData: Omit<Task, 'id'>) => {
+    dbAddTask({
+      title: taskData.title,
+      description: taskData.description,
+      type: taskData.type,
+      status: taskData.status,
+      priority: taskData.priority,
+      assignedTo: taskData.assignedTo,
+      dueDate: taskData.dueDate,
+      remarks: taskData.remarks,
+      attachments: taskData.attachments,
+    });
+  };
+
+  const updateTaskStatus = (taskId: string, status: TaskStatus, details?: Partial<Task>) => {
+    dbUpdateTask({
+      id: taskId as any,
+      status,
+      ...details,
+    });
+  };
+
+  const addUser = (name: string, role: Role, username?: string, password?: string, employeeRole?: string) => {
+    const tempId = `temp_${Date.now()}`;
+    dbAddUser({
+      name,
+      role,
+      username,
+      password,
+      employeeRole,
+    });
+    return { id: tempId, name, role, username, password, employeeRole };
+  };
+
+  const editTask = (taskId: string, updatedFields: Partial<Task>) => {
+    const { id, ...fields } = updatedFields;
+    dbUpdateTask({
+      id: taskId as any,
+      ...fields,
+    });
+  };
+
+  const deleteTask = (taskId: string) => {
+    dbRemoveTask({ id: taskId as any });
+  };
+
+  const updateUser = (userId: string, updatedFields: Partial<User>) => {
+    const { id, ...fields } = updatedFields;
+    dbUpdateUser({
+      id: userId as any,
+      ...fields,
+    });
+    if (currentUser && currentUser.id === userId) {
+      const updatedUser = { ...currentUser, ...updatedFields };
+      handleSetCurrentUser(updatedUser);
+    }
+  };
+
+  const logout = () => {
+    handleSetCurrentUser(null);
+  };
+
+  return (
+    <TaskContext.Provider value={{ 
+      tasks: mappedDbTasks, 
+      users: mappedDbUsers, 
+      currentUser, 
+      setCurrentUser: handleSetCurrentUser, 
+      addTask, 
+      updateTaskStatus,
+      addUser,
+      editTask,
+      deleteTask,
+      updateUser,
+      logout,
+      isBackendConnected: true
+    }}>
+      {children}
+    </TaskContext.Provider>
+  );
+};
+
+export const useTasks = () => {
+  const context = useContext(TaskContext);
+  if (context === undefined) {
+    throw new Error('useTasks must be used within a TaskProvider');
+  }
+  return context;
+};
