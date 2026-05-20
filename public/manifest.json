@@ -12,7 +12,7 @@
       "src": "/resilientlogo.svg",
       "type": "image/svg+xml",
       "sizes": "192x192",
-      "purpose": "maskable"
+      "purpose": "any"
     },
     {
       "src": "/resilientlogo.svg",
