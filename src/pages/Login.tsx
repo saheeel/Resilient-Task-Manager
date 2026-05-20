@@ -95,7 +95,7 @@ const Login: React.FC = () => {
             disabled={loading}
             className="w-full bg-slate-900 text-white rounded-lg py-2.5 font-semibold text-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition-all disabled:opacity-50 mt-2"
           >
-            {loading ? 'Authenticating...' : 'Sign In as Admin'}
+            {loading ? 'Authenticating...' : 'Sign In'}
           </button>
         </form>
       </div>
