@@ -43,12 +43,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // For navigation requests, always serve index.html (SPA routing support)
-  if (event.request.mode === 'navigate') {
+  // For navigation requests, use Network-First strategy to ensure updates are seen immediately while retaining offline fallback
+  if (event.request.mode === 'navigate' || event.request.url === self.location.origin + '/' || event.request.url.endsWith('/index.html')) {
     event.respondWith(
-      caches.match('/index.html').then((cachedResponse) => {
-        return cachedResponse || fetch(event.request);
-      })
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', responseToCache));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match('/index.html');
+        })
     );
     return;
   }
