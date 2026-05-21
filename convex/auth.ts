@@ -5,6 +5,8 @@ import type { DataModel } from "./_generated/dataModel";
 import { betterAuth } from "better-auth";
 import { admin } from "better-auth/plugins";
 import authConfig from "./auth.config";
+import { action } from "./_generated/server";
+import { v } from "convex/values";
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -48,6 +50,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
+      minPasswordLength: 4,
     },
     plugins: [
       admin({
@@ -60,3 +63,27 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 };
 
 export const { getAuthUser } = authComponent.clientApi();
+
+export const bootstrapSuperAdmin = action({
+  args: {
+    email: v.string(),
+    password: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const normalizedEmail = args.email.trim().toLowerCase();
+    if (!isSuperAdminEmail(normalizedEmail)) {
+      throw new Error("This email is not allowed for superadmin bootstrap.");
+    }
+
+    const auth = createAuth(ctx);
+    await auth.api.signUpEmail({
+      body: {
+        email: normalizedEmail,
+        password: args.password,
+        name: normalizedEmail === "saheel62320@gmail.com" ? "Saheel" : "Ivm",
+      },
+    });
+
+    return { status: "created" as const };
+  },
+});

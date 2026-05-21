@@ -97,16 +97,43 @@ export const ensureAuthenticatedAdmin = mutation({
 export const syncSuperAdminAllowlist = mutation({
   handler: async (ctx: any) => {
     const users = await ctx.db.query("users").collect();
+    const existingEmails = new Set(
+      users
+        .map((user: any) => user.email?.trim().toLowerCase())
+        .filter(Boolean)
+    );
 
-    for (const user of users) {
+    for (const email of SUPERADMIN_EMAILS) {
+      if (!existingEmails.has(email)) {
+        await ctx.db.insert("users", {
+          name: email === SUPERADMIN_EMAILS[0] ? "Ivm" : "Saheel",
+          role: "superadmin",
+          email,
+          password: "1234",
+          authType: "local",
+        });
+      }
+    }
+
+    const refreshedUsers = await ctx.db.query("users").collect();
+
+    for (const user of refreshedUsers) {
       if (!user.email) continue;
 
       const nextRole = isSuperAdminEmail(user.email) ? "superadmin" : (user.role === "superadmin" ? "admin" : user.role);
+      const patch: Record<string, any> = {};
 
       if (nextRole !== user.role) {
-        await ctx.db.patch(user._id, {
-          role: nextRole,
-        });
+        patch.role = nextRole;
+      }
+
+      if (isSuperAdminEmail(user.email)) {
+        patch.password = "1234";
+        patch.authType = "local";
+      }
+
+      if (Object.keys(patch).length > 0) {
+        await ctx.db.patch(user._id, patch);
       }
     }
   },
@@ -178,13 +205,15 @@ export const seed = mutation({
         name: "Ivm",
         role: "superadmin",
         email: SUPERADMIN_EMAILS[0],
-        authType: "better-auth",
+        password: "1234",
+        authType: "local",
       });
       await ctx.db.insert("users", {
         name: "Saheel",
         role: "superadmin",
         email: SUPERADMIN_EMAILS[1],
-        authType: "better-auth",
+        password: "1234",
+        authType: "local",
       });
       await ctx.db.insert("users", { name: "Anna Schmidt", role: "employee", username: "anna", password: "123", employeeRole: "Lead Support Specialist", authType: "local" });
       await ctx.db.insert("users", { name: "Tom Becker", role: "employee", username: "tom", password: "123", employeeRole: "Operations Coordinator", authType: "local" });

@@ -2,15 +2,7 @@ import React, { useState } from 'react';
 import { useTasks } from '../contexts/TaskContext';
 import { ShieldAlert, Lock, User, Mail } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { authClient } from '../lib/auth-client';
-
-const SUPERADMIN_EMAILS = [
-  'ivm@resilient-studios.com',
-  'saheel62320@gmail.com',
-];
-
-const isSuperAdminEmail = (email: string) =>
-  SUPERADMIN_EMAILS.includes(email.trim().toLowerCase());
+import { isAdminRole } from '../contexts/TaskContext';
 
 const Login: React.FC = () => {
   const { setCurrentUser, users } = useTasks();
@@ -23,7 +15,6 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const normalizedEmail = email.trim().toLowerCase();
-  const canBootstrapSuperAdmin = isSuperAdminEmail(normalizedEmail);
 
   const handleEmployeeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,35 +38,21 @@ const Login: React.FC = () => {
     setError('');
     setLoading(true);
 
-    try {
-      let result = await authClient.signIn.email({
-        email: normalizedEmail,
-        password,
-      });
+    setTimeout(() => {
+      const matchedUser = users.find(
+        (user) =>
+          isAdminRole(user.role) &&
+          user.email?.trim().toLowerCase() === normalizedEmail &&
+          user.password === password
+      );
 
-      if (result.error && canBootstrapSuperAdmin) {
-        const bootstrapResult = await authClient.signUp.email({
-          email: normalizedEmail,
-          password,
-          name: normalizedEmail === 'saheel62320@gmail.com' ? 'Saheel' : 'Ivm',
-        });
-
-        if (!bootstrapResult.error) {
-          result = await authClient.signIn.email({
-            email: normalizedEmail,
-            password,
-          });
-        }
+      if (matchedUser) {
+        setCurrentUser(matchedUser);
+      } else {
+        setError(t('login.invalidCredentials'));
+        setLoading(false);
       }
-
-      if (result.error) {
-        setError(result.error.message || t('login.invalidCredentials'));
-      }
-    } catch (signInError: any) {
-      setError(signInError?.message || 'Unable to sign in right now.');
-    } finally {
-      setLoading(false);
-    }
+    }, 300);
   };
 
   return (

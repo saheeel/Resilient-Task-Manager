@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import type { ReactNode } from 'react';
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { authClient } from '../lib/auth-client';
 
 export type Role = 'employee' | 'admin' | 'superadmin' | 'manager';
 export type TaskType = 'daily' | 'weekly' | 'monthly' | 'one-time';
@@ -72,7 +71,6 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Convex Queries and Mutations
   const dbUsersRaw = useQuery(api.users.list);
   const dbTasksRaw = useQuery(api.tasks.list);
-  const { data: authSession } = authClient.useSession();
   
   const seedUsers = useMutation(api.users.seed);
   const seedTasks = useMutation(api.tasks.seed);
@@ -83,8 +81,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const dbAddUser = useMutation(api.users.create);
   const dbUpdateUser = useMutation(api.users.update);
-  const ensureAuthenticatedAdmin = useMutation(api.users.ensureAuthenticatedAdmin);
-  const createAdminProfile = useMutation(api.users.createAdminProfile);
+  const syncSuperAdminAllowlist = useMutation(api.users.syncSuperAdminAllowlist);
   
   const sendPushNotification = useAction(api.pushActions.sendNotification);
   const notifyAdmins = useAction(api.pushActions.notifyAdmins);
@@ -93,8 +90,9 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     seedUsers().then(() => {
       seedTasks();
+      syncSuperAdminAllowlist();
     });
-  }, [seedUsers, seedTasks]);
+  }, [seedUsers, seedTasks, syncSuperAdminAllowlist]);
 
   // Session state for tracking active logged-in user profile
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -141,39 +139,6 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }
   }, [mappedDbUsers, currentUser]);
-
-  useEffect(() => {
-    const authUser = authSession?.user;
-    if (!authUser) return;
-
-    const authUserId = String((authUser as any).id ?? "");
-    const authUserEmail = (authUser as any).email;
-    const authUserName = (authUser as any).name;
-
-    if (!authUserId || !authUserEmail || !authUserName) return;
-
-    ensureAuthenticatedAdmin({
-      authUserId,
-      email: authUserEmail,
-      name: authUserName,
-    }).then((syncedUser: any) => {
-      if (!syncedUser) return;
-      handleSetCurrentUser({
-        id: syncedUser._id,
-        name: syncedUser.name,
-        role: syncedUser.role as Role,
-        email: syncedUser.email,
-        username: syncedUser.username,
-        password: syncedUser.password,
-        employeeRole: syncedUser.employeeRole,
-        authUserId: syncedUser.authUserId,
-        authType: syncedUser.authType,
-      });
-    }).catch((error: any) => {
-      console.error("Failed to sync authenticated admin user:", error);
-      authClient.signOut().catch(() => undefined);
-    });
-  }, [authSession, ensureAuthenticatedAdmin]);
 
   // Map Convex database tasks to type-safe Task objects
   const mappedDbTasks = useMemo(() => {
@@ -275,57 +240,20 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const addAdminUser = async (name: string, email: string, role: Extract<Role, 'admin' | 'superadmin'> = 'admin') => {
-    const result = await authClient.admin.createUser({
-      email,
-      password: '1234',
-      name,
-      role: 'admin',
-    });
-
-    if ((result as any).error) {
-      throw new Error((result as any).error.message || 'Failed to create admin user.');
-    }
-
-    if (!(result as any).data?.user) {
-      throw new Error('Admin user was created without an auth user.');
-    }
-
-    await createAdminProfile({
-      email,
+    await dbAddUser({
       name,
       role,
-      authUserId: (result as any).data.user.id,
+      email,
       password: '1234',
+      authType: 'local',
     });
   };
 
   const updateAdminUser = async (userId: string, updates: { name: string; password?: string }) => {
     const targetUser = mappedDbUsers.find((user) => user.id === userId);
 
-    if (!targetUser?.authUserId) {
-      throw new Error('This admin account is not linked to an auth user yet.');
-    }
-
-    const profileResult = await authClient.admin.updateUser({
-      userId: targetUser.authUserId,
-      data: {
-        name: updates.name,
-      },
-    });
-
-    if ((profileResult as any).error) {
-      throw new Error((profileResult as any).error.message || 'Failed to update admin details.');
-    }
-
-    if (updates.password?.trim()) {
-      const passwordResult = await authClient.admin.setUserPassword({
-        userId: targetUser.authUserId,
-        newPassword: updates.password.trim(),
-      });
-
-      if ((passwordResult as any).error) {
-        throw new Error((passwordResult as any).error.message || 'Failed to update admin password.');
-      }
+    if (!targetUser) {
+      throw new Error('Admin account not found.');
     }
 
     await dbUpdateUser({
@@ -368,9 +296,6 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-    if (currentUser?.authType === 'better-auth') {
-      authClient.signOut();
-    }
     handleSetCurrentUser(null);
   };
 
