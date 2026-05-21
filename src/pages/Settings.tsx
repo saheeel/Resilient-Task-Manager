@@ -115,6 +115,7 @@ const Settings: React.FC = () => {
                 <tr>
                   <th className="px-6 py-3.5">{t('common.name')}</th>
                   <th className="px-6 py-3.5">{t('common.username')}</th>
+                  {isSuperAdmin ? <th className="px-6 py-3.5">Password</th> : null}
                   <th className="px-6 py-3.5">{t('common.role')}</th>
                   <th className="px-6 py-3.5 text-right">{t('common.actions')}</th>
                 </tr>
@@ -132,13 +133,26 @@ const Settings: React.FC = () => {
                     <td className="px-6 py-4 text-slate-500 font-mono text-xs">
                       {user.email || 'admin'}
                     </td>
+                    {isSuperAdmin ? (
+                      <td className="px-6 py-4 text-slate-500 font-mono text-xs">
+                        {user.password || '—'}
+                      </td>
+                    ) : null}
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-amber-100 text-amber-800 uppercase tracking-wider">
                         {user.role === 'superadmin' ? 'Super Admin' : roleLabel('admin')}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {/* Empty for Manager */}
+                      {isSuperAdmin ? (
+                        <button
+                          onClick={() => navigate(`/settings/admin/${user.id}/edit`)}
+                          className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
+                          title="Edit admin details"
+                        >
+                          <Edit size={16} />
+                        </button>
+                      ) : null}
                     </td>
                   </tr>
                 ))}
@@ -160,6 +174,9 @@ const Settings: React.FC = () => {
                     <td className="px-6 py-4 text-slate-500 font-mono text-xs">
                       {user.username || t('settings.notSet')}
                     </td>
+                    {isSuperAdmin ? (
+                      <td className="px-6 py-4 text-slate-400 font-mono text-xs">—</td>
+                    ) : null}
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800 uppercase tracking-wider">
                         {roleLabel('employee')}

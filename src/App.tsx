@@ -10,6 +10,7 @@ import AddAdmin from './pages/AddAdmin';
 import Settings from './pages/Settings';
 import EditTask from './pages/EditTask';
 import EditEmployee from './pages/EditEmployee';
+import EditAdmin from './pages/EditAdmin';
 import EmployeeHistory from './pages/EmployeeHistory';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import CompletedHistory from './pages/CompletedHistory';
@@ -44,6 +45,7 @@ const AppContent = () => {
         <Route path="/add-admin" element={<AddAdmin />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/settings/employee/:id/edit" element={<EditEmployee />} />
+        <Route path="/settings/admin/:id/edit" element={<EditAdmin />} />
         <Route path="/settings/employee/:id/history" element={<EmployeeHistory />} />
         {/* Employee: completed tasks history page */}
         <Route path="/history" element={currentUser.role === 'employee' ? <CompletedHistory /> : <Navigate to="/" replace />} />

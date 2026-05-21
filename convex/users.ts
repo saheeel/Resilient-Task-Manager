@@ -118,6 +118,7 @@ export const createAdminProfile = mutation({
     email: v.string(),
     name: v.string(),
     role: v.string(),
+    password: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     const existing = await ctx.db
@@ -131,6 +132,7 @@ export const createAdminProfile = mutation({
         role: args.role,
         email: args.email,
         authUserId: args.authUserId,
+        password: args.password,
         authType: "better-auth",
       });
       return await ctx.db.get(existing._id);
@@ -141,6 +143,7 @@ export const createAdminProfile = mutation({
       role: args.role,
       email: args.email,
       authUserId: args.authUserId,
+      password: args.password,
       authType: "better-auth",
     });
     return await ctx.db.get(userId);

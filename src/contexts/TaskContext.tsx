@@ -56,6 +56,7 @@ interface TaskContextType {
   updateTaskStatus: (taskId: string, status: TaskStatus, details?: Partial<Task>) => void;
   addUser: (name: string, role: Role, username?: string, password?: string, employeeRole?: string) => User;
   addAdminUser: (name: string, email: string, role?: Extract<Role, 'admin' | 'superadmin'>) => Promise<void>;
+  updateAdminUser: (userId: string, updates: { name: string; password?: string }) => Promise<void>;
   editTask: (taskId: string, updatedFields: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
   updateUser: (userId: string, updatedFields: Partial<User>) => void;
@@ -274,10 +275,63 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const addAdminUser = async (name: string, email: string, role: Extract<Role, 'admin' | 'superadmin'> = 'admin') => {
+    const result = await authClient.admin.createUser({
+      email,
+      password: '1234',
+      name,
+      role: 'admin',
+    });
+
+    if ((result as any).error) {
+      throw new Error((result as any).error.message || 'Failed to create admin user.');
+    }
+
+    if (!(result as any).data?.user) {
+      throw new Error('Admin user was created without an auth user.');
+    }
+
     await createAdminProfile({
       email,
       name,
       role,
+      authUserId: (result as any).data.user.id,
+      password: '1234',
+    });
+  };
+
+  const updateAdminUser = async (userId: string, updates: { name: string; password?: string }) => {
+    const targetUser = mappedDbUsers.find((user) => user.id === userId);
+
+    if (!targetUser?.authUserId) {
+      throw new Error('This admin account is not linked to an auth user yet.');
+    }
+
+    const profileResult = await authClient.admin.updateUser({
+      userId: targetUser.authUserId,
+      data: {
+        name: updates.name,
+      },
+    });
+
+    if ((profileResult as any).error) {
+      throw new Error((profileResult as any).error.message || 'Failed to update admin details.');
+    }
+
+    if (updates.password?.trim()) {
+      const passwordResult = await authClient.admin.setUserPassword({
+        userId: targetUser.authUserId,
+        newPassword: updates.password.trim(),
+      });
+
+      if ((passwordResult as any).error) {
+        throw new Error((passwordResult as any).error.message || 'Failed to update admin password.');
+      }
+    }
+
+    await dbUpdateUser({
+      id: userId as any,
+      name: updates.name,
+      password: updates.password?.trim() || targetUser.password,
     });
   };
 
@@ -330,6 +384,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateTaskStatus,
       addUser,
       addAdminUser,
+      updateAdminUser,
       editTask,
       deleteTask,
       updateUser,
