@@ -260,7 +260,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addUser = (name: string, role: Role, username?: string, password?: string, employeeRole?: string) => {
     const tempId = `temp_${Date.now()}`;
-    const email = createTemporaryEmail(name);
+    const email = role === 'employee' ? undefined : createTemporaryEmail(name);
     dbAddUser({
       name,
       role,

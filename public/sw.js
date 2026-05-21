@@ -43,6 +43,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
+  // For navigation requests, always serve index.html (SPA routing support)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('/index.html').then((cachedResponse) => {
+        return cachedResponse || fetch(event.request);
+      })
+    );
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {

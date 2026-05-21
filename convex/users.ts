@@ -53,7 +53,7 @@ export const create = mutation({
     authType: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
-    const normalizedEmail = args.email?.trim().toLowerCase();
+    const normalizedEmail = args.role === "employee" ? undefined : args.email?.trim().toLowerCase();
     const userId = await ctx.db.insert("users", {
       name: args.name,
       role: args.role,
@@ -162,6 +162,10 @@ export const syncSuperAdminAllowlist = mutation({
         patch.email = createTemporaryEmail(user.name, usedEmails);
       }
 
+      if (user.role === "employee" && user.email !== undefined) {
+        patch.email = undefined;
+      }
+
       if (normalizedEmail && isSuperAdminEmail(normalizedEmail)) {
         patch.password = "1234";
         patch.authType = "local";
@@ -227,6 +231,11 @@ export const update = mutation({
   },
   handler: async (ctx: any, args: any) => {
     const { id, ...fields } = args;
+    const existing = await ctx.db.get(id);
+    const newRole = fields.role || existing?.role;
+    if (newRole === "employee") {
+      fields.email = undefined;
+    }
     await ctx.db.patch(id, fields);
   },
 });
