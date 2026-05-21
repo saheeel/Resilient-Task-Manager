@@ -158,7 +158,7 @@ export const syncSuperAdminAllowlist = mutation({
         patch.role = nextRole;
       }
 
-      if (!normalizedEmail) {
+      if (!normalizedEmail && user.role !== "employee") {
         patch.email = createTemporaryEmail(user.name, usedEmails);
       }
 
@@ -238,6 +238,10 @@ export const remove = mutation({
   handler: async (ctx: any, args: any) => {
     const user = await ctx.db.get(args.id);
     if (!user) return;
+
+    if (user.role === "superadmin" || (user.email && isSuperAdminEmail(user.email))) {
+      throw new Error("Super Admins cannot be deleted.");
+    }
 
     const tasks = await ctx.db.query("tasks").collect();
     for (const task of tasks) {
