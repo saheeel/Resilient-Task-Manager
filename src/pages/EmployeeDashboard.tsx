@@ -210,9 +210,15 @@ const EmployeeDashboard: React.FC = () => {
                       })}
                     </span>
                   )}
-                  <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
-                    {taskTypeLabel(task.type)}
-                  </span>
+                  {task.type !== 'one-time' ? (
+                    <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700">
+                      {taskTypeLabel(task.type)}
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
+                      {taskTypeLabel(task.type)}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -251,9 +257,15 @@ const EmployeeDashboard: React.FC = () => {
                       {upcomingDueLabel(task)}
                     </span>
                   )}
-                  <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
-                    {taskTypeLabel(task.type)}
-                  </span>
+                  {task.type !== 'one-time' ? (
+                    <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700">
+                      {taskTypeLabel(task.type)}
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
+                      {taskTypeLabel(task.type)}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}

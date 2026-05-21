@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { PlusCircle, Edit, Trash2, RefreshCw } from 'lucide-react';
+import { PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const ManageTasks: React.FC = () => {
@@ -16,7 +16,6 @@ const ManageTasks: React.FC = () => {
   const activeTasks = tasks.filter(t => t.status === 'open' || t.status === 'in_progress');
   const completedTasks = tasks.filter(t => t.status === 'completed');
   const recurringTasks = tasks.filter((task) => task.type !== 'one-time');
-  const runningRecurringTasks = recurringTasks.filter((task) => !task.isPaused);
 
   const formatRecurringTime = (time?: string) => {
     if (!time) return '';
@@ -161,7 +160,7 @@ const ManageTasks: React.FC = () => {
                         <div className="flex flex-wrap items-center gap-2">
                           <span>{task.title}</span>
                           {task.type !== 'one-time' ? (
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                            <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-700">
                               {taskTypeLabel(task.type)}
                             </span>
                           ) : null}
@@ -222,16 +221,6 @@ const ManageTasks: React.FC = () => {
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold tracking-tight text-slate-900">{t('manageTasks.recurringSchedules')}</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                {t('manageTasks.recurringSummary', {
-                  running: runningRecurringTasks.length,
-                  total: recurringTasks.length,
-                })}
-              </p>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600">
-              <RefreshCw size={14} />
-              {runningRecurringTasks.length} {t('manageTasks.runningNow')}
             </div>
           </div>
 
@@ -239,24 +228,30 @@ const ManageTasks: React.FC = () => {
             {recurringTasks.map((task) => (
               <div
                 key={task.id}
-                className="cursor-pointer rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:bg-slate-50"
+                className="cursor-pointer rounded-xl border border-indigo-100 bg-indigo-50/20 p-4 shadow-sm transition-all hover:bg-indigo-50/40 hover:border-indigo-200"
                 onClick={() => navigate(`/task/${task.id}`)}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-slate-900">{task.title}</h3>
-                    <p className={`mt-2 text-xs font-semibold ${task.isPaused ? 'text-amber-700' : 'text-emerald-700'}`}>
-                      {task.isPaused ? t('manageTasks.paused') : t('manageTasks.running')}
-                    </p>
-                    <p className="mt-2 text-sm text-slate-500">{recurringScheduleLabel(task)}</p>
-                    <p className="mt-2 text-xs text-slate-400">
+                    <h3 className="text-sm font-bold text-indigo-950">{task.title}</h3>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border ${
+                        task.isPaused 
+                          ? 'border-amber-200 bg-amber-50 text-amber-700' 
+                          : 'border-indigo-200 bg-indigo-50 text-indigo-700'
+                      }`}>
+                        {task.isPaused ? t('manageTasks.paused') : t('manageTasks.running')}
+                      </span>
+                    </div>
+                    <p className="mt-2.5 text-sm font-medium text-indigo-900/80">{recurringScheduleLabel(task)}</p>
+                    <p className="mt-2 text-xs text-indigo-800/60 font-medium">
                       {task.assignedTo.length > 0
                         ? task.assignedTo.map((id: string) => users.find(u => u.id === id)?.name.split(' ')[0]).join(', ')
                         : t('common.unassigned')}
                     </p>
                   </div>
 
-                  <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                  <span className="shrink-0 rounded-full border border-indigo-200 bg-indigo-100/50 px-2.5 py-1 text-[11px] font-bold text-indigo-800">
                     {taskTypeLabel(task.type)}
                   </span>
                 </div>
@@ -297,7 +292,7 @@ const ManageTasks: React.FC = () => {
                       className="hover:bg-slate-50 cursor-pointer transition-colors" 
                       onClick={() => navigate(`/task/${task.id}`)}
                     >
-                      <td className="px-5 py-3.5 font-medium text-slate-700 line-through decoration-slate-350">{task.title}</td>
+                      <td className="px-5 py-3.5 font-medium text-slate-500 line-through decoration-slate-300">{task.title}</td>
                       <td className="px-5 py-3.5 text-slate-600">
                         {task.assignedTo.length > 0 
                           ? task.assignedTo.map(id => users.find(u => u.id === id)?.name.split(' ')[0]).join(', ')

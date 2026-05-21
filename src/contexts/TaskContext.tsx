@@ -63,6 +63,7 @@ interface TaskContextType {
   deleteTask: (taskId: string) => void;
   updateUser: (userId: string, updatedFields: Partial<User>) => void;
   logout: () => void;
+  addTaskUpdate: (taskId: string, text: string, photoUrl?: string) => Promise<void>;
   isBackendConnected: boolean;
 }
 
@@ -85,6 +86,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const dbAddUser = useMutation(api.users.create);
   const dbUpdateUser = useMutation(api.users.update);
   const dbRemoveUser = useMutation(api.users.remove);
+  const dbAddTaskUpdate = useMutation(api.taskUpdates.create);
   const syncSuperAdminAllowlist = useMutation(api.users.syncSuperAdminAllowlist);
   
   const sendPushNotification = useAction(api.pushActions.sendNotification);
@@ -340,6 +342,52 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     handleSetCurrentUser(null);
   };
 
+  const addTaskUpdate = async (taskId: string, text: string, photoUrl?: string) => {
+    if (!currentUser) return;
+    
+    await dbAddTaskUpdate({
+      taskId,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      text,
+      photoUrl,
+      createdAt: new Date().toISOString(),
+    });
+
+    const task = mappedDbTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    if (isAdminRole(currentUser.role)) {
+      // Admin commented, notify all assignees
+      task.assignedTo.forEach((userId: string) => {
+        if (userId !== currentUser.id) {
+          sendPushNotification({
+            userId,
+            title: `💬 Comment from Admin: ${currentUser.name}`,
+            body: `"${text}"\nTask: ${task.title}`,
+            url: `/task/${taskId}`
+          }).catch((err) => console.error("Push notification action trigger error:", err));
+        }
+      });
+    } else {
+      // Employee commented, notify assigner (or admins if not assigned by a specific admin)
+      if (task.assignedById) {
+        sendPushNotification({
+          userId: task.assignedById,
+          title: `💬 Update from ${currentUser.name}`,
+          body: `"${text}"\nTask: ${task.title}`,
+          url: `/task/${taskId}`
+        }).catch((err) => console.error("Push notification action trigger error:", err));
+      } else {
+        notifyAdmins({
+          taskTitle: task.title,
+          employeeName: currentUser.name,
+          taskId: task.id,
+        }).catch((err) => console.error("Admin notification trigger error:", err));
+      }
+    }
+  };
+
   return (
     <TaskContext.Provider value={{ 
       tasks: mappedDbTasks, 
@@ -356,6 +404,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       deleteTask,
       updateUser,
       logout,
+      addTaskUpdate,
       isBackendConnected: true
     }}>
       {children}

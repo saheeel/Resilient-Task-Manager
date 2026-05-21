@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, Image } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 
 const TaskDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { tasks, updateTaskStatus, currentUser, deleteTask, users, editTask } = useTasks();
-  const { t, formatDate, formatDateTime, formatTime, priorityLabel, taskTypeLabel, weekdayLabel, monthDayOrdinalLabel } = useLanguage();
+  const { tasks, updateTaskStatus, currentUser, deleteTask, users, editTask, addTaskUpdate } = useTasks();
+  const { t, formatDate, formatDateTime, formatTime, priorityLabel, taskTypeLabel, weekdayLabel, monthDayOrdinalLabel, roleLabel } = useLanguage();
   
   const task = tasks.find(t => t.id === id);
   
@@ -18,6 +20,23 @@ const TaskDetail: React.FC = () => {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [activeZoomUrl, setActiveZoomUrl] = useState<string | null>(null);
   const photoInputRef = React.useRef<HTMLInputElement>(null);
+
+  const updates = useQuery(api.taskUpdates.list, { taskId: task?.id || "" }) || [];
+  const [updateText, setUpdateText] = useState('');
+  const [updatePhotoUrl, setUpdatePhotoUrl] = useState<string | null>(null);
+  const [isPostingUpdate, setIsPostingUpdate] = useState(false);
+  const updatePhotoInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleUpdatePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setUpdatePhotoUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveUpdatePhoto = () => {
+    setUpdatePhotoUrl(null);
+  };
 
   const isImageFile = (url: string) => {
     return url.startsWith('blob:') || url.startsWith('data:image') || /\.(jpg|jpeg|png|webp|gif)$/i.test(url);
@@ -210,9 +229,15 @@ const TaskDetail: React.FC = () => {
       <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-xl shadow-sm mb-6">
         <div className="flex justify-between items-center gap-4 mb-4">
           <StatusBadge status={task.status} />
-          <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
-            {taskTypeLabel(task.type)}
-          </span>
+          {task.type !== 'one-time' ? (
+            <span className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full uppercase tracking-wider font-bold">
+              {taskTypeLabel(task.type)}
+            </span>
+          ) : (
+            <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
+              {taskTypeLabel(task.type)}
+            </span>
+          )}
         </div>
         
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-4">{task.title}</h1>
@@ -240,8 +265,8 @@ const TaskDetail: React.FC = () => {
           )}
 
           {task.type !== 'one-time' && (
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200">
-              <Play size={14} className="text-slate-400" />
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-1.5 rounded border border-indigo-200">
+              <Play size={14} className="text-indigo-500" />
               {recurringScheduleLabel()}
             </div>
           )}
@@ -399,6 +424,162 @@ const TaskDetail: React.FC = () => {
                 );
               })}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Progress Updates & Communication Thread */}
+      <div className="mb-6 bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm">
+        <header className="mb-4 pb-3 border-b border-slate-200/80 flex items-center gap-2">
+          <MessageSquare size={18} className="text-indigo-600" />
+          <div>
+            <h3 className="font-bold text-slate-900 text-sm tracking-tight">{t('taskDetail.updatesTitle')}</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{t('taskDetail.updatesSubtitle')}</p>
+          </div>
+        </header>
+
+        {/* Updates Thread List */}
+        <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1 mb-4 flex flex-col">
+          {updates.length === 0 ? (
+            <p className="text-center py-6 text-xs text-slate-400 font-medium bg-white rounded-lg border border-slate-150 shadow-inner">
+              {t('taskDetail.noUpdates')}
+            </p>
+          ) : (
+            updates.map((up: any) => {
+              const isSelf = up.userId === currentUser.id;
+              const sender = users.find(u => u.id === up.userId);
+              const senderRoleLabel = sender ? roleLabel(sender.role) : '';
+              
+              return (
+                <div 
+                  key={up._id}
+                  className={`flex flex-col gap-1 max-w-[85%] rounded-2xl p-3.5 shadow-xs border ${
+                    isSelf 
+                      ? 'bg-slate-100 border-slate-200 self-end rounded-tr-none' 
+                      : 'bg-white border-slate-150 self-start rounded-tl-none'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-4 text-[10px]">
+                    <span className="font-bold text-slate-800 flex items-center gap-1">
+                      {up.userName}
+                      {senderRoleLabel && (
+                        <span className={`px-1 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wide border ${
+                          isAdminRole(sender?.role) 
+                            ? 'bg-red-50 text-red-700 border-red-150' 
+                            : 'bg-indigo-50 text-indigo-700 border-indigo-150'
+                        }`}>
+                          {senderRoleLabel}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-slate-400 font-medium">{formatDateTime(up.createdAt, { dateStyle: 'short', timeStyle: 'short' })}</span>
+                  </div>
+                  
+                  <p className="text-xs text-slate-700 mt-1 leading-relaxed whitespace-pre-wrap">{up.text}</p>
+                  
+                  {up.photoUrl && (
+                    <div className="relative inline-block mt-2 group cursor-zoom-in self-start" onClick={() => setActiveZoomUrl(up.photoUrl)}>
+                      <img 
+                        src={up.photoUrl} 
+                        alt="Progress Proof" 
+                        className="max-h-36 max-w-full object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
+                        <Eye className="text-white" size={16} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Post Update Form */}
+        {task.status === 'in_progress' || isAdminRole(currentUser.role) ? (
+          <form 
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!updateText.trim()) return;
+              setIsPostingUpdate(true);
+              try {
+                await addTaskUpdate(task.id, updateText, updatePhotoUrl || undefined);
+                setUpdateText('');
+                setUpdatePhotoUrl(null);
+              } catch (err) {
+                console.error("Failed to add progress update:", err);
+              } finally {
+                setIsPostingUpdate(false);
+              }
+            }}
+            className="border-t border-slate-200/80 pt-4"
+          >
+            <div className="flex flex-col gap-2">
+              <textarea
+                value={updateText}
+                onChange={(e) => setUpdateText(e.target.value)}
+                placeholder={t('taskDetail.updatePlaceholder')}
+                disabled={isPostingUpdate}
+                rows={2}
+                className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 disabled:bg-slate-50 disabled:text-slate-400"
+              />
+              
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    ref={updatePhotoInputRef}
+                    onChange={handleUpdatePhotoChange}
+                    disabled={isPostingUpdate}
+                  />
+                  
+                  {!updatePhotoUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => updatePhotoInputRef.current?.click()}
+                      disabled={isPostingUpdate}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-[11px] font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors disabled:opacity-50"
+                    >
+                      <Image size={13} className="text-slate-400" />
+                      {t('taskDetail.updatePhoto')}
+                    </button>
+                  ) : (
+                    <div className="relative inline-block">
+                      <img
+                        src={updatePhotoUrl}
+                        alt="Update attachment preview"
+                        className="w-10 h-10 object-cover rounded border border-slate-200 shadow-sm cursor-zoom-in"
+                        onClick={() => setActiveZoomUrl(updatePhotoUrl)}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveUpdatePhoto}
+                        disabled={isPostingUpdate}
+                        className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-0.5 shadow border-none cursor-pointer"
+                        title={t('taskDetail.removePhoto')}
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isPostingUpdate || !updateText.trim()}
+                  className="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer"
+                >
+                  {isPostingUpdate ? t('taskDetail.posting') : t('taskDetail.sendUpdate')}
+                </button>
+              </div>
+            </div>
+          </form>
+        ) : (
+          <div className="flex items-center gap-2 border border-slate-200 bg-white rounded-lg p-3 text-slate-500 text-xs font-medium shadow-sm">
+            <AlertCircle size={15} className="text-slate-400 shrink-0" />
+            <span>{t('taskDetail.onlyInProgress')}</span>
           </div>
         )}
       </div>

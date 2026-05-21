@@ -13,6 +13,7 @@ import type * as http from "../http.js";
 import type * as push from "../push.js";
 import type * as pushActions from "../pushActions.js";
 import type * as pushMutations from "../pushMutations.js";
+import type * as taskUpdates from "../taskUpdates.js";
 import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
 
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   push: typeof push;
   pushActions: typeof pushActions;
   pushMutations: typeof pushMutations;
+  taskUpdates: typeof taskUpdates;
   tasks: typeof tasks;
   users: typeof users;
 }>;

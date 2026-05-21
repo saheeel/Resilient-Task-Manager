@@ -39,6 +39,15 @@ export default defineSchema({
     pausedAt: v.optional(v.string()),
   }),
 
+  taskUpdates: defineTable({
+    taskId: v.string(),
+    userId: v.string(),
+    userName: v.string(),
+    text: v.string(),
+    photoUrl: v.optional(v.string()),
+    createdAt: v.string(), // ISO date string
+  }).index("by_taskId", ["taskId"]),
+
   pushSubscriptions: defineTable({
     userId: v.string(),
     endpoint: v.string(),

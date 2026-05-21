@@ -164,9 +164,15 @@ const CompletedHistory: React.FC = () => {
                                 {formatTimeTaken(task.startedAt, task.completedAt)}
                               </span>
                             )}
-                            <span className="capitalize text-slate-400">
-                              {taskTypeLabel(task.type)} {t('completedHistory.taskTypeSuffix')}
-                            </span>
+                            {task.type !== 'one-time' ? (
+                              <span className="capitalize text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-150 text-[10px] font-semibold">
+                                {taskTypeLabel(task.type)} {t('completedHistory.taskTypeSuffix')}
+                              </span>
+                            ) : (
+                              <span className="capitalize text-slate-400">
+                                {taskTypeLabel(task.type)} {t('completedHistory.taskTypeSuffix')}
+                              </span>
+                            )}
                           </div>
                           {task.completionComment && (
                             <p className="text-xs text-slate-500 mt-1.5 italic bg-slate-50 px-2.5 py-1 rounded border border-slate-100">
