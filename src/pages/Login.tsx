@@ -3,7 +3,6 @@ import { useTasks } from '../contexts/TaskContext';
 import { ShieldAlert, Lock, User, Mail } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { authClient } from '../lib/auth-client';
-import { isAdminRole } from '../contexts/TaskContext';
 
 const SUPERADMIN_EMAILS = [
   'ivm@resilient-studios.com',
