@@ -17,11 +17,33 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-// Register the PWA service worker
+// Register the PWA service worker in production, or unregister in development to prevent stale caches
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('Service worker registered successfully:', reg.scope))
-      .catch((err) => console.error('Service worker registration failed:', err));
-  });
+  if (import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => console.log('Service worker registered successfully:', reg.scope))
+        .catch((err) => console.error('Service worker registration failed:', err));
+    });
+  } else {
+    // Unregister active development service worker and clear cache to guarantee fresh reloads
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      let unregistered = false;
+      for (const registration of registrations) {
+        registration.unregister().then((success) => {
+          if (success) {
+            console.log('Unregistered active service worker in development mode.');
+            unregistered = true;
+          }
+        });
+      }
+      if (unregistered) {
+        caches.keys().then((keys) => {
+          Promise.all(keys.map((key) => caches.delete(key))).then(() => {
+            window.location.reload();
+          });
+        });
+      }
+    });
+  }
 }
