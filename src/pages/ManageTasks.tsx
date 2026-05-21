@@ -2,19 +2,54 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, PauseCircle, PlayCircle, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const ManageTasks: React.FC = () => {
   const navigate = useNavigate();
-  const { tasks, users, currentUser, deleteTask } = useTasks();
-  const { t, formatDateTime } = useLanguage();
+  const { tasks, users, currentUser, deleteTask, editTask } = useTasks();
+  const { t, formatDateTime, formatTime, taskTypeLabel, weekdayLabel, monthDayOrdinalLabel } = useLanguage();
 
   if (!currentUser) return null;
 
   const issues = tasks.filter(t => t.status === 'could_not_complete' || t.status === 'blocked');
-  const activeTasks = tasks.filter(t => t.status === 'open' || t.status === 'in_progress');
+  const activeTasks = tasks.filter(t => (t.status === 'open' || t.status === 'in_progress') && !t.isPaused);
   const completedTasks = tasks.filter(t => t.status === 'completed');
+  const recurringTasks = tasks.filter((task) => task.type !== 'one-time');
+  const runningRecurringTasks = recurringTasks.filter((task) => !task.isPaused);
+
+  const formatRecurringTime = (time?: string) => {
+    if (!time) return '';
+    return formatTime(`1970-01-01T${time}:00`);
+  };
+
+  const recurringScheduleLabel = (task: any) => {
+    if (task.type === 'daily') {
+      return task.recurringTime ? `${t('manageTasks.everyDayAt')} ${formatRecurringTime(task.recurringTime)}` : t('manageTasks.everyDay');
+    }
+    if (task.type === 'weekly') {
+      const days = task.recurringDay
+        ? task.recurringDay.split(',').map((day: string) => weekdayLabel(day.trim())).join(', ')
+        : t('manageTasks.noScheduleSet');
+      return task.recurringTime
+        ? `${days} • ${formatRecurringTime(task.recurringTime)}`
+        : days;
+    }
+    if (task.type === 'monthly') {
+      const day = task.recurringDay ? monthDayOrdinalLabel(task.recurringDay) : t('manageTasks.noScheduleSet');
+      return task.recurringTime
+        ? `${day} • ${formatRecurringTime(task.recurringTime)}`
+        : day;
+    }
+    return '';
+  };
+
+  const toggleRecurringPause = (task: any) => {
+    editTask(task.id, {
+      isPaused: !task.isPaused,
+      pausedAt: task.isPaused ? undefined : new Date().toISOString(),
+    });
+  };
 
   const formatTimeTaken = (start?: string, end?: string) => {
     if (!start || !end) return '';
@@ -30,6 +65,71 @@ const ManageTasks: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {recurringTasks.length > 0 && (
+        <div className="mb-8">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold tracking-tight text-slate-900">{t('manageTasks.recurringSchedules')}</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                {t('manageTasks.recurringSummary', {
+                  running: runningRecurringTasks.length,
+                  total: recurringTasks.length,
+                })}
+              </p>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600">
+              <RefreshCw size={14} />
+              {runningRecurringTasks.length} {t('manageTasks.runningNow')}
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            {recurringTasks.map((task) => (
+              <div key={task.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-sm font-semibold text-slate-900">{task.title}</h3>
+                      <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                        {taskTypeLabel(task.type)}
+                      </span>
+                      {task.isPaused ? (
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+                          {t('manageTasks.paused')}
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                          {t('manageTasks.running')}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm text-slate-500">{recurringScheduleLabel(task)}</p>
+                    <p className="mt-2 text-xs text-slate-400">
+                      {task.assignedTo.length > 0
+                        ? task.assignedTo.map((id: string) => users.find(u => u.id === id)?.name.split(' ')[0]).join(', ')
+                        : t('common.unassigned')}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleRecurringPause(task)}
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                      task.isPaused
+                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                        : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                    }`}
+                  >
+                    {task.isPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
+                    {task.isPaused ? t('manageTasks.resumeRecurring') : t('manageTasks.pauseRecurring')}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Attention Required Section */}
       {issues.length > 0 && (
         <div className="mb-8">

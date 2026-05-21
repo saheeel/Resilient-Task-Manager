@@ -25,6 +25,8 @@ export const create = mutation({
     createdAt: v.optional(v.string()),
     recurringDay: v.optional(v.string()),
     recurringTime: v.optional(v.string()),
+    isPaused: v.optional(v.boolean()),
+    pausedAt: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     const taskId = await ctx.db.insert("tasks", {
@@ -42,6 +44,8 @@ export const create = mutation({
       createdAt: args.createdAt || new Date().toISOString(),
       recurringDay: args.recurringDay,
       recurringTime: args.recurringTime,
+      isPaused: args.isPaused,
+      pausedAt: args.pausedAt,
     });
     return taskId;
   },
@@ -70,6 +74,8 @@ export const update = mutation({
     startedAt: v.optional(v.string()),
     recurringDay: v.optional(v.string()),
     recurringTime: v.optional(v.string()),
+    isPaused: v.optional(v.boolean()),
+    pausedAt: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     const { id, ...fields } = args;

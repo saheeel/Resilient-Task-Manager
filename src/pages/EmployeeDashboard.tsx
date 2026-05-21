@@ -29,6 +29,7 @@ const EmployeeDashboard: React.FC = () => {
   todayEnd.setHours(23, 59, 59, 999);
 
   const activeTasks = myTasks.filter((task) => {
+    if (task.isPaused) return false;
     if (task.status === 'completed' || task.status === 'blocked' || task.status === 'could_not_complete') {
       return false;
     }
@@ -42,13 +43,14 @@ const EmployeeDashboard: React.FC = () => {
   });
 
   const upcomingTasks = myTasks.filter((task) => {
+    if (task.isPaused) return false;
     if (task.status !== 'open' || !task.dueDate) return false;
     const dueDate = new Date(task.dueDate);
     dueDate.setHours(0, 0, 0, 0);
     return dueDate.getTime() > today.getTime();
   });
 
-  const issueTasks = myTasks.filter((task) => task.status === 'blocked' || task.status === 'could_not_complete');
+  const issueTasks = myTasks.filter((task) => !task.isPaused && (task.status === 'blocked' || task.status === 'could_not_complete'));
 
   const todayCompleted = myTasks.filter((task) => {
     if (task.status !== 'completed' || !task.completedAt) return false;

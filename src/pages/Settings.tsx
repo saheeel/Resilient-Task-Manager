@@ -26,6 +26,7 @@ const Settings: React.FC = () => {
   );
   const employees = visibleUsers.filter(u => u.role === 'employee');
   const admins = visibleUsers.filter(u => isAdminRole(u.role));
+  const shouldShowNotificationCard = notificationPermission !== 'granted';
 
   useEffect(() => {
     if (typeof Notification === 'undefined') {
@@ -54,59 +55,65 @@ const Settings: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Header */}
-      <header className="mb-8 flex justify-between items-center border-b border-slate-150 pb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center shadow-sm">
+      <header className="mb-8 border-b border-slate-150 pb-6">
+        <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
             <SettingsIcon size={20} />
+            </div>
+            <div className="max-w-sm">
+              <h1 className="text-2xl font-bold leading-tight text-slate-900 tracking-tight sm:text-3xl">
+                {t('app.systemSettings')}
+              </h1>
+              <p className="mt-2 text-base leading-8 text-slate-500">
+                {t('settings.subtitle')}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('app.systemSettings')}</h1>
-            <p className="text-sm text-slate-500 mt-1">{t('settings.subtitle')}</p>
-          </div>
+
+          {isSuperAdmin ? (
+            <div className="grid grid-cols-2 gap-3 md:flex md:flex-wrap md:justify-end">
+              <button
+                onClick={() => navigate('/add-admin')}
+                className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-center text-slate-800 shadow-sm transition-colors hover:bg-slate-50 cursor-pointer md:min-h-0 md:flex-row md:rounded-lg md:px-4 md:py-2.5 md:text-left"
+              >
+                <ShieldPlus size={18} />
+                <span className="text-sm font-semibold">Add Admin</span>
+              </button>
+              <button 
+                onClick={() => navigate('/add-employee')}
+                className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-4 text-center text-slate-800 shadow-sm transition-colors hover:bg-slate-200 cursor-pointer md:min-h-0 md:flex-row md:rounded-lg md:px-4 md:py-2.5 md:text-left"
+              >
+                <UserPlus size={18} />
+                <span className="text-sm font-semibold">{t('settings.addEmployee')}</span>
+              </button>
+            </div>
+          ) : null}
         </div>
-        {isSuperAdmin ? (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate('/add-admin')}
-              className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-800 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-colors cursor-pointer border border-slate-200"
-            >
-              <ShieldPlus size={18} />
-              Add Admin
-            </button>
-            <button 
-              onClick={() => navigate('/add-employee')}
-              className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-colors cursor-pointer border border-slate-200"
-            >
-              <UserPlus size={18} />
-              {t('settings.addEmployee')}
-            </button>
-          </div>
-        ) : null}
       </header>
 
-      {/* Team Directory Section */}
-      <div className="mb-6 flex justify-end md:hidden">
-        <div className="max-w-[220px] rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            {t('settings.alertsTitle')}
-          </p>
-          <div className="mt-2">
-            {notificationPermission === 'granted' ? (
-              <p className="text-xs font-medium text-emerald-700">{t('settings.alertsEnabled')}</p>
-            ) : notificationPermission === 'unsupported' ? (
-              <p className="text-xs font-medium text-slate-500">{t('settings.alertsUnavailable')}</p>
-            ) : (
-              <button
-                type="button"
-                onClick={handleEnableAlerts}
-                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 cursor-pointer"
-              >
-                {t('common.enableAlerts')}
-              </button>
-            )}
+      {shouldShowNotificationCard ? (
+        <div className="mb-6 flex justify-end md:hidden">
+          <div className="w-full max-w-[220px] rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              {t('settings.alertsTitle')}
+            </p>
+            <div className="mt-2">
+              {notificationPermission === 'unsupported' ? (
+                <p className="text-xs font-medium text-slate-500">{t('settings.alertsUnavailable')}</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleEnableAlerts}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 cursor-pointer"
+                >
+                  {t('common.enableAlerts')}
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Team Directory Section */}
       <div className="mb-8">

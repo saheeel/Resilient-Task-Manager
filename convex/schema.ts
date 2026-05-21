@@ -35,6 +35,8 @@ export default defineSchema({
     startedAt: v.optional(v.string()),
     recurringDay: v.optional(v.string()),
     recurringTime: v.optional(v.string()),
+    isPaused: v.optional(v.boolean()),
+    pausedAt: v.optional(v.string()),
   }),
 
   pushSubscriptions: defineTable({

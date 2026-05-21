@@ -44,6 +44,8 @@ export interface Task {
   startedAt?: string; // ISO date string when employee clicks 'Start Task'
   recurringDay?: string; // Day name for weekly ("Monday"), day number for monthly ("15")
   recurringTime?: string; // Time string in HH:MM format ("09:00")
+  isPaused?: boolean;
+  pausedAt?: string;
 }
 
 interface TaskContextType {
@@ -167,6 +169,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       startedAt: t.startedAt,
       recurringDay: t.recurringDay,
       recurringTime: t.recurringTime,
+      isPaused: t.isPaused,
+      pausedAt: t.pausedAt,
     }));
   }, [dbTasksRaw]);
 
@@ -217,6 +221,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       attachments: taskData.attachments,
       recurringDay: taskData.recurringDay,
       recurringTime: taskData.recurringTime,
+      isPaused: taskData.isPaused,
+      pausedAt: taskData.pausedAt,
     }).then(() => {
       // Loop through assignees and fire off background Web Push notifications
       taskData.assignedTo.forEach((userId) => {
