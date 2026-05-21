@@ -30,6 +30,7 @@ const CreateTask: React.FC = () => {
   const [recurringTime, setRecurringTime] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const employees = users.filter(u => u.role === 'employee');
 
   const toggleAssignee = (id: string) => {
@@ -252,7 +253,14 @@ const CreateTask: React.FC = () => {
                     <div className="relative inline-flex items-center">
                       <button
                         type="button"
-                        className={`inline-flex items-center gap-2 pl-4 py-2 border rounded-full text-xs font-semibold shadow-2xs transition-all pointer-events-none ${
+                        onClick={() => {
+                          try {
+                            dateInputRef.current?.showPicker();
+                          } catch (err) {
+                            dateInputRef.current?.click();
+                          }
+                        }}
+                        className={`inline-flex items-center gap-2 pl-4 py-2 border rounded-full text-xs font-semibold shadow-2xs transition-all cursor-pointer ${
                           dueDate
                             ? 'bg-blue-50 border-blue-200 text-blue-700 pr-8'
                             : 'bg-slate-50 border-slate-200 text-slate-600 pr-4'
@@ -266,8 +274,9 @@ const CreateTask: React.FC = () => {
                         </span>
                       </button>
                       <input
+                        ref={dateInputRef}
                         type="date"
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' }}
                         value={dueDate}
                         onChange={e => setDueDate(e.target.value)}
                       />

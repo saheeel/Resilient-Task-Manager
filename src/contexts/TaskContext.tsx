@@ -292,11 +292,18 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       throw new Error('Admin account not found.');
     }
 
+    const nextPassword = updates.password?.trim() || targetUser.password;
+
     await dbUpdateUser({
       id: userId as any,
       name: updates.name,
-      password: updates.password?.trim() || targetUser.password,
+      password: nextPassword,
     });
+
+    if (currentUser && currentUser.id === userId) {
+      const updatedUser = { ...currentUser, name: updates.name, password: nextPassword };
+      handleSetCurrentUser(updatedUser);
+    }
   };
 
   const editTask = (taskId: string, updatedFields: Partial<Task>) => {

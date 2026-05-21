@@ -158,7 +158,7 @@ const Settings: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {isSuperAdmin ? (
+                      {isSuperAdmin || (currentUser && currentUser.id === user.id) ? (
                         <button
                           onClick={() => navigate(`/settings/admin/${user.id}/edit`)}
                           className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"

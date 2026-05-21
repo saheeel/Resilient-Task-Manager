@@ -16,7 +16,7 @@ const EditAdmin: React.FC = () => {
     (user) =>
       user.id === id &&
       isAdminRole(user.role) &&
-      (!user.email || !HIDDEN_USER_EMAILS.has(user.email.trim().toLowerCase()))
+      (user.id === currentUser?.id || !user.email || !HIDDEN_USER_EMAILS.has(user.email.trim().toLowerCase()))
   );
 
   const [name, setName] = useState('');
@@ -36,7 +36,7 @@ const EditAdmin: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
-  if (currentUser.role !== 'superadmin') {
+  if (currentUser.role !== 'superadmin' && currentUser.id !== id) {
     return <Navigate to="/settings" replace />;
   }
 
@@ -180,7 +180,7 @@ const EditAdmin: React.FC = () => {
           <button
             type="button"
             onClick={handleDelete}
-            disabled={deleting || saving || adminUser.role === 'superadmin'}
+            disabled={deleting || saving || adminUser.role === 'superadmin' || adminUser.id === currentUser?.id}
             className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-700 transition-colors disabled:opacity-60 cursor-pointer"
           >
             <Trash2 size={16} />
