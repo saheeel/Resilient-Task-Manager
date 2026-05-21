@@ -30,7 +30,6 @@ const CreateTask: React.FC = () => {
   const [recurringTime, setRecurringTime] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dateInputRef = useRef<HTMLInputElement>(null);
   const employees = users.filter(u => u.role === 'employee');
 
   const toggleAssignee = (id: string) => {
@@ -127,6 +126,11 @@ const CreateTask: React.FC = () => {
             type="time"
             value={recurringTime}
             onChange={e => setRecurringTime(e.target.value)}
+            onClick={(e) => {
+              try {
+                (e.target as HTMLInputElement).showPicker();
+              } catch (err) {}
+            }}
             className={`px-3 py-2 border rounded-lg text-sm bg-white text-slate-700 focus:outline-none focus:ring-1 cursor-pointer ${colorMap[accentColor]}`}
           />
           {recurringTime && (
@@ -253,14 +257,7 @@ const CreateTask: React.FC = () => {
                     <div className="relative inline-flex items-center">
                       <button
                         type="button"
-                        onClick={() => {
-                          try {
-                            dateInputRef.current?.showPicker();
-                          } catch (err) {
-                            dateInputRef.current?.click();
-                          }
-                        }}
-                        className={`inline-flex items-center gap-2 pl-4 py-2 border rounded-full text-xs font-semibold shadow-2xs transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-2 pl-4 py-2 border rounded-full text-xs font-semibold shadow-2xs transition-all pointer-events-none ${
                           dueDate
                             ? 'bg-blue-50 border-blue-200 text-blue-700 pr-8'
                             : 'bg-slate-50 border-slate-200 text-slate-600 pr-4'
@@ -274,11 +271,15 @@ const CreateTask: React.FC = () => {
                         </span>
                       </button>
                       <input
-                        ref={dateInputRef}
                         type="date"
-                        style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                         value={dueDate}
                         onChange={e => setDueDate(e.target.value)}
+                        onClick={(e) => {
+                          try {
+                            (e.target as HTMLInputElement).showPicker();
+                          } catch (err) {}
+                        }}
                       />
                       {dueDate && (
                         <button
@@ -294,6 +295,11 @@ const CreateTask: React.FC = () => {
                         type="time"
                         value={dueTime}
                         onChange={e => setDueTime(e.target.value)}
+                        onClick={(e) => {
+                          try {
+                            (e.target as HTMLInputElement).showPicker();
+                          } catch (err) {}
+                        }}
                         className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 cursor-pointer"
                       />
                       {dueTime && (
