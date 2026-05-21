@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useTasks } from '../contexts/TaskContext';
+import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
 import { ArrowLeft, BarChart2, CheckCircle2, AlertOctagon, RefreshCw, Calendar, Clock, MessageSquare } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -14,7 +14,7 @@ const EmployeeHistory: React.FC = () => {
   const employee = users.find(u => u.id === id);
 
   // Security Check: Only managers can view user history profiles
-  if (!currentUser || currentUser.role !== 'manager') {
+  if (!currentUser || !isAdminRole(currentUser.role)) {
     return (
       <div className="max-w-xl mx-auto px-4 py-12 text-center">
         <p className="text-red-700 font-semibold bg-red-50 border border-red-200 rounded-lg p-4">

@@ -4,12 +4,15 @@ import { v } from "convex/values";
 export default defineSchema({
   users: defineTable({
     name: v.string(),
-    role: v.string(), // "employee" | "manager"
+    role: v.string(), // "employee" | "admin" | "superadmin"
+    email: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
     username: v.optional(v.string()),
     password: v.optional(v.string()),
     employeeRole: v.optional(v.string()),
-  }).index("by_username", ["username"]),
+    authUserId: v.optional(v.string()),
+    authType: v.optional(v.string()),
+  }).index("by_username", ["username"]).index("by_email", ["email"]).index("by_authUserId", ["authUserId"]),
 
   tasks: defineTable({
     title: v.string(),

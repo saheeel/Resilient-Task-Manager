@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useTasks } from '../contexts/TaskContext';
+import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
 import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -36,7 +36,7 @@ const TaskDetail: React.FC = () => {
 
   if (!currentUser) return null;
 
-  const isAuthorized = task && (currentUser.role === 'manager' || task.assignedTo.includes(currentUser.id));
+  const isAuthorized = task && (isAdminRole(currentUser.role) || task.assignedTo.includes(currentUser.id));
 
   if (!task || !isAuthorized) {
     return (
@@ -93,6 +93,18 @@ const TaskDetail: React.FC = () => {
     navigate(-1);
   };
 
+  const handleReopen = () => {
+    updateTaskStatus(task.id, 'open', {
+      blockReason: undefined,
+      markedIssueAt: undefined,
+      completionComment: undefined,
+      completedAt: undefined,
+      proofPhotoUrl: undefined,
+      startedAt: undefined,
+    });
+    navigate(-1);
+  };
+
   return (
     <div className="max-w-xl mx-auto px-4 py-8">
       {/* Header action bar */}
@@ -104,8 +116,17 @@ const TaskDetail: React.FC = () => {
           <ArrowLeft size={16} />
           {t('common.back')}
         </button>
-        {currentUser.role === 'manager' && (
+        {isAdminRole(currentUser.role) && (
           <div className="flex gap-2">
+            {(task.status === 'could_not_complete' || task.status === 'blocked') && (
+              <button
+                onClick={handleReopen}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg shadow-sm transition-colors cursor-pointer"
+              >
+                <CheckCircle size={14} />
+                {t('taskDetail.reopenTask')}
+              </button>
+            )}
             <button 
               onClick={() => navigate(`/task/${task.id}/edit`)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer"
@@ -190,7 +211,7 @@ const TaskDetail: React.FC = () => {
             </div>
           )}
 
-          {task.status === 'could_not_complete' && (
+          {(task.status === 'could_not_complete' || task.status === 'blocked') && (
             <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
               <span className="font-semibold shrink-0 min-w-[100px]">{t('taskDetail.incompleteAt')}:</span>
               <div className="flex flex-col gap-1">

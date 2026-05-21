@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { PlusCircle, CheckCircle, AlertCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const ManageTasks: React.FC = () => {
@@ -12,7 +12,6 @@ const ManageTasks: React.FC = () => {
 
   if (!currentUser) return null;
 
-  const completedToday = tasks.filter(t => t.status === 'completed').length;
   const issues = tasks.filter(t => t.status === 'could_not_complete' || t.status === 'blocked');
   const activeTasks = tasks.filter(t => t.status === 'open' || t.status === 'in_progress');
   const completedTasks = tasks.filter(t => t.status === 'completed');
@@ -31,52 +30,10 @@ const ManageTasks: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Header */}
-      <header className="mb-8 flex justify-between items-center border-b border-slate-150 pb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('app.adminDashboard')}</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {t('manageTasks.welcome', { name: currentUser.name.split(' ')[0] })}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate('/create')}
-            className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
-          >
-            <PlusCircle size={18} />
-            {t('manageTasks.newTask')}
-          </button>
-        </div>
-      </header>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-green-50 text-green-700 flex items-center justify-center">
-            <CheckCircle size={20} />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('manageTasks.completedTasks')}</p>
-            <p className="text-2xl font-bold text-slate-900 mt-0.5">{completedToday}</p>
-          </div>
-        </div>
-        
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-red-50 text-red-700 flex items-center justify-center">
-            <AlertCircle size={20} />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('manageTasks.attentionRequired')}</p>
-            <p className="text-2xl font-bold text-slate-900 mt-0.5">{issues.length}</p>
-          </div>
-        </div>
-      </div>
-
       {/* Attention Required Section */}
-      <div className="mb-8">
-        <h2 className="font-bold text-slate-900 text-lg mb-3 tracking-tight">{t('manageTasks.attentionRequired')}</h2>
-        {issues.length > 0 ? (
+      {issues.length > 0 && (
+        <div className="mb-8">
+          <h2 className="font-bold text-slate-900 text-lg mb-3 tracking-tight">{t('manageTasks.attentionRequired')}</h2>
           <div className="flex flex-col gap-3">
             {issues.map(task => (
               <div 
@@ -147,10 +104,8 @@ const ManageTasks: React.FC = () => {
               </div>
             ))}
           </div>
-        ) : (
-          <p className="text-sm text-slate-500 bg-slate-50 border border-slate-200 p-4 rounded-xl">{t('manageTasks.noIssues')}</p>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Active Tasks Table */}
       <div>
@@ -222,7 +177,16 @@ const ManageTasks: React.FC = () => {
 
       {/* Recently Completed Tasks */}
       <div className="mt-8">
-        <h2 className="font-bold text-slate-900 text-lg mb-3 tracking-tight">{t('manageTasks.recentlyCompleted')}</h2>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="font-bold text-slate-900 text-lg tracking-tight">{t('manageTasks.recentlyCompleted')}</h2>
+          <button
+            type="button"
+            onClick={() => navigate('/admin-history')}
+            className="text-sm font-semibold text-slate-600 hover:text-slate-900 cursor-pointer bg-transparent border-none p-0"
+          >
+            {t('nav.history')}
+          </button>
+        </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {completedTasks.length > 0 ? (
             <div className="overflow-x-auto">
@@ -270,6 +234,15 @@ const ManageTasks: React.FC = () => {
           )}
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => navigate('/create')}
+        className="fixed bottom-20 right-4 z-[60] inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-slate-800 cursor-pointer md:bottom-20 md:right-8"
+      >
+        <PlusCircle size={18} />
+        {t('manageTasks.newTask')}
+      </button>
     </div>
   );
 };

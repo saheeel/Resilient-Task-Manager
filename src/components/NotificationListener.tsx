@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useTasks } from '../contexts/TaskContext';
+import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { ensurePushSubscription } from '../lib/pushNotifications';
@@ -62,7 +62,7 @@ const NotificationListener: React.FC = () => {
 
   // 3. Track task completion updates for admin-side users while the app is open
   useEffect(() => {
-    if (!currentUser || currentUser.role === 'employee') return;
+    if (!currentUser || !isAdminRole(currentUser.role)) return;
 
     if (isFirstLoad.current) return;
 

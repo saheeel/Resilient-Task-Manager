@@ -79,6 +79,8 @@ const translations: Record<Language, TranslationTree> = {
       password: 'Password',
       role: 'Role',
       employee: 'Employee',
+      admin: 'Admin',
+      superadmin: 'Super Admin',
       manager: 'Manager',
       unassigned: 'Unassigned',
       notRecorded: 'Not recorded',
@@ -117,6 +119,8 @@ const translations: Record<Language, TranslationTree> = {
     },
     roles: {
       employee: 'Employee',
+      admin: 'Admin',
+      superadmin: 'Super Admin',
       manager: 'Manager',
     },
     status: {
@@ -189,6 +193,16 @@ const translations: Record<Language, TranslationTree> = {
       markedIncompleteAt: 'Marked Incomplete At',
       assignedAt: 'Assigned At',
       noReasonProvided: 'No reason provided',
+      reopenTask: 'Reactivate Task',
+    },
+    adminHistory: {
+      title: 'Task History',
+      subtitle: 'Review completed and incomplete tasks across the team.',
+      empty: 'No task history yet.',
+      timeline: 'Last update',
+      reopen: 'Reactivate',
+      filterLabel: 'Filter by date',
+      clearFilter: 'Clear',
     },
     settings: {
       subtitle: 'Manage your team and operational preferences.',
@@ -198,6 +212,10 @@ const translations: Record<Language, TranslationTree> = {
       noTeamMembersFound: 'No team members found.',
       viewProfileHistory: 'View profile and work history',
       editEmployeeDetails: 'Edit employee details',
+      alertsTitle: 'Notifications',
+      alertsSubtitle: 'Enable background alerts for this installed app on this device.',
+      alertsEnabled: 'Alerts are enabled on this device.',
+      alertsUnavailable: 'Notifications are not supported on this device.',
     },
     addEmployee: {
       backToDashboard: 'Back to Dashboard',
@@ -315,6 +333,7 @@ const translations: Record<Language, TranslationTree> = {
       submitIssue: 'Submit Issue',
       provideReason: 'Please provide a reason before marking as incomplete or blocked.',
       taskTypePriority: '{{priority}} priority',
+      reopenTask: 'Reactivate Task',
     },
   },
   de: {
@@ -364,6 +383,8 @@ const translations: Record<Language, TranslationTree> = {
       password: 'Passwort',
       role: 'Rolle',
       employee: 'Mitarbeiter',
+      admin: 'Admin',
+      superadmin: 'Superadmin',
       manager: 'Manager',
       unassigned: 'Nicht zugewiesen',
       notRecorded: 'Nicht erfasst',
@@ -402,6 +423,8 @@ const translations: Record<Language, TranslationTree> = {
     },
     roles: {
       employee: 'Mitarbeiter',
+      admin: 'Admin',
+      superadmin: 'Superadmin',
       manager: 'Manager',
     },
     status: {
@@ -474,6 +497,16 @@ const translations: Record<Language, TranslationTree> = {
       markedIncompleteAt: 'Als unvollstandig markiert am',
       assignedAt: 'Zugewiesen am',
       noReasonProvided: 'Kein Grund angegeben',
+      reopenTask: 'Aufgabe reaktivieren',
+    },
+    adminHistory: {
+      title: 'Aufgabenverlauf',
+      subtitle: 'Sieh dir erledigte und unvollstandige Aufgaben im Team an.',
+      empty: 'Noch kein Aufgabenverlauf vorhanden.',
+      timeline: 'Letzte Anderung',
+      reopen: 'Reaktivieren',
+      filterLabel: 'Nach Datum filtern',
+      clearFilter: 'Zurucksetzen',
     },
     settings: {
       subtitle: 'Verwalte dein Team und operative Einstellungen.',
@@ -483,6 +516,10 @@ const translations: Record<Language, TranslationTree> = {
       noTeamMembersFound: 'Keine Teammitglieder gefunden.',
       viewProfileHistory: 'Profil und Verlauf anzeigen',
       editEmployeeDetails: 'Mitarbeiter bearbeiten',
+      alertsTitle: 'Benachrichtigungen',
+      alertsSubtitle: 'Aktiviere Hintergrundbenachrichtigungen fur diese installierte App auf diesem Gerat.',
+      alertsEnabled: 'Benachrichtigungen sind auf diesem Gerat aktiviert.',
+      alertsUnavailable: 'Benachrichtigungen werden auf diesem Gerat nicht unterstutzt.',
     },
     addEmployee: {
       backToDashboard: 'Zuruck zum Dashboard',
@@ -600,6 +637,7 @@ const translations: Record<Language, TranslationTree> = {
       submitIssue: 'Problem senden',
       provideReason: 'Bitte gib einen Grund an, bevor du die Aufgabe als unvollstandig markierst.',
       taskTypePriority: '{{priority}} Prioritat',
+      reopenTask: 'Aufgabe reaktivieren',
     },
   },
 };

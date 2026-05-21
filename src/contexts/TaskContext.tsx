@@ -2,8 +2,9 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import type { ReactNode } from 'react';
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { authClient } from '../lib/auth-client';
 
-export type Role = 'employee' | 'manager';
+export type Role = 'employee' | 'admin' | 'superadmin' | 'manager';
 export type TaskType = 'daily' | 'weekly' | 'monthly' | 'one-time';
 export type TaskStatus = 'open' | 'in_progress' | 'completed' | 'could_not_complete' | 'blocked';
 export type Priority = 'low' | 'medium' | 'high';
@@ -12,10 +13,13 @@ export interface User {
   id: string;
   name: string;
   role: Role;
+  email?: string;
   avatarUrl?: string;
   username?: string;
   password?: string;
   employeeRole?: string;
+  authUserId?: string;
+  authType?: string;
 }
 
 export interface Task {
@@ -51,6 +55,7 @@ interface TaskContextType {
   addTask: (task: Omit<Task, 'id'>) => void;
   updateTaskStatus: (taskId: string, status: TaskStatus, details?: Partial<Task>) => void;
   addUser: (name: string, role: Role, username?: string, password?: string, employeeRole?: string) => User;
+  addAdminUser: (name: string, email: string, role?: Extract<Role, 'admin' | 'superadmin'>) => Promise<void>;
   editTask: (taskId: string, updatedFields: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
   updateUser: (userId: string, updatedFields: Partial<User>) => void;
@@ -60,10 +65,13 @@ interface TaskContextType {
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
+export const isAdminRole = (role?: Role | string | null) => role === 'admin' || role === 'superadmin' || role === 'manager';
+
 export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Convex Queries and Mutations
   const dbUsersRaw = useQuery(api.users.list);
   const dbTasksRaw = useQuery(api.tasks.list);
+  const { data: authSession } = authClient.useSession();
   
   const seedUsers = useMutation(api.users.seed);
   const seedTasks = useMutation(api.tasks.seed);
@@ -74,6 +82,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const dbAddUser = useMutation(api.users.create);
   const dbUpdateUser = useMutation(api.users.update);
+  const ensureAuthenticatedAdmin = useMutation(api.users.ensureAuthenticatedAdmin);
+  const createAdminProfile = useMutation(api.users.createAdminProfile);
   
   const sendPushNotification = useAction(api.pushActions.sendNotification);
   const notifyAdmins = useAction(api.pushActions.notifyAdmins);
@@ -107,10 +117,13 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       id: u._id,
       name: u.name,
       role: u.role as Role,
+      email: u.email,
       avatarUrl: u.avatarUrl,
       username: u.username,
       password: u.password,
       employeeRole: u.employeeRole,
+      authUserId: u.authUserId,
+      authType: u.authType,
     }));
   }, [dbUsersRaw]);
 
@@ -127,6 +140,39 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }
   }, [mappedDbUsers, currentUser]);
+
+  useEffect(() => {
+    const authUser = authSession?.user;
+    if (!authUser) return;
+
+    const authUserId = String((authUser as any).id ?? "");
+    const authUserEmail = (authUser as any).email;
+    const authUserName = (authUser as any).name;
+
+    if (!authUserId || !authUserEmail || !authUserName) return;
+
+    ensureAuthenticatedAdmin({
+      authUserId,
+      email: authUserEmail,
+      name: authUserName,
+    }).then((syncedUser: any) => {
+      if (!syncedUser) return;
+      handleSetCurrentUser({
+        id: syncedUser._id,
+        name: syncedUser.name,
+        role: syncedUser.role as Role,
+        email: syncedUser.email,
+        username: syncedUser.username,
+        password: syncedUser.password,
+        employeeRole: syncedUser.employeeRole,
+        authUserId: syncedUser.authUserId,
+        authType: syncedUser.authType,
+      });
+    }).catch((error: any) => {
+      console.error("Failed to sync authenticated admin user:", error);
+      authClient.signOut().catch(() => undefined);
+    });
+  }, [authSession, ensureAuthenticatedAdmin]);
 
   // Map Convex database tasks to type-safe Task objects
   const mappedDbTasks = useMemo(() => {
@@ -222,8 +268,17 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       username,
       password,
       employeeRole,
+      authType: 'local',
     });
-    return { id: tempId, name, role, username, password, employeeRole };
+    return { id: tempId, name, role, username, password, employeeRole, authType: 'local' };
+  };
+
+  const addAdminUser = async (name: string, email: string, role: Extract<Role, 'admin' | 'superadmin'> = 'admin') => {
+    await createAdminProfile({
+      email,
+      name,
+      role,
+    });
   };
 
   const editTask = (taskId: string, updatedFields: Partial<Task>) => {
@@ -259,6 +314,9 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
+    if (currentUser?.authType === 'better-auth') {
+      authClient.signOut();
+    }
     handleSetCurrentUser(null);
   };
 
@@ -271,6 +329,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       addTask, 
       updateTaskStatus,
       addUser,
+      addAdminUser,
       editTask,
       deleteTask,
       updateUser,

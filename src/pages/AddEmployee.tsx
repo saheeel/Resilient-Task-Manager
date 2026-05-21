@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const AddEmployee: React.FC = () => {
   const navigate = useNavigate();
-  const { addUser } = useTasks();
+  const { addUser, currentUser } = useTasks();
   const { t } = useLanguage();
   
   const [name, setName] = useState('');
@@ -14,6 +14,14 @@ const AddEmployee: React.FC = () => {
   const [password, setPassword] = useState('');
   const [employeeRole, setEmployeeRole] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  if (!currentUser) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (currentUser.role !== 'superadmin') {
+    return <Navigate to="/settings" replace />;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

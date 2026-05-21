@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Settings, History } from 'lucide-react';
-import { useTasks } from '../contexts/TaskContext';
+import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const BottomNav: React.FC = () => {
@@ -35,8 +35,19 @@ const BottomNav: React.FC = () => {
         </NavLink>
       )}
 
-      {/* Manager: show Settings tab only */}
-      {currentUser.role === 'manager' && (
+      {isAdminRole(currentUser.role) && (
+        <NavLink 
+          to="/admin-history"
+          className={({ isActive }) => `flex flex-col items-center gap-1 text-xs font-semibold transition-colors ${
+            isActive ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <History size={20} />
+          <span>{t('nav.history')}</span>
+        </NavLink>
+      )}
+
+      {isAdminRole(currentUser.role) && (
         <NavLink 
           to="/settings"
           className={({ isActive }) => `flex flex-col items-center gap-1 text-xs font-semibold transition-colors ${

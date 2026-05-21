@@ -125,29 +125,11 @@ const EmployeeDashboard: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <header className="mb-8 flex items-end justify-between border-b border-slate-150 pb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('app.myWorkspace')}</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {t('employeeDashboard.welcome', { name: currentUser.name.split(' ')[0] })}
-          </p>
-        </div>
-        <div className="flex items-center gap-4 text-right">
-          <div>
-            <span className="block text-3xl font-bold text-slate-800">{activeTasks.length}</span>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              {t('common.active')}
-            </span>
-          </div>
-          {upcomingTasks.length > 0 && (
-            <div className="border-l border-slate-200 pl-4">
-              <span className="block text-3xl font-bold text-indigo-600">{upcomingTasks.length}</span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-                {t('common.upcoming')}
-              </span>
-            </div>
-          )}
-        </div>
+      <header className="mb-8 border-b border-slate-150 pb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('app.myWorkspace')}</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          {t('employeeDashboard.welcome', { name: currentUser.name.split(' ')[0] })}
+        </p>
       </header>
 
       <div className="mb-6 flex items-center justify-end">
