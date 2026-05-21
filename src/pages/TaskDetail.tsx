@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const TaskDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { tasks, updateTaskStatus, currentUser, deleteTask, users } = useTasks();
-  const { t, formatDate, formatDateTime, formatTime, priorityLabel, taskTypeLabel } = useLanguage();
+  const { tasks, updateTaskStatus, currentUser, deleteTask, users, editTask } = useTasks();
+  const { t, formatDate, formatDateTime, formatTime, priorityLabel, taskTypeLabel, weekdayLabel, monthDayOrdinalLabel } = useLanguage();
   
   const task = tasks.find(t => t.id === id);
   
@@ -105,6 +105,40 @@ const TaskDetail: React.FC = () => {
     navigate(-1);
   };
 
+  const recurringScheduleLabel = () => {
+    if (task.type === 'daily') {
+      return task.recurringTime ? `${t('manageTasks.everyDayAt')} ${formatTime(`1970-01-01T${task.recurringTime}:00`)}` : t('manageTasks.everyDay');
+    }
+    if (task.type === 'weekly') {
+      const days = task.recurringDay
+        ? task.recurringDay.split(',').map((day) => weekdayLabel(day.trim())).join(', ')
+        : t('manageTasks.noScheduleSet');
+      return task.recurringTime ? `${days} • ${formatTime(`1970-01-01T${task.recurringTime}:00`)}` : days;
+    }
+    if (task.type === 'monthly') {
+      const day = task.recurringDay ? monthDayOrdinalLabel(task.recurringDay) : t('manageTasks.noScheduleSet');
+      return task.recurringTime ? `${day} • ${formatTime(`1970-01-01T${task.recurringTime}:00`)}` : day;
+    }
+    return '';
+  };
+
+  const toggleRecurringPause = () => {
+    editTask(task.id, {
+      isPaused: !task.isPaused,
+      pausedAt: task.isPaused ? undefined : new Date().toISOString(),
+    });
+  };
+
+  const handleStopRecurring = () => {
+    editTask(task.id, {
+      type: 'one-time',
+      recurringDay: undefined,
+      recurringTime: undefined,
+      isPaused: false,
+      pausedAt: undefined,
+    });
+  };
+
   return (
     <div className="max-w-xl mx-auto px-4 py-8">
       {/* Header action bar */}
@@ -134,6 +168,28 @@ const TaskDetail: React.FC = () => {
               <Edit size={14} />
               {t('taskDetail.editTask')}
             </button>
+            {task.type !== 'one-time' && (
+              <>
+                <button
+                  onClick={toggleRecurringPause}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer ${
+                    task.isPaused
+                      ? 'border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+                      : 'border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100'
+                  }`}
+                >
+                  {task.isPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
+                  {task.isPaused ? t('manageTasks.resumeRecurring') : t('manageTasks.pauseRecurring')}
+                </button>
+                <button
+                  onClick={handleStopRecurring}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer"
+                >
+                  <Square size={14} />
+                  {t('manageTasks.stopRecurring')}
+                </button>
+              </>
+            )}
             <button 
               onClick={() => {
                 if (confirm(t('common.confirmDeleteTask'))) {
@@ -180,6 +236,20 @@ const TaskDetail: React.FC = () => {
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200" title={t('taskDetail.assignedAt')}>
               <Clock size={14} className="text-slate-400" />
               {t('common.assigned')}: {formatDateTime(task.createdAt, { dateStyle: 'short', timeStyle: 'short' })}
+            </div>
+          )}
+
+          {task.type !== 'one-time' && (
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200">
+              <Play size={14} className="text-slate-400" />
+              {recurringScheduleLabel()}
+            </div>
+          )}
+
+          {task.type !== 'one-time' && task.isPaused && (
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded border border-amber-200">
+              <PauseCircle size={14} className="text-amber-500" />
+              {t('manageTasks.paused')}
             </div>
           )}
         </div>
