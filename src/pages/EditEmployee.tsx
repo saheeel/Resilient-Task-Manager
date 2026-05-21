@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
-import { ArrowLeft, UserCheck } from 'lucide-react';
+import { ArrowLeft, UserCheck, Trash2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const EditEmployee: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { users, updateUser } = useTasks();
+  const { users, currentUser, updateUser, deleteUserAccount } = useTasks();
   const { t } = useLanguage();
 
   const user = users.find(u => u.id === id);
@@ -17,6 +17,7 @@ const EditEmployee: React.FC = () => {
   const [password, setPassword] = useState('');
   const [employeeRole, setEmployeeRole] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -26,6 +27,14 @@ const EditEmployee: React.FC = () => {
       setEmployeeRole(user.employeeRole || '');
     }
   }, [user]);
+
+  if (!currentUser) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (currentUser.role !== 'superadmin') {
+    return <Navigate to="/settings" replace />;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +56,19 @@ const EditEmployee: React.FC = () => {
       setSuccessMsg('');
       navigate('/settings');
     }, 1500);
+  };
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(`Delete ${user?.name}? This cannot be undone.`);
+    if (!confirmed || !id) return;
+
+    setDeleting(true);
+    try {
+      await deleteUserAccount(id);
+      navigate('/settings');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (!user) {
@@ -153,6 +175,16 @@ const EditEmployee: React.FC = () => {
             className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer mt-4"
           >
             {t('editEmployee.saveChanges')}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-700 transition-colors disabled:opacity-60 cursor-pointer"
+          >
+            <Trash2 size={16} />
+            {deleting ? 'Deleting...' : 'Delete User'}
           </button>
         </form>
       </div>

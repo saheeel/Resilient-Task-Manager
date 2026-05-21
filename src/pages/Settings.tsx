@@ -7,6 +7,10 @@ import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { ensurePushSubscription } from '../lib/pushNotifications';
 
+const HIDDEN_USER_EMAILS = new Set([
+  'saheel62320@gmail.com',
+]);
+
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { users, currentUser } = useTasks();
@@ -17,8 +21,11 @@ const Settings: React.FC = () => {
     typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
   );
 
-  const employees = users.filter(u => u.role === 'employee');
-  const admins = users.filter(u => isAdminRole(u.role));
+  const visibleUsers = users.filter(
+    (user) => !user.email || !HIDDEN_USER_EMAILS.has(user.email.trim().toLowerCase())
+  );
+  const employees = visibleUsers.filter(u => u.role === 'employee');
+  const admins = visibleUsers.filter(u => isAdminRole(u.role));
 
   useEffect(() => {
     if (typeof Notification === 'undefined') {
@@ -172,7 +179,10 @@ const Settings: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-slate-500 font-mono text-xs">
-                      {user.username || t('settings.notSet')}
+                      <div className="flex flex-col items-start gap-1">
+                        <span>{user.username || t('settings.notSet')}</span>
+                        {user.email ? <span className="text-[11px] text-slate-400">{user.email}</span> : null}
+                      </div>
                     </td>
                     {isSuperAdmin ? (
                       <td className="px-6 py-4 text-slate-400 font-mono text-xs">—</td>

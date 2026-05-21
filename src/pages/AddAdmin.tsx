@@ -26,16 +26,16 @@ const AddAdmin: React.FC = () => {
     setError('');
     setSuccess('');
 
-    if (!name.trim() || !email.trim()) {
-      setError('Please fill out all fields.');
+    if (!name.trim()) {
+      setError('Please fill out the name.');
       return;
     }
 
     setSubmitting(true);
 
     try {
-      await addAdminUser(name.trim(), email.trim());
-      setSuccess(`${name.trim()} was added successfully.`);
+      const createdEmail = await addAdminUser(name.trim(), email.trim());
+      setSuccess(`${name.trim()} was added successfully. Login email: ${createdEmail}`);
       setName('');
       setEmail('');
     } catch (submitError: any) {
@@ -101,9 +101,8 @@ const AddAdmin: React.FC = () => {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="admin@example.com"
+              placeholder="Leave blank to generate a temporary email"
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-              required
             />
           </div>
 

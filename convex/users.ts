@@ -9,6 +9,30 @@ const SUPERADMIN_EMAILS = [
 const isSuperAdminEmail = (email: string) =>
   SUPERADMIN_EMAILS.includes(email.trim().toLowerCase());
 
+const slugifyName = (name: string) =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ".")
+    .replace(/^\.+|\.+$/g, "") || "user";
+
+const createTemporaryEmail = (name: string, usedEmails: Set<string>) => {
+  const base = `${slugifyName(name)}@temp.resilient.local`;
+  if (!usedEmails.has(base)) {
+    usedEmails.add(base);
+    return base;
+  }
+
+  let counter = 2;
+  while (usedEmails.has(`${slugifyName(name)}.${counter}@temp.resilient.local`)) {
+    counter += 1;
+  }
+
+  const nextEmail = `${slugifyName(name)}.${counter}@temp.resilient.local`;
+  usedEmails.add(nextEmail);
+  return nextEmail;
+};
+
 // Get all users
 export const list = query({
   handler: async (ctx: any) => {
@@ -29,10 +53,11 @@ export const create = mutation({
     authType: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
+    const normalizedEmail = args.email?.trim().toLowerCase();
     const userId = await ctx.db.insert("users", {
       name: args.name,
       role: args.role,
-      email: args.email,
+      email: normalizedEmail,
       username: args.username,
       password: args.password,
       employeeRole: args.employeeRole,
@@ -97,10 +122,10 @@ export const ensureAuthenticatedAdmin = mutation({
 export const syncSuperAdminAllowlist = mutation({
   handler: async (ctx: any) => {
     const users = await ctx.db.query("users").collect();
-    const existingEmails = new Set(
+    const existingEmails = new Set<string>(
       users
         .map((user: any) => user.email?.trim().toLowerCase())
-        .filter(Boolean)
+        .filter((email: string | undefined): email is string => Boolean(email))
     );
 
     for (const email of SUPERADMIN_EMAILS) {
@@ -116,18 +141,28 @@ export const syncSuperAdminAllowlist = mutation({
     }
 
     const refreshedUsers = await ctx.db.query("users").collect();
+    const usedEmails = new Set<string>(
+      refreshedUsers
+        .map((user: any) => user.email?.trim().toLowerCase())
+        .filter((email: string | undefined): email is string => Boolean(email))
+    );
 
     for (const user of refreshedUsers) {
-      if (!user.email) continue;
-
-      const nextRole = isSuperAdminEmail(user.email) ? "superadmin" : (user.role === "superadmin" ? "admin" : user.role);
+      const normalizedEmail = user.email?.trim().toLowerCase();
+      const nextRole = normalizedEmail && isSuperAdminEmail(normalizedEmail)
+        ? "superadmin"
+        : (user.role === "superadmin" ? "admin" : user.role);
       const patch: Record<string, any> = {};
 
       if (nextRole !== user.role) {
         patch.role = nextRole;
       }
 
-      if (isSuperAdminEmail(user.email)) {
+      if (!normalizedEmail) {
+        patch.email = createTemporaryEmail(user.name, usedEmails);
+      }
+
+      if (normalizedEmail && isSuperAdminEmail(normalizedEmail)) {
         patch.password = "1234";
         patch.authType = "local";
       }
@@ -142,7 +177,7 @@ export const syncSuperAdminAllowlist = mutation({
 export const createAdminProfile = mutation({
   args: {
     authUserId: v.optional(v.string()),
-    email: v.string(),
+    email: v.optional(v.string()),
     name: v.string(),
     role: v.string(),
     password: v.optional(v.string()),
@@ -193,6 +228,26 @@ export const update = mutation({
   handler: async (ctx: any, args: any) => {
     const { id, ...fields } = args;
     await ctx.db.patch(id, fields);
+  },
+});
+
+export const remove = mutation({
+  args: {
+    id: v.id("users"),
+  },
+  handler: async (ctx: any, args: any) => {
+    const user = await ctx.db.get(args.id);
+    if (!user) return;
+
+    const tasks = await ctx.db.query("tasks").collect();
+    for (const task of tasks) {
+      if (!Array.isArray(task.assignedTo) || !task.assignedTo.includes(args.id)) continue;
+      await ctx.db.patch(task._id, {
+        assignedTo: task.assignedTo.filter((assignedId: string) => assignedId !== args.id),
+      });
+    }
+
+    await ctx.db.delete(args.id);
   },
 });
 

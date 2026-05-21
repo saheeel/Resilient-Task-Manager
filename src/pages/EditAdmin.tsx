@@ -1,18 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, Navigate } from 'react-router-dom';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Trash2 } from 'lucide-react';
 import { useTasks, isAdminRole } from '../contexts/TaskContext';
+
+const HIDDEN_USER_EMAILS = new Set([
+  'saheel62320@gmail.com',
+]);
 
 const EditAdmin: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { users, currentUser, updateAdminUser } = useTasks();
+  const { users, currentUser, updateAdminUser, deleteUserAccount } = useTasks();
 
-  const adminUser = users.find((user) => user.id === id && isAdminRole(user.role));
+  const adminUser = users.find(
+    (user) =>
+      user.id === id &&
+      isAdminRole(user.role) &&
+      (!user.email || !HIDDEN_USER_EMAILS.has(user.email.trim().toLowerCase()))
+  );
 
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -68,6 +78,22 @@ const EditAdmin: React.FC = () => {
       setError(submitError?.message || 'Failed to update admin.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(`Delete ${adminUser.name}? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setError('');
+    setDeleting(true);
+    try {
+      await deleteUserAccount(adminUser.id);
+      navigate('/settings');
+    } catch (deleteError: any) {
+      setError(deleteError?.message || 'Failed to delete admin.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -149,6 +175,16 @@ const EditAdmin: React.FC = () => {
             className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer mt-4 disabled:opacity-60"
           >
             {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting || saving || adminUser.role === 'superadmin'}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-700 transition-colors disabled:opacity-60 cursor-pointer"
+          >
+            <Trash2 size={16} />
+            {deleting ? 'Deleting...' : 'Delete User'}
           </button>
         </form>
       </div>

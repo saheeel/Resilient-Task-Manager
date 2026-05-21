@@ -54,8 +54,9 @@ interface TaskContextType {
   addTask: (task: Omit<Task, 'id'>) => void;
   updateTaskStatus: (taskId: string, status: TaskStatus, details?: Partial<Task>) => void;
   addUser: (name: string, role: Role, username?: string, password?: string, employeeRole?: string) => User;
-  addAdminUser: (name: string, email: string, role?: Extract<Role, 'admin' | 'superadmin'>) => Promise<void>;
+  addAdminUser: (name: string, email?: string, role?: Extract<Role, 'admin' | 'superadmin'>) => Promise<string>;
   updateAdminUser: (userId: string, updates: { name: string; password?: string }) => Promise<void>;
+  deleteUserAccount: (userId: string) => Promise<void>;
   editTask: (taskId: string, updatedFields: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
   updateUser: (userId: string, updatedFields: Partial<User>) => void;
@@ -81,6 +82,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const dbAddUser = useMutation(api.users.create);
   const dbUpdateUser = useMutation(api.users.update);
+  const dbRemoveUser = useMutation(api.users.remove);
   const syncSuperAdminAllowlist = useMutation(api.users.syncSuperAdminAllowlist);
   
   const sendPushNotification = useAction(api.pushActions.sendNotification);
@@ -168,6 +170,28 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }));
   }, [dbTasksRaw]);
 
+  const createTemporaryEmail = (name: string) => {
+    const slug = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ".")
+      .replace(/^\.+|\.+$/g, "") || "user";
+    const usedEmails = new Set(
+      mappedDbUsers
+        .map((user) => user.email?.trim().toLowerCase())
+        .filter(Boolean) as string[]
+    );
+
+    let candidate = `${slug}@temp.resilient.local`;
+    let counter = 2;
+    while (usedEmails.has(candidate)) {
+      candidate = `${slug}.${counter}@temp.resilient.local`;
+      counter += 1;
+    }
+
+    return candidate;
+  };
+
   const addTask = (taskData: Omit<Task, 'id'>) => {
     const assignmentMetadata = currentUser && currentUser.role !== 'employee'
       ? {
@@ -228,25 +252,29 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addUser = (name: string, role: Role, username?: string, password?: string, employeeRole?: string) => {
     const tempId = `temp_${Date.now()}`;
+    const email = createTemporaryEmail(name);
     dbAddUser({
       name,
       role,
+      email,
       username,
       password,
       employeeRole,
       authType: 'local',
     });
-    return { id: tempId, name, role, username, password, employeeRole, authType: 'local' };
+    return { id: tempId, name, role, email, username, password, employeeRole, authType: 'local' };
   };
 
-  const addAdminUser = async (name: string, email: string, role: Extract<Role, 'admin' | 'superadmin'> = 'admin') => {
+  const addAdminUser = async (name: string, email?: string, role: Extract<Role, 'admin' | 'superadmin'> = 'admin') => {
+    const resolvedEmail = email?.trim().toLowerCase() || createTemporaryEmail(name);
     await dbAddUser({
       name,
       role,
-      email,
+      email: resolvedEmail,
       password: '1234',
       authType: 'local',
     });
+    return resolvedEmail;
   };
 
   const updateAdminUser = async (userId: string, updates: { name: string; password?: string }) => {
@@ -295,6 +323,13 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const deleteUserAccount = async (userId: string) => {
+    await dbRemoveUser({ id: userId as any });
+    if (currentUser?.id === userId) {
+      handleSetCurrentUser(null);
+    }
+  };
+
   const logout = () => {
     handleSetCurrentUser(null);
   };
@@ -310,6 +345,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       addUser,
       addAdminUser,
       updateAdminUser,
+      deleteUserAccount,
       editTask,
       deleteTask,
       updateUser,

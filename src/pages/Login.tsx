@@ -22,7 +22,9 @@ const Login: React.FC = () => {
     setLoading(true);
 
     setTimeout(() => {
-      const matchedUser = users.find(u => u.username === username.trim() && u.password === password);
+      const matchedUser = users.find(
+        (u) => u.role === 'employee' && u.username === username.trim() && u.password === password
+      );
 
       if (matchedUser) {
         setCurrentUser(matchedUser);
