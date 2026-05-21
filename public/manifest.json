@@ -4,6 +4,12 @@
   "description": "Team task management and operations dashboard",
   "icons": [
     {
+      "src": "/resilientlogo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
       "src": "/icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
@@ -14,12 +20,6 @@
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
-    },
-    {
-      "src": "/resilientlogo.svg",
-      "type": "image/svg+xml",
-      "sizes": "any",
-      "purpose": "any"
     }
   ],
   "start_url": "/",
