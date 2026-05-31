@@ -161,20 +161,20 @@ const TaskDetail: React.FC = () => {
   return (
     <div className="max-w-xl mx-auto px-4 py-8">
       {/* Header action bar */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <button 
           onClick={() => navigate(-1)} 
-          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0"
+          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0 self-start"
         >
           <ArrowLeft size={16} />
           {t('common.back')}
         </button>
         {isAdminRole(currentUser.role) && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             {(task.status === 'could_not_complete' || task.status === 'blocked') && (
               <button
                 onClick={handleReopen}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg shadow-sm transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center"
               >
                 <CheckCircle size={14} />
                 {t('taskDetail.reopenTask')}
@@ -182,7 +182,7 @@ const TaskDetail: React.FC = () => {
             )}
             <button 
               onClick={() => navigate(`/task/${task.id}/edit`)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center"
             >
               <Edit size={14} />
               {t('taskDetail.editTask')}
@@ -191,7 +191,7 @@ const TaskDetail: React.FC = () => {
               <>
                 <button
                   onClick={toggleRecurringPause}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center ${
                     task.isPaused
                       ? 'border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
                       : 'border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100'
@@ -202,7 +202,7 @@ const TaskDetail: React.FC = () => {
                 </button>
                 <button
                   onClick={handleStopRecurring}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center"
                 >
                   <Square size={14} />
                   {t('manageTasks.stopRecurring')}
@@ -216,7 +216,7 @@ const TaskDetail: React.FC = () => {
                   navigate('/');
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-200 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 rounded-lg shadow-sm transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-200 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center"
             >
               <Trash2 size={14} />
               {t('taskDetail.deleteTask')}

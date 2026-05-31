@@ -196,7 +196,7 @@ const translations: Record<Language, TranslationTree> = {
       recentlyCompleted: 'Recently Completed',
       noCompletedTasks: 'No completed tasks yet.',
       taskTitle: 'Task',
-      assignedTeamMembers: 'Assigned Team Members',
+      assignedTeamMembers: 'Assigned to',
       completedBy: 'Completed By',
       completedAt: 'Completed At',
       duration: 'Duration',
