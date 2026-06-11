@@ -25,6 +25,8 @@ export default defineSchema({
     assignedByName: v.optional(v.string()),
     dueDate: v.optional(v.string()),
     remarks: v.optional(v.string()),
+    inCharge: v.optional(v.string()),
+    materialStatus: v.optional(v.string()),
     attachments: v.optional(v.array(v.string())),
     completedAt: v.optional(v.string()),
     completionComment: v.optional(v.string()),

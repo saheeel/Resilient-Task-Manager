@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTasks } from '../contexts/TaskContext';
+import { useTasks, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, CalendarDays, PackageCheck, UserRoundCog } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import TaskCalendar from '../components/TaskCalendar';
+import { materialStatusToneMap } from '../lib/taskOptions';
 
 const ManageTasks: React.FC = () => {
   const navigate = useNavigate();
@@ -16,13 +18,14 @@ const ManageTasks: React.FC = () => {
   const activeTasks = tasks.filter(t => t.status === 'open' || t.status === 'in_progress');
   const completedTasks = tasks.filter(t => t.status === 'completed');
   const recurringTasks = tasks.filter((task) => task.type !== 'one-time');
+  const scheduledTasks = tasks.filter((task) => Boolean(task.dueDate));
 
   const formatRecurringTime = (time?: string) => {
     if (!time) return '';
     return formatTime(`1970-01-01T${time}:00`);
   };
 
-  const recurringScheduleLabel = (task: any) => {
+  const recurringScheduleLabel = (task: Task) => {
     if (task.type === 'daily') {
       return task.recurringTime ? `${t('manageTasks.everyDayAt')} ${formatRecurringTime(task.recurringTime)}` : t('manageTasks.everyDay');
     }
@@ -57,6 +60,53 @@ const ManageTasks: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mb-8 space-y-4">
+        <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-bold tracking-tight text-slate-900">{t('calendar.weeklyOverview')}</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                {t('calendar.weeklyOverviewSubtitle')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/calendar')}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 cursor-pointer"
+            >
+              <CalendarDays size={16} />
+              {t('calendar.openFullCalendar')}
+            </button>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('calendar.scheduledThisWeek')}</div>
+              <div className="mt-2 text-2xl font-bold text-slate-900">{scheduledTasks.length}</div>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('manageTasks.activeTasks')}</div>
+              <div className="mt-2 text-2xl font-bold text-slate-900">{activeTasks.length}</div>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('manageTasks.attentionRequired')}</div>
+              <div className="mt-2 text-2xl font-bold text-slate-900">{issues.length}</div>
+            </div>
+          </div>
+
+          <TaskCalendar
+            tasks={tasks}
+            users={users}
+            currentUserId={currentUser.id}
+            currentUserRole={currentUser.role}
+            onTaskOpen={(taskId) => navigate(`/task/${taskId}`)}
+            initialView="timeGridWeek"
+            height="32rem"
+            compact
+          />
+        </div>
+      </div>
+
       {/* Attention Required Section */}
       {issues.length > 0 && (
         <div className="mb-8">
@@ -167,6 +217,20 @@ const ManageTasks: React.FC = () => {
                           {task.isPaused ? (
                             <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
                               {t('manageTasks.paused')}
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                          {task.inCharge ? (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-medium">
+                              <UserRoundCog size={12} />
+                              {t('taskDetail.inCharge')}: {task.inCharge}
+                            </span>
+                          ) : null}
+                          {task.materialStatus ? (
+                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium ${materialStatusToneMap[task.materialStatus].badge}`}>
+                              <PackageCheck size={12} />
+                              {t(`materials.${task.materialStatus}`)}
                             </span>
                           ) : null}
                         </div>

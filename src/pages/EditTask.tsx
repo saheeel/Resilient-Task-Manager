@@ -4,8 +4,10 @@ import { useTasks } from '../contexts/TaskContext';
 import type { TaskType, Priority } from '../contexts/TaskContext';
 import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { MATERIAL_STATUS_OPTIONS } from '../lib/taskOptions';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const IN_CHARGE_OPTIONS = ['Nicolas', 'Ivo', 'Carlo', 'Sun', 'Juliane', 'Diana'];
 
 const EditTask: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +24,8 @@ const EditTask: React.FC = () => {
   const [dueTime, setDueTime] = useState('');
   const [type, setType] = useState<TaskType>('one-time');
   const [priority, setPriority] = useState<Priority>('medium');
+  const [inCharge, setInCharge] = useState('');
+  const [materialStatus, setMaterialStatus] = useState<(typeof MATERIAL_STATUS_OPTIONS)[number] | ''>('');
   const [assignedTo, setAssignedTo] = useState<string[]>([]);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
@@ -42,6 +46,8 @@ const EditTask: React.FC = () => {
       setRemarks(task.remarks || '');
       setType(task.type);
       setPriority(task.priority);
+      setInCharge(task.inCharge || '');
+      setMaterialStatus(task.materialStatus || '');
       setAssignedTo(task.assignedTo);
       setExistingAttachments(task.attachments || []);
       setRecurringTime(task.recurringTime || '');
@@ -144,6 +150,8 @@ const EditTask: React.FC = () => {
       dueDate: isoDueDate,
       type,
       priority,
+      inCharge: inCharge || undefined,
+      materialStatus: materialStatus || undefined,
       assignedTo,
       attachments: newAttachments.length > 0 ? newAttachments : undefined,
       recurringDay:
@@ -189,7 +197,9 @@ const EditTask: React.FC = () => {
             onClick={(e) => {
               try {
                 (e.target as HTMLInputElement).showPicker();
-              } catch (err) {}
+              } catch {
+                return;
+              }
             }}
             className={`px-3 py-2 border rounded-lg text-sm bg-white text-slate-700 focus:outline-none focus:ring-1 cursor-pointer ${colorMap[accentColor]}`}
           />
@@ -243,27 +253,81 @@ const EditTask: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                {t('createTask.descriptionOptional')}
+                {t('createTask.instructionsOptional')}
               </label>
               <textarea
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
                 rows={2}
-                placeholder={t('createTask.descriptionPlaceholder')}
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                {t('createTask.remarksOptional')}
-              </label>
-              <textarea
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-                rows={2}
-                placeholder={t('createTask.remarksPlaceholder')}
+                placeholder={t('createTask.instructionsPlaceholder')}
                 value={remarks}
                 onChange={e => setRemarks(e.target.value)}
               />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                  {t('createTask.inChargeOptional')}
+                </label>
+                <select
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+                  value={inCharge}
+                  onChange={(e) => setInCharge(e.target.value)}
+                >
+                  <option value="">{t('createTask.selectInCharge')}</option>
+                  {IN_CHARGE_OPTIONS.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                  {t('createTask.materialStatusOptional')}
+                </label>
+                <div className="grid gap-2">
+                  {MATERIAL_STATUS_OPTIONS.map((option) => (
+                    <label
+                      key={option}
+                      className={`flex items-start gap-3 rounded-lg border px-3 py-2 text-sm transition-colors cursor-pointer ${
+                        materialStatus === option
+                          ? 'border-slate-900 bg-slate-50'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="materialStatus"
+                        className="mt-0.5 h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500"
+                        checked={materialStatus === option}
+                        onChange={() => setMaterialStatus(option)}
+                      />
+                      <span className="leading-5 text-slate-700">{t(`materials.${option}`)}</span>
+                    </label>
+                  ))}
+                  {materialStatus && (
+                    <button
+                      type="button"
+                      onClick={() => setMaterialStatus('')}
+                      className="justify-self-start text-xs font-semibold text-red-600 hover:text-red-700 cursor-pointer bg-transparent border-none p-0"
+                    >
+                      {t('createTask.clearMaterialStatus')}
+                    </button>
+                  )}
+                </div>
+                <div className="mt-3">
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                    {t('createTask.materialCommentsOptional')}
+                  </label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+                    rows={2}
+                    placeholder={t('createTask.materialCommentsPlaceholder')}
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -320,7 +384,7 @@ const EditTask: React.FC = () => {
                         onClick={() => {
                           try {
                             dateInputRef.current?.showPicker();
-                          } catch (err) {
+                          } catch {
                             dateInputRef.current?.click();
                           }
                         }}
@@ -362,7 +426,9 @@ const EditTask: React.FC = () => {
                         onClick={(e) => {
                           try {
                             (e.target as HTMLInputElement).showPicker();
-                          } catch (err) {}
+                          } catch {
+                            return;
+                          }
                         }}
                         className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 cursor-pointer"
                       />

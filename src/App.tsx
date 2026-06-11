@@ -15,6 +15,7 @@ import EmployeeHistory from './pages/EmployeeHistory';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import CompletedHistory from './pages/CompletedHistory';
 import AdminTaskHistory from './pages/AdminTaskHistory';
+import CalendarView from './pages/CalendarView';
 import Login from './pages/Login';
 import NotificationListener from './components/NotificationListener';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -41,6 +42,7 @@ const AppContent = () => {
         <Route path="/create" element={<CreateTask />} />
         <Route path="/task/:id" element={<TaskDetail />} />
         <Route path="/task/:id/edit" element={<EditTask />} />
+        <Route path="/calendar" element={<CalendarView />} />
         <Route path="/add-employee" element={<AddEmployee />} />
         <Route path="/add-admin" element={<AddAdmin />} />
         <Route path="/settings" element={<Settings />} />

@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, Image } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, Image, PackageCheck, UserRoundCog } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
+import { materialStatusToneMap } from '../lib/taskOptions';
 
 const TaskDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -306,6 +307,26 @@ const TaskDetail: React.FC = () => {
             </div>
           )}
 
+          {task.inCharge && (
+            <div className="flex items-start gap-2 text-sm text-slate-600">
+              <span className="font-semibold text-slate-900 shrink-0 min-w-[100px]">{t('taskDetail.inCharge')}:</span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                <UserRoundCog size={14} />
+                {task.inCharge}
+              </span>
+            </div>
+          )}
+
+          {task.materialStatus && (
+            <div className="flex items-start gap-2 text-sm text-slate-600">
+              <span className="font-semibold text-slate-900 shrink-0 min-w-[100px]">{t('taskDetail.materialStatus')}:</span>
+              <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${materialStatusToneMap[task.materialStatus].badge}`}>
+                <PackageCheck size={14} />
+                {t(`materials.${task.materialStatus}`)}
+              </span>
+            </div>
+          )}
+
           {(task.status === 'could_not_complete' || task.status === 'blocked') && (
             <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
               <span className="font-semibold shrink-0 min-w-[100px]">{t('taskDetail.incompleteAt')}:</span>
@@ -359,7 +380,7 @@ const TaskDetail: React.FC = () => {
         
         {task.description && (
           <div className="mb-4">
-            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('common.description')}</h3>
+            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('common.comments')}</h3>
             <p className="text-sm text-slate-600 bg-slate-50 border border-slate-200 p-4 rounded-xl leading-relaxed">
               {task.description}
             </p>
@@ -368,7 +389,7 @@ const TaskDetail: React.FC = () => {
 
         {task.remarks && (
           <div className="mb-4">
-            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('common.remarks')}</h3>
+            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('common.instructions')}</h3>
             <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 p-4 rounded-xl leading-relaxed">
               {task.remarks}
             </p>

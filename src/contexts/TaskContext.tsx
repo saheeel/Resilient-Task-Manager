@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import type { ReactNode } from 'react';
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import type { MaterialStatus } from '../lib/taskOptions';
 
 export type Role = 'employee' | 'admin' | 'superadmin' | 'manager';
 export type TaskType = 'daily' | 'weekly' | 'monthly' | 'one-time';
@@ -33,6 +34,8 @@ export interface Task {
   assignedByName?: string;
   dueDate?: string; // ISO date string
   remarks?: string;
+  inCharge?: string;
+  materialStatus?: MaterialStatus;
   attachments?: string[]; 
   
   completedAt?: string;
@@ -161,6 +164,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       assignedByName: t.assignedByName,
       dueDate: t.dueDate,
       remarks: t.remarks,
+      inCharge: t.inCharge,
+      materialStatus: t.materialStatus as MaterialStatus | undefined,
       attachments: t.attachments,
       completedAt: t.completedAt,
       completionComment: t.completionComment,
@@ -220,6 +225,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       assignedByName: assignmentMetadata.assignedByName,
       dueDate: taskData.dueDate,
       remarks: taskData.remarks,
+      inCharge: taskData.inCharge,
+      materialStatus: taskData.materialStatus,
       attachments: taskData.attachments,
       recurringDay: taskData.recurringDay,
       recurringTime: taskData.recurringTime,
