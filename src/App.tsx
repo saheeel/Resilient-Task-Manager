@@ -15,10 +15,10 @@ import EmployeeHistory from './pages/EmployeeHistory';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import CompletedHistory from './pages/CompletedHistory';
 import AdminTaskHistory from './pages/AdminTaskHistory';
-import CalendarView from './pages/CalendarView';
 import Login from './pages/Login';
 import NotificationListener from './components/NotificationListener';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import './index.css';
 
 const AppContent = () => {
@@ -42,7 +42,6 @@ const AppContent = () => {
         <Route path="/create" element={<CreateTask />} />
         <Route path="/task/:id" element={<TaskDetail />} />
         <Route path="/task/:id/edit" element={<EditTask />} />
-        <Route path="/calendar" element={<CalendarView />} />
         <Route path="/add-employee" element={<AddEmployee />} />
         <Route path="/add-admin" element={<AddAdmin />} />
         <Route path="/settings" element={<Settings />} />
@@ -62,11 +61,13 @@ const AppContent = () => {
 const App = () => {
   return (
     <LanguageProvider>
-      <TaskProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </TaskProvider>
+      <ThemeProvider>
+        <TaskProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </TaskProvider>
+      </ThemeProvider>
     </LanguageProvider>
   );
 };

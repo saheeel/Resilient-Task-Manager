@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks, isAdminRole } from '../contexts/TaskContext';
-import { Settings as SettingsIcon, UserPlus, Users, Edit, Eye, ShieldPlus } from 'lucide-react';
+import { Settings as SettingsIcon, UserPlus, Users, Edit, Eye, ShieldPlus, Moon, Sun } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useMutation } from 'convex/react';
-import { api } from '../../convex/_generated/api';
-import { ensurePushSubscription } from '../lib/pushNotifications';
+import { useTheme, type ThemeMode } from '../contexts/ThemeContext';
 
 const HIDDEN_USER_EMAILS = new Set([
   'saheel62320@gmail.com',
@@ -15,41 +13,25 @@ const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { users, currentUser } = useTasks();
   const { t, roleLabel } = useLanguage();
-  const savePushSubscription = useMutation(api.pushMutations.subscribe);
+  const { themeMode, setThemeMode } = useTheme();
   const isSuperAdmin = currentUser?.role === 'superadmin';
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(
-    typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
-  );
 
   const visibleUsers = users.filter(
     (user) => !user.email || !HIDDEN_USER_EMAILS.has(user.email.trim().toLowerCase())
   );
   const employees = visibleUsers.filter(u => u.role === 'employee');
   const admins = visibleUsers.filter(u => isAdminRole(u.role));
-  const shouldShowNotificationCard = notificationPermission !== 'granted';
+  const themeOptions: Array<{ value: ThemeMode; label: string; icon: typeof Sun }> = [
+    { value: 'light', label: t('settings.themeLight'), icon: Sun },
+    { value: 'dark', label: t('settings.themeDark'), icon: Moon },
+  ];
+  const activeTheme = themeOptions.find((option) => option.value === themeMode) ?? themeOptions[0];
+  const ActiveThemeIcon = activeTheme.icon;
 
-  useEffect(() => {
-    if (typeof Notification === 'undefined') {
-      setNotificationPermission('unsupported');
-      return;
-    }
-
-    setNotificationPermission(Notification.permission);
-  }, []);
-
-  const handleEnableAlerts = async () => {
-    if (!currentUser || typeof Notification === 'undefined') return;
-
-    try {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
-
-      if (permission === 'granted') {
-        await ensurePushSubscription(currentUser.id, savePushSubscription);
-      }
-    } catch (error) {
-      console.error('Failed to enable alerts:', error);
-    }
+  const cycleThemeMode = () => {
+    const currentIndex = themeOptions.findIndex((option) => option.value === themeMode);
+    const nextOption = themeOptions[(currentIndex + 1) % themeOptions.length];
+    setThemeMode(nextOption.value);
   };
 
   return (
@@ -92,28 +74,22 @@ const Settings: React.FC = () => {
         </div>
       </header>
 
-      {shouldShowNotificationCard ? (
-        <div className="mb-6 flex justify-end md:hidden">
-          <div className="w-full max-w-[220px] rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-              {t('settings.alertsTitle')}
-            </p>
-            <div className="mt-2">
-              {notificationPermission === 'unsupported' ? (
-                <p className="text-xs font-medium text-slate-500">{t('settings.alertsUnavailable')}</p>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleEnableAlerts}
-                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 cursor-pointer"
-                >
-                  {t('common.enableAlerts')}
-                </button>
-              )}
-            </div>
+      <div className="mb-8 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-[140px] items-center gap-2">
+            <Moon size={16} className="text-slate-700" />
+            <p className="text-sm font-semibold text-slate-900">{t('settings.themeTitle')}</p>
           </div>
+          <button
+            type="button"
+            onClick={cycleThemeMode}
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-200 cursor-pointer"
+          >
+            <ActiveThemeIcon size={14} />
+            <span>{activeTheme.label}</span>
+          </button>
         </div>
-      ) : null}
+      </div>
 
       {/* Team Directory Section */}
       <div className="mb-8">
