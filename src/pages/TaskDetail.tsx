@@ -599,7 +599,7 @@ const TaskDetail: React.FC = () => {
                       type="button"
                       onClick={() => updatePhotoInputRef.current?.click()}
                       disabled={isPostingUpdate}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-[11px] font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors disabled:opacity-50"
+                      className="task-action-secondary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <Image size={13} className="text-slate-400" />
                       {t('taskDetail.updatePhoto')}
@@ -628,7 +628,7 @@ const TaskDetail: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isPostingUpdate || !updateText.trim()}
-                  className="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer"
+                  className="task-action-primary inline-flex items-center justify-center text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer disabled:cursor-not-allowed"
                 >
                   {isPostingUpdate ? t('taskDetail.posting') : t('taskDetail.sendUpdate')}
                 </button>
@@ -673,7 +673,7 @@ const TaskDetail: React.FC = () => {
               <button 
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                className="inline-flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 rounded-lg py-2 text-sm font-semibold transition-colors cursor-pointer"
+                className="task-action-secondary inline-flex items-center justify-center gap-2 w-full rounded-lg py-2 text-sm font-semibold transition-colors cursor-pointer"
               >
                 <Camera size={18} />
                 {t('taskDetail.addCompletionPhoto')}
@@ -703,7 +703,7 @@ const TaskDetail: React.FC = () => {
               {task.status === 'open' ? (
                 <button 
                   onClick={handleStart}
-                  className="inline-flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
+                  className="task-action-primary inline-flex items-center justify-center gap-2 w-full rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
                 >
                   <Play size={18} className="fill-current" />
                   {t('taskDetail.startTask')}
@@ -711,7 +711,7 @@ const TaskDetail: React.FC = () => {
               ) : (
                 <button 
                   onClick={handleComplete}
-                  className="inline-flex items-center justify-center gap-2 w-full bg-green-700 hover:bg-green-800 text-white rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
+                  className="task-action-success inline-flex items-center justify-center gap-2 w-full rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
                 >
                   <CheckCircle size={18} />
                   {t('taskDetail.markCompleted')}
@@ -720,7 +720,7 @@ const TaskDetail: React.FC = () => {
               
               <button 
                 onClick={() => setShowBlockReason(true)}
-                className="inline-flex items-center justify-center gap-2 w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg py-2.5 font-semibold text-sm transition-colors cursor-pointer"
+                className="task-action-danger-soft inline-flex items-center justify-center gap-2 w-full rounded-lg py-2.5 font-semibold text-sm transition-colors cursor-pointer"
               >
                 <AlertTriangle size={18} />
                 {t('taskDetail.cannotComplete')}
@@ -731,13 +731,13 @@ const TaskDetail: React.FC = () => {
               <p className="text-xs text-red-700 font-semibold">{t('taskDetail.explainIssue')}</p>
               <button 
                 onClick={handleBlock}
-                className="inline-flex items-center justify-center w-full bg-red-700 hover:bg-red-800 text-white rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
+                className="task-action-danger inline-flex items-center justify-center w-full rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
               >
                 {t('taskDetail.submitIssue')}
               </button>
               <button 
                 onClick={() => setShowBlockReason(false)}
-                className="inline-flex items-center justify-center w-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 rounded-lg py-2.5 font-semibold text-sm transition-colors cursor-pointer"
+                className="task-action-secondary inline-flex items-center justify-center w-full rounded-lg py-2.5 font-semibold text-sm transition-colors cursor-pointer"
               >
                 {t('common.cancel')}
               </button>

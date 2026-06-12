@@ -285,7 +285,7 @@ const EmployeeDashboard: React.FC = () => {
           >
             <h2 className="flex items-center gap-2 text-base font-bold tracking-tight text-slate-900">
               {t('employeeDashboard.todayCompletedTitle')}
-              <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">
+              <span className="employee-completed-count inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold">
                 {todayCompleted.length}
               </span>
             </h2>
@@ -300,22 +300,22 @@ const EmployeeDashboard: React.FC = () => {
                 <div
                   key={task.id}
                   onClick={() => navigate(`/task/${task.id}`)}
-                  className="flex items-center justify-between gap-4 rounded-xl border border-green-200/60 bg-green-50/50 p-4 cursor-pointer transition-colors hover:bg-green-50"
+                  className="employee-completed-card flex items-center justify-between gap-4 rounded-xl p-4 cursor-pointer transition-colors"
                 >
                   <div className="min-w-0">
-                    <span className="text-sm font-medium text-slate-600 line-through decoration-slate-300">
+                    <span className="text-sm font-medium text-slate-700 line-through decoration-slate-400/70">
                       {task.title}
                     </span>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-400">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500">
                       {task.completedAt && <span>{formatTime(task.completedAt)}</span>}
                       {task.startedAt && task.completedAt && (
-                        <span className="rounded border border-green-200 bg-green-100 px-2 py-0.5 font-semibold text-green-700">
+                        <span className="employee-completed-badge rounded px-2 py-0.5 font-semibold">
                           {t('common.timeTaken')}: {formatTimeTaken(task.startedAt, task.completedAt)}
                         </span>
                       )}
                     </div>
                   </div>
-                  <span className="shrink-0 text-xs font-semibold text-green-600">{t('common.done')}</span>
+                  <span className="employee-completed-status shrink-0 text-xs font-semibold">{t('common.done')}</span>
                 </div>
               ))}
             </div>
