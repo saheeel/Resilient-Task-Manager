@@ -5,6 +5,7 @@ import type { TaskType, Priority } from '../contexts/TaskContext';
 import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MATERIAL_STATUS_OPTIONS } from '../lib/taskOptions';
+import { readFileAsDataUrl } from '../lib/fileDataUrl';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const IN_CHARGE_OPTIONS = ['Nicolas', 'Ivo', 'Carlo', 'Sun', 'Juliane', 'Diana'];
@@ -121,7 +122,7 @@ const EditTask: React.FC = () => {
     return `${displayHr}:${m} ${ampm}`;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || assignedTo.length === 0) {
       alert(t('createTask.fillTitleAndAssignee'));
@@ -139,8 +140,9 @@ const EditTask: React.FC = () => {
       isoDueDate = undefined;
     }
 
-    const newAttachments = attachment
-      ? [...existingAttachments, URL.createObjectURL(attachment)]
+    const uploadedAttachment = attachment ? await readFileAsDataUrl(attachment) : undefined;
+    const newAttachments = uploadedAttachment
+      ? [...existingAttachments, uploadedAttachment]
       : existingAttachments;
 
     editTask(task.id, {

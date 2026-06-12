@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, Image, PackageCheck, UserRoundCog } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, Image, PackageCheck, UserRoundCog, ImageOff } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { materialStatusToneMap } from '../lib/taskOptions';
+import { readFileAsDataUrl } from '../lib/fileDataUrl';
 
 const TaskDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +21,7 @@ const TaskDetail: React.FC = () => {
   const [showBlockReason, setShowBlockReason] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [activeZoomUrl, setActiveZoomUrl] = useState<string | null>(null);
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
   const photoInputRef = React.useRef<HTMLInputElement>(null);
 
   const updates = useQuery(api.taskUpdates.list, { taskId: task?.id || "" }) || [];
@@ -28,10 +30,10 @@ const TaskDetail: React.FC = () => {
   const [isPostingUpdate, setIsPostingUpdate] = useState(false);
   const updatePhotoInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleUpdatePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpdatePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setUpdatePhotoUrl(URL.createObjectURL(file));
+      setUpdatePhotoUrl(await readFileAsDataUrl(file));
     }
   };
 
@@ -43,15 +45,21 @@ const TaskDetail: React.FC = () => {
     return url.startsWith('blob:') || url.startsWith('data:image') || /\.(jpg|jpeg|png|webp|gif)$/i.test(url);
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setPhotoUrl(URL.createObjectURL(file));
+      setPhotoUrl(await readFileAsDataUrl(file));
     }
   };
 
   const handleRemovePhoto = () => {
     setPhotoUrl(null);
+  };
+
+  const isLegacyUnavailableImage = (url: string) => url.startsWith('blob:');
+  const isRenderableSavedImage = (url: string) => !isLegacyUnavailableImage(url) && !brokenImages[url];
+  const markImageBroken = (url: string) => {
+    setBrokenImages((current) => (current[url] ? current : { ...current, [url]: true }));
   };
 
   if (!currentUser) return null;
@@ -399,16 +407,24 @@ const TaskDetail: React.FC = () => {
         {task.proofPhotoUrl && (
           <div className="mb-4">
             <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('taskDetail.completionPhotoProof')}</h3>
-            <div className="relative inline-block group cursor-zoom-in" onClick={() => setActiveZoomUrl(task.proofPhotoUrl || null)}>
-              <img 
-                src={task.proofPhotoUrl} 
-                alt="Completion Proof" 
-                className="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
-              />
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
-                <Eye className="text-white" size={20} />
+            {isRenderableSavedImage(task.proofPhotoUrl) ? (
+              <div className="relative inline-block group cursor-zoom-in" onClick={() => setActiveZoomUrl(task.proofPhotoUrl || null)}>
+                <img 
+                  src={task.proofPhotoUrl} 
+                  alt="Completion Proof" 
+                  className="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
+                  onError={() => markImageBroken(task.proofPhotoUrl!)}
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
+                  <Eye className="text-white" size={20} />
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                <ImageOff size={14} className="shrink-0" />
+                <span>{t('taskDetail.legacyImageUnavailable')}</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -418,15 +434,29 @@ const TaskDetail: React.FC = () => {
             <div className="flex flex-wrap gap-3">
               {task.attachments.map((url, idx) => {
                 if (isImageFile(url)) {
+                  if (isRenderableSavedImage(url)) {
+                    return (
+                      <div key={idx} className="relative group inline-block cursor-zoom-in" onClick={() => setActiveZoomUrl(url)}>
+                        <img 
+                          src={url} 
+                          alt={`Attachment ${idx + 1}`} 
+                          className="w-24 h-24 object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
+                          onError={() => markImageBroken(url)}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
+                          <Eye className="text-white" size={16} />
+                        </div>
+                      </div>
+                    );
+                  }
                   return (
-                    <div key={idx} className="relative group inline-block cursor-zoom-in" onClick={() => setActiveZoomUrl(url)}>
-                      <img 
-                        src={url} 
-                        alt={`Attachment ${idx + 1}`} 
-                        className="w-24 h-24 object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
-                        <Eye className="text-white" size={16} />
+                    <div
+                      key={idx}
+                      className="flex h-24 w-24 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-center text-[11px] font-medium text-amber-800"
+                    >
+                      <div className="flex flex-col items-center gap-1">
+                        <ImageOff size={16} />
+                        <span>{t('taskDetail.legacyImageShort')}</span>
                       </div>
                     </div>
                   );
@@ -499,16 +529,24 @@ const TaskDetail: React.FC = () => {
                   <p className="text-xs text-slate-700 mt-1 leading-relaxed whitespace-pre-wrap">{up.text}</p>
                   
                   {up.photoUrl && (
-                    <div className="relative inline-block mt-2 group cursor-zoom-in self-start" onClick={() => setActiveZoomUrl(up.photoUrl)}>
-                      <img 
-                        src={up.photoUrl} 
-                        alt="Progress Proof" 
-                        className="max-h-36 max-w-full object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
-                        <Eye className="text-white" size={16} />
+                    isRenderableSavedImage(up.photoUrl) ? (
+                      <div className="relative inline-block mt-2 group cursor-zoom-in self-start" onClick={() => setActiveZoomUrl(up.photoUrl)}>
+                        <img 
+                          src={up.photoUrl} 
+                          alt="Progress Proof" 
+                          className="max-h-36 max-w-full object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
+                          onError={() => markImageBroken(up.photoUrl)}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
+                          <Eye className="text-white" size={16} />
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="mt-2 inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-800">
+                        <ImageOff size={14} className="shrink-0" />
+                        <span>{t('taskDetail.legacyImageUnavailable')}</span>
+                      </div>
+                    )
                   )}
                 </div>
               );

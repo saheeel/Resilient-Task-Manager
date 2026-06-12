@@ -5,6 +5,7 @@ import type { TaskType, Priority } from '../contexts/TaskContext';
 import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MATERIAL_STATUS_OPTIONS } from '../lib/taskOptions';
+import { readFileAsDataUrl } from '../lib/fileDataUrl';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const IN_CHARGE_OPTIONS = ['Nicolas', 'Ivo', 'Carlo', 'Sun', 'Juliane', 'Diana'];
@@ -64,7 +65,7 @@ const CreateTask: React.FC = () => {
     return `${displayHr}:${m} ${ampm}`;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || assignedTo.length === 0) {
       alert(t('createTask.fillTitleAndAssignee'));
@@ -80,6 +81,8 @@ const CreateTask: React.FC = () => {
       }
     }
 
+    const attachmentUrls = attachment ? [await readFileAsDataUrl(attachment)] : undefined;
+
     addTask({
       title,
       description,
@@ -91,7 +94,7 @@ const CreateTask: React.FC = () => {
       materialStatus: materialStatus || undefined,
       assignedTo,
       status: 'open',
-      attachments: attachment ? [URL.createObjectURL(attachment)] : undefined,
+      attachments: attachmentUrls,
       // Weekly stores comma-separated days; monthly stores single day number
       recurringDay:
         type === 'weekly'
