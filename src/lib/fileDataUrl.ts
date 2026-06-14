@@ -5,7 +5,6 @@ const MIN_QUALITY = 0.24;
 const QUALITY_STEP = 0.08;
 const SCALE_STEP = 0.76;
 const TARGET_IMAGE_BYTES = 180 * 1024;
-const ABSOLUTE_DATA_URL_LIMIT = 360 * 1024;
 
 const readBlobAsDataUrl = (blob: Blob) =>
   new Promise<string>((resolve, reject) => {
@@ -134,12 +133,14 @@ export const readFileAsDataUrl = async (file: File) => {
     file.type !== 'image/gif' &&
     file.type !== 'image/svg+xml';
 
-  const optimizedFile = shouldCompress ? await compressImageFile(file) : file;
-  const dataUrl = await readBlobAsDataUrl(optimizedFile);
-
-  if (dataUrl.length > ABSOLUTE_DATA_URL_LIMIT) {
-    throw new Error('This image is still too large after compression. Please choose a smaller photo.');
+  if (!shouldCompress) {
+    return await readBlobAsDataUrl(file);
   }
 
-  return dataUrl;
+  try {
+    const optimizedFile = await compressImageFile(file);
+    return await readBlobAsDataUrl(optimizedFile);
+  } catch {
+    return await readBlobAsDataUrl(file);
+  }
 };
