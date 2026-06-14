@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
@@ -71,6 +71,21 @@ const TaskDetail: React.FC = () => {
   const markImageBroken = (url: string) => {
     setBrokenImages((current) => (current[url] ? current : { ...current, [url]: true }));
   };
+
+  useEffect(() => {
+    if (!activeZoomUrl) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [activeZoomUrl]);
 
   if (!currentUser) return null;
 
@@ -764,7 +779,7 @@ const TaskDetail: React.FC = () => {
         >
           <div className="relative max-w-4xl max-h-[90vh] bg-transparent rounded-lg overflow-hidden flex items-center justify-center">
             <button 
-              className="absolute top-4 right-4 text-white bg-slate-900/50 hover:bg-slate-800/80 p-2 rounded-full transition-colors cursor-pointer"
+              className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-900 shadow-lg transition-colors hover:bg-slate-100 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 setActiveZoomUrl(null);
