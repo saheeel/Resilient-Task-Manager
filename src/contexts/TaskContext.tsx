@@ -74,6 +74,20 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export const isAdminRole = (role?: Role | string | null) => role === 'admin' || role === 'superadmin' || role === 'manager';
 
+const USERS_CACHE_KEY = 'rtm_cached_users';
+const TASKS_CACHE_KEY = 'rtm_cached_tasks';
+
+const readCachedCollection = (key: string) => {
+  try {
+    const rawValue = localStorage.getItem(key);
+    if (!rawValue) return undefined;
+    const parsed = JSON.parse(rawValue);
+    return Array.isArray(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Convex Queries and Mutations
   const dbUsersRaw = useQuery(api.users.list);
@@ -94,6 +108,9 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const sendPushNotification = useAction(api.pushActions.sendNotification);
   const notifyAdmins = useAction(api.pushActions.notifyAdmins);
+  const [cachedUsersRaw, setCachedUsersRaw] = useState<any[] | undefined>(() => readCachedCollection(USERS_CACHE_KEY));
+  const [cachedTasksRaw, setCachedTasksRaw] = useState<any[] | undefined>(() => readCachedCollection(TASKS_CACHE_KEY));
+  const isBackendConnected = dbUsersRaw !== undefined && dbTasksRaw !== undefined;
 
   // Trigger Convex Auto-Seeding if table is empty
   useEffect(() => {
@@ -118,10 +135,25 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCurrentUser(user);
   };
 
+  useEffect(() => {
+    if (dbUsersRaw === undefined) return;
+    const usersSnapshot = dbUsersRaw as any[];
+    setCachedUsersRaw(usersSnapshot);
+    localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(usersSnapshot));
+  }, [dbUsersRaw]);
+
+  useEffect(() => {
+    if (dbTasksRaw === undefined) return;
+    const tasksSnapshot = dbTasksRaw as any[];
+    setCachedTasksRaw(tasksSnapshot);
+    localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(tasksSnapshot));
+  }, [dbTasksRaw]);
+
   // Map Convex database users to type-safe User objects
   const mappedDbUsers = useMemo(() => {
-    if (!dbUsersRaw) return [];
-    return (dbUsersRaw as any[]).map((u: any) => ({
+    const userSource = (dbUsersRaw as any[] | undefined) ?? cachedUsersRaw;
+    if (!userSource) return [];
+    return userSource.map((u: any) => ({
       id: u._id,
       name: u.name,
       role: u.role as Role,
@@ -133,7 +165,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       authUserId: u.authUserId,
       authType: u.authType,
     }));
-  }, [dbUsersRaw]);
+  }, [dbUsersRaw, cachedUsersRaw]);
 
   // Keep currentUser synced with database record, and auto-update ID if database is reseeded
   useEffect(() => {
@@ -151,8 +183,9 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Map Convex database tasks to type-safe Task objects
   const mappedDbTasks = useMemo(() => {
-    if (!dbTasksRaw) return [];
-    return (dbTasksRaw as any[]).map((t: any) => ({
+    const taskSource = (dbTasksRaw as any[] | undefined) ?? cachedTasksRaw;
+    if (!taskSource) return [];
+    return taskSource.map((t: any) => ({
       id: t._id,
       title: t.title,
       description: t.description,
@@ -179,7 +212,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isPaused: t.isPaused,
       pausedAt: t.pausedAt,
     }));
-  }, [dbTasksRaw]);
+  }, [dbTasksRaw, cachedTasksRaw]);
 
   const createTemporaryEmail = (name: string) => {
     const slug = name
@@ -419,7 +452,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateUser,
       logout,
       addTaskUpdate,
-      isBackendConnected: true
+      isBackendConnected
     }}>
       {children}
     </TaskContext.Provider>

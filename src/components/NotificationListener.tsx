@@ -5,7 +5,7 @@ import { api } from '../../convex/_generated/api';
 import { ensurePushSubscription } from '../lib/pushNotifications';
 
 const NotificationListener: React.FC = () => {
-  const { tasks, currentUser } = useTasks();
+  const { tasks, currentUser, isBackendConnected } = useTasks();
   const savePushSubscription = useMutation(api.pushMutations.subscribe);
   const knownTaskIds = useRef<Set<string>>(new Set());
   const knownTaskStates = useRef<Map<string, string>>(new Map());
@@ -22,7 +22,7 @@ const NotificationListener: React.FC = () => {
 
   // 2. Track Real-Time Foreground Task Assignments
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || !isBackendConnected) return;
 
     const myTasks = tasks.filter(t => t.assignedTo.includes(currentUser.id));
 
@@ -58,11 +58,11 @@ const NotificationListener: React.FC = () => {
         }
       }
     });
-  }, [tasks, currentUser]);
+  }, [tasks, currentUser, isBackendConnected]);
 
   // 3. Track task completion updates for admin-side users while the app is open
   useEffect(() => {
-    if (!currentUser || !isAdminRole(currentUser.role)) return;
+    if (!currentUser || !isAdminRole(currentUser.role) || !isBackendConnected) return;
 
     if (isFirstLoad.current) return;
 
@@ -92,7 +92,7 @@ const NotificationListener: React.FC = () => {
 
       knownTaskStates.current.set(task.id, task.status);
     });
-  }, [tasks, currentUser]);
+  }, [tasks, currentUser, isBackendConnected]);
 
   // 4. Register Browser Web Push Subscription for Background alerts (app closed)
   useEffect(() => {
