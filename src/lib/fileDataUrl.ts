@@ -1,11 +1,11 @@
-const MAX_IMAGE_DIMENSION = 1280;
-const MIN_IMAGE_DIMENSION = 640;
-const START_QUALITY = 0.78;
-const MIN_QUALITY = 0.42;
-const QUALITY_STEP = 0.12;
-const SCALE_STEP = 0.82;
-const TARGET_IMAGE_BYTES = 280 * 1024;
-const ABSOLUTE_DATA_URL_LIMIT = 550 * 1024;
+const MAX_IMAGE_DIMENSION = 960;
+const MIN_IMAGE_DIMENSION = 320;
+const START_QUALITY = 0.72;
+const MIN_QUALITY = 0.24;
+const QUALITY_STEP = 0.08;
+const SCALE_STEP = 0.76;
+const TARGET_IMAGE_BYTES = 180 * 1024;
+const ABSOLUTE_DATA_URL_LIMIT = 360 * 1024;
 
 const readBlobAsDataUrl = (blob: Blob) =>
   new Promise<string>((resolve, reject) => {
@@ -78,7 +78,7 @@ const compressImageFile = async (file: File) => {
   let quality = START_QUALITY;
   let bestBlob: Blob | null = null;
 
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  for (let attempt = 0; attempt < 14; attempt += 1) {
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
