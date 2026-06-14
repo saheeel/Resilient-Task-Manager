@@ -140,7 +140,14 @@ const EditTask: React.FC = () => {
       isoDueDate = undefined;
     }
 
-    const uploadedAttachment = attachment ? await readFileAsDataUrl(attachment) : undefined;
+    let uploadedAttachment: string | undefined;
+    try {
+      uploadedAttachment = attachment ? await readFileAsDataUrl(attachment) : undefined;
+    } catch (error) {
+      console.error('Failed to prepare task attachment:', error);
+      alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
+      return;
+    }
     const newAttachments = uploadedAttachment
       ? [...existingAttachments, uploadedAttachment]
       : existingAttachments;

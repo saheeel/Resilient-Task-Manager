@@ -33,7 +33,12 @@ const TaskDetail: React.FC = () => {
   const handleUpdatePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setUpdatePhotoUrl(await readFileAsDataUrl(file));
+      try {
+        setUpdatePhotoUrl(await readFileAsDataUrl(file));
+      } catch (error) {
+        console.error('Failed to prepare update photo:', error);
+        alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
+      }
     }
   };
 
@@ -48,7 +53,12 @@ const TaskDetail: React.FC = () => {
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setPhotoUrl(await readFileAsDataUrl(file));
+      try {
+        setPhotoUrl(await readFileAsDataUrl(file));
+      } catch (error) {
+        console.error('Failed to prepare completion photo:', error);
+        alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
+      }
     }
   };
 
@@ -567,6 +577,7 @@ const TaskDetail: React.FC = () => {
                 setUpdatePhotoUrl(null);
               } catch (err) {
                 console.error("Failed to add progress update:", err);
+                alert('Unable to send this update right now. If you attached a large image, please try a smaller photo.');
               } finally {
                 setIsPostingUpdate(false);
               }

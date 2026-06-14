@@ -81,7 +81,14 @@ const CreateTask: React.FC = () => {
       }
     }
 
-    const attachmentUrls = attachment ? [await readFileAsDataUrl(attachment)] : undefined;
+    let attachmentUrls: string[] | undefined;
+    try {
+      attachmentUrls = attachment ? [await readFileAsDataUrl(attachment)] : undefined;
+    } catch (error) {
+      console.error('Failed to prepare task attachment:', error);
+      alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
+      return;
+    }
 
     addTask({
       title,
