@@ -10,6 +10,7 @@ const NotificationListener: React.FC = () => {
   const knownTaskIds = useRef<Set<string>>(new Set());
   const knownTaskStates = useRef<Map<string, string>>(new Map());
   const isFirstLoad = useRef(true);
+  const supportsBackgroundPush = 'serviceWorker' in navigator && 'PushManager' in window;
 
   // 1. Request Browser System Notification Permission
   useEffect(() => {
@@ -39,7 +40,7 @@ const NotificationListener: React.FC = () => {
       if (!knownTaskIds.current.has(task.id)) {
         knownTaskIds.current.add(task.id);
 
-        if ('Notification' in window && Notification.permission === 'granted') {
+        if (!supportsBackgroundPush && 'Notification' in window && Notification.permission === 'granted') {
           try {
             const notification = new Notification("New Task Assigned! 🚀", {
               body: `${task.title}\nPriority: ${task.priority.toUpperCase()}${task.assignedByName ? `\nAssigned by: ${task.assignedByName}` : ''}`,
@@ -70,7 +71,7 @@ const NotificationListener: React.FC = () => {
       const previousStatus = knownTaskStates.current.get(task.id);
 
       if (previousStatus && previousStatus !== 'completed' && task.status === 'completed') {
-        if ('Notification' in window && Notification.permission === 'granted') {
+        if (!supportsBackgroundPush && 'Notification' in window && Notification.permission === 'granted') {
           try {
             const notification = new Notification('Task Completed', {
               body: task.title,
