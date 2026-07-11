@@ -22,8 +22,24 @@ if ('serviceWorker' in navigator) {
   if (import.meta.env.PROD) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
-        .then((reg) => console.log('Service worker registered successfully:', reg.scope))
+        .then((reg) => {
+          console.log('Service worker registered successfully:', reg.scope);
+          
+          // Periodically check for updates (every hour)
+          setInterval(() => {
+            reg.update();
+          }, 1000 * 60 * 60);
+        })
         .catch((err) => console.error('Service worker registration failed:', err));
+        
+      // Auto-reload the page when a new service worker takes over (OTA updates)
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
     });
   } else {
     // Unregister active development service worker and clear cache to guarantee fresh reloads

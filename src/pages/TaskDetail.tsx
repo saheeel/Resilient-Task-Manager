@@ -19,7 +19,7 @@ const TaskDetail: React.FC = () => {
   
   const [comment, setComment] = useState('');
   const [showBlockReason, setShowBlockReason] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [activeZoomUrl, setActiveZoomUrl] = useState<string | null>(null);
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
   const photoInputRef = React.useRef<HTMLInputElement>(null);
@@ -56,18 +56,25 @@ const TaskDetail: React.FC = () => {
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      try {
-        setPhotoUrl(await readFileAsDataUrl(file));
-      } catch (error) {
-        console.error('Failed to prepare completion photo:', error);
-        alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
+      const files = Array.from(e.target.files);
+      const newUrls: string[] = [];
+      for (const file of files) {
+        try {
+          const url = await readFileAsDataUrl(file);
+          newUrls.push(url);
+        } catch (error) {
+          console.error('Failed to prepare completion photo:', error);
+          alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
+        }
+      }
+      if (newUrls.length > 0) {
+        setPhotoUrls(prev => [...prev, ...newUrls]);
       }
     }
   };
 
-  const handleRemovePhoto = () => {
-    setPhotoUrl(null);
+  const handleRemovePhoto = (index: number) => {
+    setPhotoUrls(prev => prev.filter((_, i) => i !== index));
   };
 
   const isLegacyUnavailableImage = (url: string) => url.startsWith('blob:');
@@ -144,14 +151,16 @@ const TaskDetail: React.FC = () => {
     updateTaskStatus(task.id, 'in_progress', {
       startedAt: new Date().toISOString()
     });
+    addTaskUpdate(task.id, `${currentUser.name} started the task.`);
   };
 
   const handleComplete = () => {
     updateTaskStatus(task.id, 'completed', { 
       completedAt: new Date().toISOString(),
       completionComment: comment,
-      proofPhotoUrl: photoUrl || undefined
+      proofPhotoUrls: photoUrls.length > 0 ? photoUrls : undefined
     });
+    addTaskUpdate(task.id, `${currentUser.name} completed the task.`);
     navigate(-1);
   };
 
@@ -164,6 +173,7 @@ const TaskDetail: React.FC = () => {
       blockReason: comment,
       markedIssueAt: new Date().toISOString()
     });
+    addTaskUpdate(task.id, `${currentUser.name} marked the task as an issue.`);
     navigate(-1);
   };
 
@@ -262,7 +272,7 @@ const TaskDetail: React.FC = () => {
     });
   };
 
-  const otherEmployees = users.filter(u => u.role === 'employee' && u.id !== currentUser.id && !task.assignedTo.includes(u.id));
+  const otherUsers = users.filter(u => u.id !== currentUser.id && !task.assignedTo.includes(u.id));
 
   return (
     <div className="max-w-xl mx-auto px-4 py-8">
@@ -331,8 +341,8 @@ const TaskDetail: React.FC = () => {
             </>
           )}
 
-          {/* Transfer Task Button for assigned employees */}
-          {!isAdminRole(currentUser.role) && task.assignedTo.includes(currentUser.id) && !task.pendingTransferTo && task.status !== 'completed' && (
+          {/* Transfer Task Button for assigned users */}
+          {task.assignedTo.includes(currentUser.id) && !task.pendingTransferTo && task.status !== 'completed' && (
             <button 
               onClick={() => setShowTransfer(!showTransfer)}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center ${showTransfer ? 'border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100' : 'border-slate-200 text-slate-700 bg-slate-50 hover:bg-slate-100'}`}
@@ -354,8 +364,8 @@ const TaskDetail: React.FC = () => {
               onChange={(e) => setTransferToId(e.target.value)}
               className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             >
-              <option value="">Select an employee...</option>
-              {otherEmployees.map(emp => (
+              <option value="">{t('taskDetail.selectColleague')}</option>
+              {otherUsers.map(emp => (
                 <option key={emp.id} value={emp.id}>{emp.name}</option>
               ))}
             </select>
@@ -378,7 +388,7 @@ const TaskDetail: React.FC = () => {
       {task.pendingTransferTo && task.pendingTransferFrom === currentUser.id && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="text-sm text-amber-800 font-medium">You requested to transfer this task to <span className="font-bold">{users.find(u => u.id === task.pendingTransferTo)?.name}</span>.</div>
-          <button onClick={handleTransferCancel} className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap">Cancel Request</button>
+          <button onClick={handleTransferCancel} className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap shadow-sm">Cancel Request</button>
         </div>
       )}
 
@@ -565,27 +575,33 @@ const TaskDetail: React.FC = () => {
           </div>
         )}
 
-        {task.proofPhotoUrl && (
+        {(task.proofPhotoUrls || task.proofPhotoUrl) && (
           <div className="mb-4">
             <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('taskDetail.completionPhotoProof')}</h3>
-            {isRenderableSavedImage(task.proofPhotoUrl) ? (
-              <div className="relative inline-block group cursor-zoom-in" onClick={() => setActiveZoomUrl(task.proofPhotoUrl || null)}>
-                <img 
-                  src={task.proofPhotoUrl} 
-                  alt="Completion Proof" 
-                  className="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
-                  onError={() => markImageBroken(task.proofPhotoUrl!)}
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
-                  <Eye className="text-white" size={20} />
-                </div>
-              </div>
-            ) : (
-              <div className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
-                <ImageOff size={14} className="shrink-0" />
-                <span>{t('taskDetail.legacyImageUnavailable')}</span>
-              </div>
-            )}
+            <div className="flex flex-wrap gap-3">
+              {(task.proofPhotoUrls || (task.proofPhotoUrl ? [task.proofPhotoUrl] : [])).map((url, index) => (
+                <React.Fragment key={index}>
+                  {isRenderableSavedImage(url) ? (
+                    <div className="relative inline-block group cursor-zoom-in" onClick={() => setActiveZoomUrl(url || null)}>
+                      <img 
+                        src={url} 
+                        alt={`Completion Proof ${index + 1}`} 
+                        className="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
+                        onError={() => markImageBroken(url!)}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
+                        <Eye className="text-white" size={20} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                      <ImageOff size={14} className="shrink-0" />
+                      <span>{t('taskDetail.legacyImageUnavailable')}</span>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
         )}
 
@@ -827,35 +843,41 @@ const TaskDetail: React.FC = () => {
             <input 
               type="file" 
               accept="image/*" 
+              multiple
               className="hidden" 
               ref={photoInputRef}
               onChange={handlePhotoChange}
             />
-            {!photoUrl ? (
-              <button 
-                type="button"
-                onClick={() => photoInputRef.current?.click()}
-                className="task-action-secondary inline-flex items-center justify-center gap-2 w-full rounded-lg py-2 text-sm font-semibold transition-colors cursor-pointer"
-              >
-                <Camera size={18} />
-                {t('taskDetail.addCompletionPhoto')}
-              </button>
-            ) : (
-              <div className="relative inline-block mt-1">
-                <img 
-                  src={photoUrl} 
-                  alt="Proof Preview" 
-                  className="w-24 h-24 object-cover rounded-lg border border-slate-200 shadow-sm cursor-zoom-in"
-                  onClick={() => setActiveZoomUrl(photoUrl)}
-                />
-                <button
-                  type="button"
-                  onClick={handleRemovePhoto}
-                  className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow transition-colors border-none cursor-pointer"
-                  title={t('taskDetail.removePhoto')}
-                >
-                  <X size={12} />
-                </button>
+            
+            <button 
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              className="task-action-secondary inline-flex items-center justify-center gap-2 w-full rounded-lg py-2 text-sm font-semibold transition-colors cursor-pointer mb-3"
+            >
+              <Camera size={18} />
+              {t('taskDetail.addCompletionPhoto')}
+            </button>
+            
+            {photoUrls.length > 0 && (
+              <div className="flex flex-wrap gap-3">
+                {photoUrls.map((url, index) => (
+                  <div key={index} className="relative inline-block mt-1">
+                    <img 
+                      src={url} 
+                      alt={`Proof Preview ${index + 1}`} 
+                      className="w-24 h-24 object-cover rounded-lg border border-slate-200 shadow-sm cursor-zoom-in"
+                      onClick={() => setActiveZoomUrl(url)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhoto(index)}
+                      className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow transition-colors border-none cursor-pointer"
+                      title={t('taskDetail.removePhoto')}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>

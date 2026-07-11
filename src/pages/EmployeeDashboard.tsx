@@ -9,7 +9,7 @@ import { Pin, MoreVertical } from 'lucide-react';
 
 const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { tasks, currentUser, editTask, users, addTaskUpdate } = useTasks();
+  const { tasks, currentUser, editTask, users, addTaskUpdate, sendPushNotification } = useTasks();
   const {
     t,
     formatDate,
@@ -21,6 +21,7 @@ const EmployeeDashboard: React.FC = () => {
   const [sortBy, setSortBy] = useState<'default' | 'priority' | 'dueDate'>('default');
   const [showTodayCompleted, setShowTodayCompleted] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [processingTasks, setProcessingTasks] = useState<Set<string>>(new Set());
 
   React.useEffect(() => {
     const closeMenu = () => setOpenMenuId(null);
@@ -101,11 +102,13 @@ const EmployeeDashboard: React.FC = () => {
   const sortedActiveTasks = sortTasks(activeTasks);
   const sortedUpcomingTasks = sortTasks(upcomingTasks);
 
-  const pendingTransfers = tasks.filter(task => task.pendingTransferTo === currentUser.id);
-  const transferResults = tasks.filter(task => task.pendingTransferFrom === currentUser.id && task.transferResult && !task.transferResultSeen);
+  const pendingTransfers = tasks.filter(task => task.pendingTransferTo === currentUser.id && !processingTasks.has(task.id));
+  const transferResults = tasks.filter(task => task.pendingTransferFrom === currentUser.id && task.transferResult && !task.transferResultSeen && !processingTasks.has(task.id));
+  const outgoingTransfers = tasks.filter(task => task.pendingTransferFrom === currentUser.id && task.pendingTransferTo && !processingTasks.has(task.id));
 
   const handleDismissTransferResult = (e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
+    setProcessingTasks(prev => new Set(prev).add(task.id));
     editTask(task.id, {
       transferResultSeen: true,
       pendingTransferFrom: "",
@@ -115,6 +118,7 @@ const EmployeeDashboard: React.FC = () => {
 
   const handleTransferAccept = (e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
+    setProcessingTasks(prev => new Set(prev).add(task.id));
     const newAssignedTo = task.assignedTo.filter(id => id !== task.pendingTransferFrom);
     if (!newAssignedTo.includes(currentUser.id)) {
       newAssignedTo.push(currentUser.id);
@@ -131,16 +135,45 @@ const EmployeeDashboard: React.FC = () => {
     const previousAssignee = users.find(u => u.id === task.pendingTransferFrom);
     if (previousAssignee) {
       addTaskUpdate(task.id, `Task transferred from ${previousAssignee.name} to ${currentUser.name}.`);
+      sendPushNotification({
+        userId: previousAssignee.id,
+        title: "✅ Transfer Accepted",
+        body: `${currentUser.name} accepted your transfer for: ${task.title}`,
+        url: `/task/${task.id}`
+      }).catch(err => console.error(err));
     }
   };
 
   const handleTransferDecline = (e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
+    setProcessingTasks(prev => new Set(prev).add(task.id));
     editTask(task.id, {
       pendingTransferTo: "",
       pendingTransferComment: "",
       transferResult: "declined",
       transferResultSeen: false,
+    });
+    
+    // Log history    
+    const previousAssignee = users.find(u => u.id === task.pendingTransferFrom);
+    if (previousAssignee) {
+      addTaskUpdate(task.id, `${currentUser.name} declined the transfer request from ${previousAssignee.name}.`);
+      sendPushNotification({
+        userId: previousAssignee.id,
+        title: "❌ Transfer Declined",
+        body: `${currentUser.name} declined your transfer for: ${task.title}`,
+        url: `/task/${task.id}`
+      }).catch(err => console.error(err));
+    }
+  };
+
+  const handleTransferCancel = (e: React.MouseEvent, task: Task) => {
+    e.stopPropagation();
+    setProcessingTasks(prev => new Set(prev).add(task.id));
+    editTask(task.id, {
+      pendingTransferTo: "",
+      pendingTransferFrom: "",
+      pendingTransferComment: "",
     });
   };
 
@@ -274,6 +307,28 @@ const EmployeeDashboard: React.FC = () => {
                     <button onClick={(e) => handleTransferAccept(e, task)} className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap shadow-sm">Accept Task</button>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {outgoingTransfers.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900 flex items-center gap-2">Outgoing Requests</h2>
+          <div className="flex flex-col gap-3">
+            {outgoingTransfers.map((task) => (
+              <div
+                key={`outgoing-${task.id}`}
+                className="cursor-pointer flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-3 shadow-sm transition-colors hover:bg-amber-100/60"
+                onClick={() => navigate(`/task/${task.id}`)}
+              >
+                <div>
+                  <span className="text-sm font-semibold text-slate-800 block mb-0.5">{task.title}</span>
+                  <p className="text-xs text-slate-700">Requested transfer to <span className="font-bold">{users.find(u => u.id === task.pendingTransferTo)?.name}</span> <span className="italic text-slate-500 ml-1">(Waiting...)</span></p>
+                </div>
+                
+                <button onClick={(e) => handleTransferCancel(e, task)} className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap shadow-sm">Cancel</button>
               </div>
             ))}
           </div>

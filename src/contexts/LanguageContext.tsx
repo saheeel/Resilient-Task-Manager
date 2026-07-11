@@ -109,6 +109,7 @@ const translations: Record<Language, TranslationTree> = {
     },
     nav: {
       dashboard: 'My Tasks',
+      adminDashboard: 'Dashboard',
       allTasks: 'All Tasks',
       history: 'History',
       calendar: 'Calendar',
@@ -471,6 +472,7 @@ const translations: Record<Language, TranslationTree> = {
     },
     nav: {
       dashboard: 'Meine Aufgaben',
+      adminDashboard: 'Übersicht',
       allTasks: 'Alle Aufgaben',
       history: 'Verlauf',
       calendar: 'Kalender',

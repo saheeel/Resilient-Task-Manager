@@ -76,9 +76,9 @@ const compressImageFile = async (file: File) => {
   let height = Math.max(1, Math.round(sourceHeight * initialScale));
   let quality = START_QUALITY;
   let bestBlob: Blob | null = null;
+  const canvas = document.createElement('canvas');
 
   for (let attempt = 0; attempt < 14; attempt += 1) {
-    const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
 
@@ -102,6 +102,8 @@ const compressImageFile = async (file: File) => {
       if ('close' in image && typeof image.close === 'function') {
         image.close();
       }
+      canvas.width = 0;
+      canvas.height = 0;
       return blob;
     }
 
@@ -123,6 +125,9 @@ const compressImageFile = async (file: File) => {
   if ('close' in image && typeof image.close === 'function') {
     image.close();
   }
+  
+  canvas.width = 0;
+  canvas.height = 0;
 
   return bestBlob && bestBlob.size < file.size ? bestBlob : file;
 };

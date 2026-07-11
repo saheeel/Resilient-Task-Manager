@@ -42,6 +42,7 @@ const AppContent = () => {
         <Route path="/" element={isAdminRole(currentUser.role) ? <ManageTasks /> : <EmployeeDashboard />} />
         <Route path="/all-tasks" element={currentUser.role === 'employee' ? <AllTasks /> : <Navigate to="/" replace />} />
         <Route path="/create" element={<CreateTask />} />
+        <Route path="/my-tasks" element={isAdminRole(currentUser.role) ? <EmployeeDashboard /> : <Navigate to="/" replace />} />
         <Route path="/task/:id" element={<TaskDetail />} />
         <Route path="/task/:id/edit" element={<EditTask />} />
         <Route path="/add-employee" element={<AddEmployee />} />

@@ -135,13 +135,22 @@ const Settings: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       {isSuperAdmin || (currentUser && currentUser.id === user.id) ? (
-                        <button
-                          onClick={() => navigate(`/settings/admin/${user.id}/edit`)}
-                          className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
-                          title="Edit admin details"
-                        >
-                          <Edit size={16} />
-                        </button>
+                        <div className="flex justify-end gap-1.5">
+                          <button 
+                            onClick={() => navigate(`/settings/employee/${user.id}/history`)}
+                            className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
+                            title={t('settings.viewProfileHistory')}
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => navigate(`/settings/admin/${user.id}/edit`)}
+                            className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
+                            title="Edit admin details"
+                          >
+                            <Edit size={16} />
+                          </button>
+                        </div>
                       ) : null}
                     </td>
                   </tr>

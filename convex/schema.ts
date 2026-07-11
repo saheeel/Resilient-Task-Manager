@@ -32,6 +32,7 @@ export default defineSchema({
     completionComment: v.optional(v.string()),
     blockReason: v.optional(v.string()),
     proofPhotoUrl: v.optional(v.string()),
+    proofPhotoUrls: v.optional(v.array(v.string())),
     createdAt: v.optional(v.string()),
     markedIssueAt: v.optional(v.string()),
     startedAt: v.optional(v.string()),

@@ -38,7 +38,7 @@ const EditTask: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
-  const employees = users.filter(u => u.role === 'employee');
+  const assignableUsers = users;
 
   useEffect(() => {
     if (task) {
@@ -608,9 +608,9 @@ const EditTask: React.FC = () => {
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-3">
                 {t('createTask.assignTo')} *
               </label>
-              <div className="space-y-2 max-h-[260px] overflow-y-auto border border-slate-200 rounded-lg p-3 bg-slate-50">
-                {employees.length > 0 ? (
-                  employees.map(emp => (
+              <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                {assignableUsers.length > 0 ? (
+                  assignableUsers.map(emp => (
                     <label
                       key={emp.id}
                       className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer select-none transition-colors"

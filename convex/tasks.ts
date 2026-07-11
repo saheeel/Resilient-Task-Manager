@@ -84,6 +84,7 @@ export const update = mutation({
     completionComment: v.optional(v.string()),
     blockReason: v.optional(v.string()),
     proofPhotoUrl: v.optional(v.string()),
+    proofPhotoUrls: v.optional(v.array(v.string())),
     markedIssueAt: v.optional(v.string()),
     startedAt: v.optional(v.string()),
     recurringDay: v.optional(v.string()),

@@ -42,6 +42,7 @@ export interface Task {
   completionComment?: string;
   blockReason?: string; 
   proofPhotoUrl?: string; 
+  proofPhotoUrls?: string[];
   createdAt?: string; // ISO date string when assigned
   markedIssueAt?: string; // ISO date string when reported as issue/incomplete
   startedAt?: string; // ISO date string when employee clicks 'Start Task'
@@ -104,7 +105,20 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const seedTasks = useMutation(api.tasks.seed);
 
   const dbAddTask = useMutation(api.tasks.create);
-  const dbUpdateTask = useMutation(api.tasks.update);
+  const dbUpdateTask = useMutation(api.tasks.update).withOptimisticUpdate(
+    (localStore, args) => {
+      const { id, ...updates } = args;
+      const currentTasks = localStore.getQuery(api.tasks.list);
+      if (currentTasks !== undefined) {
+        localStore.setQuery(api.tasks.list, {}, currentTasks.map(task => {
+          if (task._id === id) {
+            return { ...task, ...updates };
+          }
+          return task;
+        }));
+      }
+    }
+  );
   const dbRemoveTask = useMutation(api.tasks.remove);
 
   const dbAddUser = useMutation(api.users.create);
@@ -211,6 +225,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       completionComment: t.completionComment,
       blockReason: t.blockReason,
       proofPhotoUrl: t.proofPhotoUrl,
+      proofPhotoUrls: t.proofPhotoUrls,
       createdAt: t.createdAt,
       markedIssueAt: t.markedIssueAt,
       startedAt: t.startedAt,
@@ -299,8 +314,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       ...details,
     });
 
-    // Fire push notification to all admin-side users when an employee completes a task
-    if (status === 'completed' && currentUser && currentUser.role === 'employee') {
+    // Fire push notification to all admin-side users when anyone completes a task
+    if (status === 'completed' && currentUser) {
       const completedTask = mappedDbTasks.find(t => t.id === taskId);
       if (completedTask) {
         notifyAdmins({
