@@ -110,7 +110,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { id, ...updates } = args;
       const currentTasks = localStore.getQuery(api.tasks.list);
       if (currentTasks !== undefined) {
-        localStore.setQuery(api.tasks.list, {}, currentTasks.map(task => {
+        localStore.setQuery(api.tasks.list, {}, currentTasks.map((task: any) => {
           if (task._id === id) {
             return { ...task, ...updates };
           }
