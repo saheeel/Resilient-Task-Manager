@@ -49,6 +49,12 @@ export interface Task {
   recurringTime?: string; // Time string in HH:MM format ("09:00")
   isPaused?: boolean;
   pausedAt?: string;
+  pinned?: boolean;
+  pendingTransferTo?: string;
+  pendingTransferFrom?: string;
+  pendingTransferComment?: string;
+  transferResult?: string;
+  transferResultSeen?: boolean;
 }
 
 interface TaskContextType {
@@ -68,6 +74,7 @@ interface TaskContextType {
   logout: () => void;
   addTaskUpdate: (taskId: string, text: string, photoUrl?: string) => Promise<void>;
   isBackendConnected: boolean;
+  sendPushNotification: (args: { userId: string; title: string; body: string; url?: string }) => Promise<null>;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -211,6 +218,12 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       recurringTime: t.recurringTime,
       isPaused: t.isPaused,
       pausedAt: t.pausedAt,
+      pinned: t.pinned,
+      pendingTransferTo: t.pendingTransferTo,
+      pendingTransferFrom: t.pendingTransferFrom,
+      pendingTransferComment: t.pendingTransferComment,
+      transferResult: t.transferResult,
+      transferResultSeen: t.transferResultSeen,
     }));
   }, [dbTasksRaw, cachedTasksRaw]);
 
@@ -265,6 +278,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       recurringTime: taskData.recurringTime,
       isPaused: taskData.isPaused,
       pausedAt: taskData.pausedAt,
+      pinned: taskData.pinned,
     }).then(() => {
       // Loop through assignees and fire off background Web Push notifications
       taskData.assignedTo.forEach((userId) => {
@@ -452,7 +466,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateUser,
       logout,
       addTaskUpdate,
-      isBackendConnected
+      isBackendConnected,
+      sendPushNotification,
     }}>
       {children}
     </TaskContext.Provider>

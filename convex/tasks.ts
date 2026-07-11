@@ -29,6 +29,10 @@ export const create = mutation({
     recurringTime: v.optional(v.string()),
     isPaused: v.optional(v.boolean()),
     pausedAt: v.optional(v.string()),
+    pinned: v.optional(v.boolean()),
+    pendingTransferTo: v.optional(v.string()),
+    pendingTransferFrom: v.optional(v.string()),
+    pendingTransferComment: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     const taskId = await ctx.db.insert("tasks", {
@@ -50,6 +54,10 @@ export const create = mutation({
       recurringTime: args.recurringTime,
       isPaused: args.isPaused,
       pausedAt: args.pausedAt,
+      pinned: args.pinned,
+      pendingTransferTo: args.pendingTransferTo,
+      pendingTransferFrom: args.pendingTransferFrom,
+      pendingTransferComment: args.pendingTransferComment,
     });
     return taskId;
   },
@@ -82,6 +90,12 @@ export const update = mutation({
     recurringTime: v.optional(v.string()),
     isPaused: v.optional(v.boolean()),
     pausedAt: v.optional(v.string()),
+    pinned: v.optional(v.boolean()),
+    pendingTransferTo: v.optional(v.string()),
+    pendingTransferFrom: v.optional(v.string()),
+    pendingTransferComment: v.optional(v.string()),
+    transferResult: v.optional(v.string()),
+    transferResultSeen: v.optional(v.boolean()),
   },
   handler: async (ctx: any, args: any) => {
     const { id, ...fields } = args;

@@ -108,7 +108,8 @@ const translations: Record<Language, TranslationTree> = {
       enableAlerts: 'Enable alerts',
     },
     nav: {
-      dashboard: 'Dashboard',
+      dashboard: 'My Tasks',
+      allTasks: 'All Tasks',
       history: 'History',
       calendar: 'Calendar',
       settings: 'Settings',
@@ -173,7 +174,7 @@ const translations: Record<Language, TranslationTree> = {
     },
     employeeDashboard: {
       welcome: 'Welcome back, {{name}}. Here is your active work.',
-      sortMyWork: 'Sort my work',
+      sortMyWork: 'Sort by',
       originalOrder: 'Original Order',
       priorityFirst: 'Priority First',
       dueDateSoon: 'Due Date Soon',
@@ -469,7 +470,8 @@ const translations: Record<Language, TranslationTree> = {
       enableAlerts: 'Benachrichtigungen aktivieren',
     },
     nav: {
-      dashboard: 'Dashboard',
+      dashboard: 'Meine Aufgaben',
+      allTasks: 'Alle Aufgaben',
       history: 'Verlauf',
       calendar: 'Kalender',
       settings: 'Einstellungen',

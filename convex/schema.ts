@@ -39,6 +39,12 @@ export default defineSchema({
     recurringTime: v.optional(v.string()),
     isPaused: v.optional(v.boolean()),
     pausedAt: v.optional(v.string()),
+    pinned: v.optional(v.boolean()),
+    pendingTransferTo: v.optional(v.string()),
+    pendingTransferFrom: v.optional(v.string()),
+    pendingTransferComment: v.optional(v.string()),
+    transferResult: v.optional(v.string()), // "accepted" or "declined"
+    transferResultSeen: v.optional(v.boolean()),
   }),
 
   taskUpdates: defineTable({

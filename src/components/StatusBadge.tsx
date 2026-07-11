@@ -10,10 +10,12 @@ interface StatusBadgeProps {
 const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   const { taskStatusLabel } = useLanguage();
 
+  if (status === 'open') {
+    return null;
+  }
+
   const getStatusConfig = () => {
     switch (status) {
-      case 'open':
-        return { label: taskStatusLabel(status), colorClass: 'bg-blue-100 text-blue-800 border-blue-200' };
       case 'in_progress':
         return { label: taskStatusLabel(status), colorClass: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
       case 'completed':

@@ -11,7 +11,7 @@ const MyTasks: React.FC = () => {
   const myTasks = tasks.filter(t => 
     t.assignedTo.includes(currentUser.id) && 
     (t.status === 'open' || t.status === 'in_progress')
-  );
+  ).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 
   return (
     <div className="support-container" style={{ paddingBottom: '20px' }}>

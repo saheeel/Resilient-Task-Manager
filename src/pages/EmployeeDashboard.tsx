@@ -5,9 +5,11 @@ import type { Task } from '../contexts/TaskContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import StatusBadge from '../components/StatusBadge';
 
+import { Pin, MoreVertical } from 'lucide-react';
+
 const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { tasks, currentUser } = useTasks();
+  const { tasks, currentUser, editTask, users, addTaskUpdate } = useTasks();
   const {
     t,
     formatDate,
@@ -18,6 +20,13 @@ const EmployeeDashboard: React.FC = () => {
   } = useLanguage();
   const [sortBy, setSortBy] = useState<'default' | 'priority' | 'dueDate'>('default');
   const [showTodayCompleted, setShowTodayCompleted] = useState(true);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const closeMenu = () => setOpenMenuId(null);
+    document.addEventListener('click', closeMenu);
+    return () => document.removeEventListener('click', closeMenu);
+  }, []);
 
   if (!currentUser) return null;
 
@@ -67,20 +76,73 @@ const EmployeeDashboard: React.FC = () => {
   const sortTasks = (taskList: Task[]) => {
     const listCopy = [...taskList];
     if (sortBy === 'priority') {
-      return listCopy.sort((a, b) => getPriorityWeight(b.priority) - getPriorityWeight(a.priority));
+      return listCopy.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
+      });
     }
     if (sortBy === 'dueDate') {
       return listCopy.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       });
     }
-    return listCopy;
+    return listCopy.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return 0;
+    });
   };
 
   const sortedActiveTasks = sortTasks(activeTasks);
   const sortedUpcomingTasks = sortTasks(upcomingTasks);
+
+  const pendingTransfers = tasks.filter(task => task.pendingTransferTo === currentUser.id);
+  const transferResults = tasks.filter(task => task.pendingTransferFrom === currentUser.id && task.transferResult && !task.transferResultSeen);
+
+  const handleDismissTransferResult = (e: React.MouseEvent, task: Task) => {
+    e.stopPropagation();
+    editTask(task.id, {
+      transferResultSeen: true,
+      pendingTransferFrom: "",
+      transferResult: "",
+    });
+  };
+
+  const handleTransferAccept = (e: React.MouseEvent, task: Task) => {
+    e.stopPropagation();
+    const newAssignedTo = task.assignedTo.filter(id => id !== task.pendingTransferFrom);
+    if (!newAssignedTo.includes(currentUser.id)) {
+      newAssignedTo.push(currentUser.id);
+    }
+    editTask(task.id, {
+      assignedTo: newAssignedTo,
+      pendingTransferTo: "",
+      pendingTransferComment: "",
+      transferResult: "accepted",
+      transferResultSeen: false,
+    });
+    
+    // Log history
+    const previousAssignee = users.find(u => u.id === task.pendingTransferFrom);
+    if (previousAssignee) {
+      addTaskUpdate(task.id, `Task transferred from ${previousAssignee.name} to ${currentUser.name}.`);
+    }
+  };
+
+  const handleTransferDecline = (e: React.MouseEvent, task: Task) => {
+    e.stopPropagation();
+    editTask(task.id, {
+      pendingTransferTo: "",
+      pendingTransferComment: "",
+      transferResult: "declined",
+      transferResultSeen: false,
+    });
+  };
 
   const formatTimeTaken = (start?: string, end?: string) => {
     if (!start || !end) return '';
@@ -125,6 +187,13 @@ const EmployeeDashboard: React.FC = () => {
     return `${diffDays}d - ${formatDate(dueDate, { month: 'short', day: 'numeric' })}`;
   };
 
+  const handlePinClick = (e: React.MouseEvent, task: Task) => {
+    e.stopPropagation();
+    e.preventDefault();
+    editTask(task.id, { pinned: !task.pinned });
+    setOpenMenuId(null);
+  };
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <header className="mb-8 border-b border-slate-150 pb-6">
@@ -151,6 +220,65 @@ const EmployeeDashboard: React.FC = () => {
           </select>
         </div>
       </div>
+
+      {transferResults.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900 flex items-center gap-2">Transfer Updates</h2>
+          <div className="flex flex-col gap-3">
+            {transferResults.map((task) => (
+              <div
+                key={`result-${task.id}`}
+                className={`flex items-center justify-between rounded-xl border p-4 shadow-sm transition-colors cursor-pointer ${task.transferResult === 'accepted' ? 'border-green-200 bg-green-50 hover:bg-green-100/60' : 'border-red-200 bg-red-50 hover:bg-red-100/60'}`}
+                onClick={() => navigate(`/task/${task.id}`)}
+              >
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    Transfer {task.transferResult === 'accepted' ? 'Accepted' : 'Declined'}
+                  </p>
+                  <p className="text-xs text-slate-600">
+                    Your request to transfer <span className="font-bold">"{task.title}"</span> was {task.transferResult}.
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => handleDismissTransferResult(e, task)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${task.transferResult === 'accepted' ? 'bg-white text-green-700 border-green-300 hover:bg-green-50' : 'bg-white text-red-700 border-red-300 hover:bg-red-50'}`}
+                >
+                  Dismiss
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {pendingTransfers.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900 flex items-center gap-2">Pending Transfers <span className="bg-indigo-600 text-white text-xs px-2 py-0.5 rounded-full">{pendingTransfers.length}</span></h2>
+          <div className="flex flex-col gap-3">
+            {pendingTransfers.map((task) => (
+              <div
+                key={task.id}
+                className="cursor-pointer rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:bg-slate-50 shadow-sm"
+                onClick={() => navigate(`/task/${task.id}`)}
+              >
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <span className="text-sm font-semibold text-slate-900 flex-1">{task.title}</span>
+                </div>
+                <p className="text-sm text-slate-700"><span className="font-bold">{users.find(u => u.id === task.pendingTransferFrom)?.name}</span> has requested to transfer this task to you.</p>
+                {task.pendingTransferComment && <p className="mt-2 text-xs italic text-slate-600 bg-slate-50 p-2 rounded">"{task.pendingTransferComment}"</p>}
+                
+                <div className="flex gap-3 mt-4 items-center justify-between">
+                  <span className="text-xs text-slate-500 italic">Click card to view details</span>
+                  <div className="flex gap-2">
+                    <button onClick={(e) => handleTransferDecline(e, task)} className="px-4 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap shadow-sm">Decline</button>
+                    <button onClick={(e) => handleTransferAccept(e, task)} className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap shadow-sm">Accept Task</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {issueTasks.length > 0 && (
         <div className="mb-8">
@@ -188,12 +316,39 @@ const EmployeeDashboard: React.FC = () => {
                 onClick={() => navigate(`/task/${task.id}`)}
                 className="cursor-pointer rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:shadow"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-3 relative">
                   <div className="min-w-0 flex-1">
-                    <h3 className="mb-2 text-lg font-semibold text-slate-900">{task.title}</h3>
+                    <h3 className="mb-2 text-lg font-semibold text-slate-900 flex items-center gap-2">
+                      {task.pinned && <Pin size={14} className="text-blue-600 shrink-0" fill="currentColor" />}
+                      {task.title}
+                    </h3>
                     <p className="line-clamp-2 text-sm leading-6 text-slate-500">{taskPreview(task)}</p>
                   </div>
-                  <StatusBadge status={task.status} />
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={task.status} />
+                    <div className="relative" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenMenuId(openMenuId === task.id ? null : task.id);
+                        }}
+                        className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer border-none bg-transparent"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                      {openMenuId === task.id && (
+                        <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-lg shadow-lg border border-slate-150 py-1.5 z-20 overflow-hidden">
+                          <button
+                            onClick={(e) => handlePinClick(e, task)}
+                            className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer border-none bg-transparent"
+                          >
+                            <Pin size={14} className={task.pinned ? 'text-blue-600' : 'text-slate-400'} fill={task.pinned ? "currentColor" : "none"} />
+                            {task.pinned ? 'Unpin task' : 'Pin task'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2.5">
@@ -241,9 +396,36 @@ const EmployeeDashboard: React.FC = () => {
                 onClick={() => navigate(`/task/${task.id}`)}
                 className="cursor-pointer rounded-xl border border-slate-200 border-l-4 border-l-indigo-400 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:shadow"
               >
-                <div className="min-w-0">
-                  <h3 className="mb-2 text-base font-semibold text-slate-900">{task.title}</h3>
-                  <p className="line-clamp-2 text-sm leading-6 text-slate-500">{taskPreview(task)}</p>
+                <div className="flex items-start justify-between gap-3 relative">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="mb-2 text-base font-semibold text-slate-900 flex items-center gap-2">
+                      {task.pinned && <Pin size={14} className="text-blue-600 shrink-0" fill="currentColor" />}
+                      {task.title}
+                    </h3>
+                    <p className="line-clamp-2 text-sm leading-6 text-slate-500">{taskPreview(task)}</p>
+                  </div>
+                  <div className="relative flex items-center" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setOpenMenuId(openMenuId === task.id ? null : task.id);
+                      }}
+                      className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer border-none bg-transparent"
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                    {openMenuId === task.id && (
+                      <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-lg shadow-lg border border-slate-150 py-1.5 z-20 overflow-hidden">
+                        <button
+                          onClick={(e) => handlePinClick(e, task)}
+                          className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer border-none bg-transparent"
+                        >
+                          <Pin size={14} className={task.pinned ? 'text-blue-600' : 'text-slate-400'} fill={task.pinned ? "currentColor" : "none"} />
+                          {task.pinned ? 'Unpin task' : 'Pin task'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-2.5">
                   {renderPriorityBadge(task.priority)}

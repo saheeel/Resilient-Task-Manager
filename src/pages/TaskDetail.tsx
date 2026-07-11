@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, Image, PackageCheck, UserRoundCog, ImageOff } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, Image, PackageCheck, UserRoundCog, ImageOff, ArrowRightLeft } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -12,7 +12,7 @@ import { readFileAsDataUrl } from '../lib/fileDataUrl';
 const TaskDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { tasks, updateTaskStatus, currentUser, deleteTask, users, editTask, addTaskUpdate } = useTasks();
+  const { tasks, updateTaskStatus, currentUser, deleteTask, users, editTask, addTaskUpdate, sendPushNotification } = useTasks();
   const { t, formatDate, formatDateTime, formatTime, priorityLabel, taskTypeLabel, weekdayLabel, monthDayOrdinalLabel, roleLabel } = useLanguage();
   
   const task = tasks.find(t => t.id === id);
@@ -23,6 +23,10 @@ const TaskDetail: React.FC = () => {
   const [activeZoomUrl, setActiveZoomUrl] = useState<string | null>(null);
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
   const photoInputRef = React.useRef<HTMLInputElement>(null);
+
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [transferToId, setTransferToId] = useState('');
+  const [transferComment, setTransferComment] = useState('');
 
   const updates = useQuery(api.taskUpdates.list, { taskId: task?.id || "" }) || [];
   const [updateText, setUpdateText] = useState('');
@@ -108,11 +112,11 @@ const TaskDetail: React.FC = () => {
 
   const isAuthorized = task && (isAdminRole(currentUser.role) || task.assignedTo.includes(currentUser.id));
 
-  if (!task || !isAuthorized) {
+  if (!task) {
     return (
       <div className="max-w-xl mx-auto px-4 py-12 text-center">
         <p className="text-slate-600 font-medium">
-          {!task ? t('taskDetail.taskNotFound') : t('taskDetail.noPermission')}
+          {t('taskDetail.taskNotFound')}
         </p>
         
         <button 
@@ -209,6 +213,57 @@ const TaskDetail: React.FC = () => {
     });
   };
 
+  const handleTransferRequest = () => {
+    if (!transferToId) return;
+    editTask(task.id, {
+      pendingTransferTo: transferToId,
+      pendingTransferFrom: currentUser.id,
+      pendingTransferComment: transferComment || "",
+    });
+    
+    sendPushNotification({
+      userId: transferToId,
+      title: "Task Transfer Request",
+      body: `${currentUser.name} has requested to transfer a task to you: ${task.title}`,
+      url: "/"
+    }).catch(err => console.error("Failed to send transfer push notification", err));
+
+    setShowTransfer(false);
+    setTransferToId('');
+    setTransferComment('');
+  };
+
+  const handleTransferCancel = () => {
+    editTask(task.id, {
+      pendingTransferTo: "",
+      pendingTransferFrom: "",
+      pendingTransferComment: "",
+    });
+  };
+
+  const handleTransferAccept = () => {
+    const newAssignedTo = task.assignedTo.filter(id => id !== task.pendingTransferFrom);
+    if (!newAssignedTo.includes(currentUser.id)) {
+      newAssignedTo.push(currentUser.id);
+    }
+    editTask(task.id, {
+      assignedTo: newAssignedTo,
+      pendingTransferTo: undefined,
+      pendingTransferFrom: undefined,
+      pendingTransferComment: undefined,
+    });
+  };
+
+  const handleTransferDecline = () => {
+    editTask(task.id, {
+      pendingTransferTo: undefined,
+      pendingTransferFrom: undefined,
+      pendingTransferComment: undefined,
+    });
+  };
+
+  const otherEmployees = users.filter(u => u.role === 'employee' && u.id !== currentUser.id && !task.assignedTo.includes(u.id));
+
   return (
     <div className="max-w-xl mx-auto px-4 py-8">
       {/* Header action bar */}
@@ -220,9 +275,10 @@ const TaskDetail: React.FC = () => {
           <ArrowLeft size={16} />
           {t('common.back')}
         </button>
-        {isAdminRole(currentUser.role) && (
-          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-            {(task.status === 'could_not_complete' || task.status === 'blocked') && (
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          {isAdminRole(currentUser.role) && (
+            <>
+              {(task.status === 'could_not_complete' || task.status === 'blocked') && (
               <button
                 onClick={handleReopen}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center"
@@ -272,9 +328,72 @@ const TaskDetail: React.FC = () => {
               <Trash2 size={14} />
               {t('taskDetail.deleteTask')}
             </button>
-          </div>
-        )}
+            </>
+          )}
+
+          {/* Transfer Task Button for assigned employees */}
+          {!isAdminRole(currentUser.role) && task.assignedTo.includes(currentUser.id) && !task.pendingTransferTo && task.status !== 'completed' && (
+            <button 
+              onClick={() => setShowTransfer(!showTransfer)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center ${showTransfer ? 'border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100' : 'border-slate-200 text-slate-700 bg-slate-50 hover:bg-slate-100'}`}
+            >
+              <ArrowRightLeft size={14} />
+              Transfer Task
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Transfer UI block */}
+      {showTransfer && (
+        <div className="bg-white p-5 border border-indigo-200 rounded-xl shadow-sm mb-6 bg-indigo-50/30">
+          <h3 className="font-bold text-slate-900 text-sm mb-3">Transfer Task to Employee</h3>
+          <div className="space-y-3">
+            <select
+              value={transferToId}
+              onChange={(e) => setTransferToId(e.target.value)}
+              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="">Select an employee...</option>
+              {otherEmployees.map(emp => (
+                <option key={emp.id} value={emp.id}>{emp.name}</option>
+              ))}
+            </select>
+            <textarea
+              value={transferComment}
+              onChange={(e) => setTransferComment(e.target.value)}
+              placeholder="Optional comment to the recipient..."
+              rows={2}
+              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            />
+            <div className="flex gap-2 justify-end pt-2">
+              <button onClick={() => setShowTransfer(false)} className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer">Cancel</button>
+              <button onClick={handleTransferRequest} disabled={!transferToId} className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:text-white/70 rounded-lg shadow-sm transition-colors cursor-pointer">Send Request</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pending Transfer Banners */}
+      {task.pendingTransferTo && task.pendingTransferFrom === currentUser.id && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="text-sm text-amber-800 font-medium">You requested to transfer this task to <span className="font-bold">{users.find(u => u.id === task.pendingTransferTo)?.name}</span>.</div>
+          <button onClick={handleTransferCancel} className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap">Cancel Request</button>
+        </div>
+      )}
+
+      {task.pendingTransferTo === currentUser.id && (
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-3">
+            <div className="text-sm text-indigo-900 font-medium"><span className="font-bold">{users.find(u => u.id === task.pendingTransferFrom)?.name}</span> wants to transfer this task to you.</div>
+            <div className="flex gap-2">
+              <button onClick={handleTransferDecline} className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap shadow-sm">Decline</button>
+              <button onClick={handleTransferAccept} className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap shadow-sm">Accept Task</button>
+            </div>
+          </div>
+          {task.pendingTransferComment && <div className="text-xs text-indigo-800 italic bg-white/50 px-3 py-2 rounded border border-indigo-100">"{task.pendingTransferComment}"</div>}
+        </div>
+      )}
 
       {/* Task Card */}
       <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-xl shadow-sm mb-6">
@@ -597,7 +716,7 @@ const TaskDetail: React.FC = () => {
         </div>
 
         {/* Post Update Form */}
-        {task.status === 'in_progress' || isAdminRole(currentUser.role) ? (
+        {(task.status === 'in_progress' || isAdminRole(currentUser.role)) && isAuthorized ? (
           <form 
             onSubmit={async (e) => {
               e.preventDefault();
@@ -687,7 +806,7 @@ const TaskDetail: React.FC = () => {
       </div>
 
       {/* Completion Actions (Visible only for non-finalized tasks) */}
-      {task.status !== 'completed' && task.status !== 'could_not_complete' && (
+      {task.status !== 'completed' && task.status !== 'could_not_complete' && isAuthorized && (
         <div className="bg-white p-6 border border-slate-200 rounded-xl shadow-sm">
           <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider mb-4">{t('taskDetail.completionActions')}</h3>
           

@@ -13,6 +13,7 @@ import EditEmployee from './pages/EditEmployee';
 import EditAdmin from './pages/EditAdmin';
 import EmployeeHistory from './pages/EmployeeHistory';
 import EmployeeDashboard from './pages/EmployeeDashboard';
+import AllTasks from './pages/AllTasks';
 import CompletedHistory from './pages/CompletedHistory';
 import AdminTaskHistory from './pages/AdminTaskHistory';
 import Login from './pages/Login';
@@ -39,6 +40,7 @@ const AppContent = () => {
       <NotificationListener />
       <Routes>
         <Route path="/" element={isAdminRole(currentUser.role) ? <ManageTasks /> : <EmployeeDashboard />} />
+        <Route path="/all-tasks" element={currentUser.role === 'employee' ? <AllTasks /> : <Navigate to="/" replace />} />
         <Route path="/create" element={<CreateTask />} />
         <Route path="/task/:id" element={<TaskDetail />} />
         <Route path="/task/:id/edit" element={<EditTask />} />
