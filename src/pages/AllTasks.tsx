@@ -4,7 +4,7 @@ import { useTasks } from '../contexts/TaskContext';
 import type { Task } from '../contexts/TaskContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import StatusBadge from '../components/StatusBadge';
-import { PackageCheck, UserRoundCog } from 'lucide-react';
+import { PackageCheck, UserRoundCog, ArrowDownUp } from 'lucide-react';
 import { materialStatusToneMap } from '../lib/taskOptions';
 
 const AllTasks: React.FC = () => {
@@ -16,7 +16,7 @@ const AllTasks: React.FC = () => {
     priorityLabel,
     taskTypeLabel,
   } = useLanguage();
-  const [sortBy, setSortBy] = useState<'default' | 'priority' | 'dueDate'>('default');
+  const [sortBy, setSortBy] = useState<'default' | 'priority' | 'dueDate' | 'employee'>('employee');
 
   if (!currentUser) return null;
 
@@ -74,6 +74,89 @@ const AllTasks: React.FC = () => {
     return t('employeeDashboard.taskDescriptionFallback');
   };
 
+  const renderTaskCard = (task: Task, keyPrefix = '') => (
+    <div
+      key={`${keyPrefix}${task.id}`}
+      onClick={() => navigate(`/task/${task.id}`)}
+      className="cursor-pointer rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:shadow"
+    >
+      <div className="flex items-start justify-between gap-3 relative">
+        <div className="min-w-0 flex-1">
+          <h3 className="mb-2 text-lg font-semibold text-slate-900 flex items-center gap-2">
+            {task.title}
+          </h3>
+          <p className="line-clamp-2 text-sm leading-6 text-slate-500">{taskPreview(task)}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <StatusBadge status={task.status} />
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2.5">
+        {renderPriorityBadge(task.priority)}
+        
+        {task.assignedTo.length > 0 ? (
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
+            {t('taskDetail.assignedTo')}: {task.assignedTo.map(id => users.find(u => u.id === id)?.name).join(', ')}
+          </span>
+        ) : (
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-400">
+            {t('common.unassigned')}
+          </span>
+        )}
+
+        {task.dueDate && (
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+            {t('employeeDashboard.dueOn', {
+              date: formatDate(task.dueDate, { month: 'short', day: 'numeric' }),
+            })}
+          </span>
+        )}
+        {task.type !== 'one-time' ? (
+          <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700">
+            {taskTypeLabel(task.type)}
+          </span>
+        ) : (
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
+            {taskTypeLabel(task.type)}
+          </span>
+        )}
+        {task.inCharge && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium">
+            <UserRoundCog size={12} />
+            {t('taskDetail.inCharge')}: {task.inCharge}
+          </span>
+        )}
+        {task.materialStatus && (
+          <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium ${materialStatusToneMap[task.materialStatus].badge}`}>
+            <PackageCheck size={12} />
+            {t(`materials.${task.materialStatus}`)}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+
+  const groupedTasks: Record<string, Task[]> = {};
+  if (sortBy === 'employee') {
+    users.forEach(u => {
+      groupedTasks[u.id] = [];
+    });
+    groupedTasks['unassigned'] = [];
+
+    sortedActiveTasks.forEach(task => {
+      if (task.assignedTo.length === 0) {
+        groupedTasks['unassigned'].push(task);
+      } else {
+        task.assignedTo.forEach(id => {
+          if (groupedTasks[id]) {
+            groupedTasks[id].push(task);
+          }
+        });
+      }
+    });
+  }
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <header className="mb-8 border-b border-slate-150 pb-6">
@@ -85,92 +168,59 @@ const AllTasks: React.FC = () => {
 
       <div className="mb-6 flex items-center justify-end">
         <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm">
-          <label htmlFor="all-sort" className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            {t('employeeDashboard.sortMyWork')}
+          <label htmlFor="all-sort" className="text-slate-500 hover:text-slate-700 transition-colors" title={t('employeeDashboard.sortMyWork')}>
+            <ArrowDownUp size={16} />
           </label>
           <select
             id="all-sort"
             value={sortBy}
-            onChange={(event) => setSortBy(event.target.value as 'default' | 'priority' | 'dueDate')}
+            onChange={(event) => setSortBy(event.target.value as 'default' | 'priority' | 'dueDate' | 'employee')}
             className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 outline-none transition-colors focus:border-slate-400"
           >
             <option value="default">{t('employeeDashboard.originalOrder')}</option>
             <option value="priority">{t('employeeDashboard.priorityFirst')}</option>
             <option value="dueDate">{t('employeeDashboard.dueDateSoon')}</option>
+            <option value="employee">{t('employeeDashboard.byEmployee')}</option>
           </select>
         </div>
       </div>
 
       <div className="mb-8">
-        {sortedActiveTasks.length > 0 ? (
-          <div className="grid gap-3">
-            {sortedActiveTasks.map((task) => (
-              <div
-                key={task.id}
-                onClick={() => navigate(`/task/${task.id}`)}
-                className="cursor-pointer rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:shadow"
-              >
-                <div className="flex items-start justify-between gap-3 relative">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="mb-2 text-lg font-semibold text-slate-900 flex items-center gap-2">
-                      {task.title}
-                    </h3>
-                    <p className="line-clamp-2 text-sm leading-6 text-slate-500">{taskPreview(task)}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={task.status} />
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center gap-2.5">
-                  {renderPriorityBadge(task.priority)}
-                  
-                  {task.assignedTo.length > 0 ? (
-                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
-                      {t('taskDetail.assignedTo')}: {task.assignedTo.map(id => users.find(u => u.id === id)?.name).join(', ')}
-                    </span>
-                  ) : (
-                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-400">
-                      {t('common.unassigned')}
-                    </span>
-                  )}
-
-                  {task.dueDate && (
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
-                      {t('employeeDashboard.dueOn', {
-                        date: formatDate(task.dueDate, { month: 'short', day: 'numeric' }),
-                      })}
-                    </span>
-                  )}
-                  {task.type !== 'one-time' ? (
-                    <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700">
-                      {taskTypeLabel(task.type)}
-                    </span>
-                  ) : (
-                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
-                      {taskTypeLabel(task.type)}
-                    </span>
-                  )}
-                  {task.inCharge && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium">
-                      <UserRoundCog size={12} />
-                      {t('taskDetail.inCharge')}: {task.inCharge}
-                    </span>
-                  )}
-                  {task.materialStatus && (
-                    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium ${materialStatusToneMap[task.materialStatus].badge}`}>
-                      <PackageCheck size={12} />
-                      {t(`materials.${task.materialStatus}`)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
+        {sortedActiveTasks.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center">
             <h3 className="mb-1 font-semibold text-slate-700">{t('employeeDashboard.allCaughtUp')}</h3>
             <p className="text-sm text-slate-500">{t('employeeDashboard.noActiveTasks')}</p>
+          </div>
+        ) : sortBy === 'employee' ? (
+          <div className="space-y-8">
+            {users.map(user => {
+               const userTasks = groupedTasks[user.id];
+               if (!userTasks || userTasks.length === 0) return null;
+               return (
+                 <div key={user.id}>
+                   <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">
+                     {user.name}
+                   </h2>
+                   <div className="grid gap-3">
+                     {userTasks.map(task => renderTaskCard(task, user.id))}
+                   </div>
+                 </div>
+               )
+            })}
+            {groupedTasks['unassigned']?.length > 0 && (
+                 <div key="unassigned">
+                   <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">
+                     {t('common.unassigned')}
+                   </h2>
+                   <div className="grid gap-3">
+                     {groupedTasks['unassigned'].map(task => renderTaskCard(task, 'unassigned'))}
+                   </div>
+                 </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {sortedActiveTasks.map((task) => renderTaskCard(task))}
           </div>
         )}
       </div>

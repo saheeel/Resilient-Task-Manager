@@ -5,7 +5,7 @@ import type { Task } from '../contexts/TaskContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import StatusBadge from '../components/StatusBadge';
 
-import { Pin, MoreVertical } from 'lucide-react';
+import { Pin, MoreVertical, ArrowDownUp } from 'lucide-react';
 
 const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -238,8 +238,8 @@ const EmployeeDashboard: React.FC = () => {
 
       <div className="mb-6 flex items-center justify-end">
         <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm">
-          <label htmlFor="employee-sort" className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            {t('employeeDashboard.sortMyWork')}
+          <label htmlFor="employee-sort" className="text-slate-500 hover:text-slate-700 transition-colors" title={t('employeeDashboard.sortMyWork')}>
+            <ArrowDownUp size={16} />
           </label>
           <select
             id="employee-sort"
