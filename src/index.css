@@ -138,6 +138,31 @@ body.theme-dark {
   color: #fbbf24 !important;
 }
 
+.theme-dark .text-green-700,
+.theme-dark .text-green-800 {
+  color: #4ade80 !important;
+}
+
+.theme-dark .text-red-700,
+.theme-dark .text-red-800 {
+  color: #f87171 !important;
+}
+
+.theme-dark .text-yellow-700,
+.theme-dark .text-yellow-800 {
+  color: #facc15 !important;
+}
+
+.theme-dark .text-orange-700,
+.theme-dark .text-orange-800 {
+  color: #fb923c !important;
+}
+
+.theme-dark .text-gray-700,
+.theme-dark .text-gray-800 {
+  color: #d1d5db !important;
+}
+
 .theme-dark .placeholder-slate-400::placeholder,
 .theme-dark .placeholder-slate-500::placeholder {
   color: #7b8190 !important;
