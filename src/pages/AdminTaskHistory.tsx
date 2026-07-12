@@ -81,13 +81,12 @@ const AdminTaskHistory: React.FC = () => {
         </div>
       </div>
 
-      {selectedDate && (
-        historyTasks.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
-            {t('adminHistory.empty')}
-          </div>
-        ) : (
-          <div className="space-y-6">
+      {historyTasks.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
+          {t('adminHistory.empty')}
+        </div>
+      ) : (
+        <div className="space-y-6">
             {sortedDates.map((dateKey) => (
               <section key={dateKey}>
                 <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-500">
@@ -138,7 +137,7 @@ const AdminTaskHistory: React.FC = () => {
             ))}
           </div>
         )
-      )}
+      }
     </div>
   );
 };
