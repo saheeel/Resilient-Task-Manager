@@ -301,7 +301,7 @@ const ManageTasks: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {completedTasks.slice(0, 10).map(task => (
+                  {completedTasks.slice(0, 5).map(task => (
                     <tr 
                       key={task.id} 
                       className="hover:bg-slate-50 cursor-pointer transition-colors" 
@@ -332,6 +332,13 @@ const ManageTasks: React.FC = () => {
             </div>
           ) : (
             <p className="p-6 text-center text-sm text-slate-500">{t('manageTasks.noCompletedTasks')}</p>
+          )}
+          {completedTasks.length > 5 && (
+            <div className="bg-slate-50 border-t border-slate-100 p-3 text-center">
+              <p className="text-xs text-slate-500 font-medium">
+                {t('manageTasks.recentTasksNote')}
+              </p>
+            </div>
           )}
         </div>
       </div>
