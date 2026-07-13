@@ -33,6 +33,8 @@ export const create = mutation({
     pendingTransferTo: v.optional(v.string()),
     pendingTransferFrom: v.optional(v.string()),
     pendingTransferComment: v.optional(v.string()),
+    activeFrom: v.optional(v.string()),
+    nextOccurrence: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     const taskId = await ctx.db.insert("tasks", {
@@ -58,6 +60,8 @@ export const create = mutation({
       pendingTransferTo: args.pendingTransferTo,
       pendingTransferFrom: args.pendingTransferFrom,
       pendingTransferComment: args.pendingTransferComment,
+      activeFrom: args.activeFrom,
+      nextOccurrence: args.nextOccurrence,
     });
     return taskId;
   },
@@ -97,6 +101,8 @@ export const update = mutation({
     pendingTransferComment: v.optional(v.string()),
     transferResult: v.optional(v.string()),
     transferResultSeen: v.optional(v.boolean()),
+    activeFrom: v.optional(v.string()),
+    nextOccurrence: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     const { id, ...fields } = args;
@@ -111,6 +117,31 @@ export const remove = mutation({
     await ctx.db.delete(args.id);
   },
 });
+
+// Rollover recurring task
+export const rolloverRecurringTask = mutation({
+  args: { id: v.id("tasks"), newActiveFrom: v.string(), newNextOccurrence: v.string() },
+  handler: async (ctx: any, args: any) => {
+    const task = await ctx.db.get(args.id);
+    if (!task || task.status !== "open") return;
+    
+    // Mark old as could_not_complete and change to one-time
+    await ctx.db.patch(args.id, {
+      status: "could_not_complete",
+      type: "one-time"
+    });
+    
+    // Create new recurring task
+    const { _id, _creationTime, ...taskData } = task;
+    await ctx.db.insert("tasks", {
+      ...taskData,
+      status: "open",
+      activeFrom: args.newActiveFrom,
+      nextOccurrence: args.newNextOccurrence,
+    });
+  },
+});
+
 
 // Seed default tasks if empty
 export const seed = mutation({

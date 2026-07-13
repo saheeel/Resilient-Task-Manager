@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { MaterialStatus } from '../lib/taskOptions';
+import { calculateNextOccurrence } from '../lib/recurrence';
 
 export type Role = 'employee' | 'admin' | 'superadmin' | 'manager';
 export type TaskType = 'daily' | 'weekly' | 'monthly' | 'one-time';
@@ -56,6 +57,8 @@ export interface Task {
   pendingTransferComment?: string;
   transferResult?: string;
   transferResultSeen?: boolean;
+  activeFrom?: string;
+  nextOccurrence?: string;
 }
 
 interface TaskContextType {
@@ -105,6 +108,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const seedTasks = useMutation(api.tasks.seed);
 
   const dbAddTask = useMutation(api.tasks.create);
+  const dbRolloverRecurringTask = useMutation(api.tasks.rolloverRecurringTask);
   const dbUpdateTask = useMutation(api.tasks.update).withOptimisticUpdate(
     (localStore, args) => {
       const { id, ...updates } = args;
@@ -239,6 +243,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       pendingTransferComment: t.pendingTransferComment,
       transferResult: t.transferResult,
       transferResultSeen: t.transferResultSeen,
+      activeFrom: t.activeFrom,
+      nextOccurrence: t.nextOccurrence,
     }));
   }, [dbTasksRaw, cachedTasksRaw]);
 
@@ -275,6 +281,11 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           assignedByName: taskData.assignedByName,
         };
 
+    let nextOccur = taskData.nextOccurrence;
+    if (taskData.type !== 'one-time' && !nextOccur) {
+      nextOccur = calculateNextOccurrence(taskData.type, taskData.recurringDay, taskData.recurringTime, new Date());
+    }
+
     dbAddTask({
       title: taskData.title,
       description: taskData.description,
@@ -294,6 +305,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isPaused: taskData.isPaused,
       pausedAt: taskData.pausedAt,
       pinned: taskData.pinned,
+      activeFrom: taskData.activeFrom,
+      nextOccurrence: nextOccur,
     }).then(() => {
       // Loop through assignees and fire off background Web Push notifications
       taskData.assignedTo.forEach((userId) => {
@@ -308,11 +321,40 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const updateTaskStatus = (taskId: string, status: TaskStatus, details?: Partial<Task>) => {
-    dbUpdateTask({
-      id: taskId as any,
-      status,
-      ...details,
-    });
+    const task = mappedDbTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    if (status === 'completed' && task.type !== 'one-time') {
+      // It's a recurring task being completed. Change this instance to one-time.
+      dbUpdateTask({
+        id: taskId as any,
+        status,
+        type: 'one-time',
+        ...details,
+      });
+
+      // Spawn the next instance
+      const baseDate = task.nextOccurrence ? new Date(task.nextOccurrence) : new Date();
+      const nextOccur = calculateNextOccurrence(task.type, task.recurringDay, task.recurringTime, baseDate);
+      if (nextOccur) {
+        addTask({
+          ...task,
+          status: 'open',
+          activeFrom: task.nextOccurrence || new Date().toISOString(),
+          nextOccurrence: nextOccur,
+          completedAt: undefined,
+          completionComment: undefined,
+          proofPhotoUrls: undefined,
+          startedAt: undefined,
+        });
+      }
+    } else {
+      dbUpdateTask({
+        id: taskId as any,
+        status,
+        ...details,
+      });
+    }
 
     // Fire push notification to all admin-side users when anyone completes a task
     if (status === 'completed' && currentUser) {
@@ -374,6 +416,30 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       handleSetCurrentUser(updatedUser);
     }
   };
+
+  useEffect(() => {
+    // Auto-rollover expired recurring tasks
+    if (mappedDbTasks) {
+      const now = new Date();
+      mappedDbTasks.forEach((task) => {
+        if (
+          task.status === 'open' &&
+          task.type !== 'one-time' &&
+          task.nextOccurrence &&
+          new Date(task.nextOccurrence) < now
+        ) {
+          const nextNext = calculateNextOccurrence(task.type, task.recurringDay, task.recurringTime, new Date(task.nextOccurrence));
+          if (nextNext) {
+            dbRolloverRecurringTask({
+              id: task.id as any,
+              newActiveFrom: task.nextOccurrence,
+              newNextOccurrence: nextNext,
+            }).catch(console.error);
+          }
+        }
+      });
+    }
+  }, [currentUser, mappedDbUsers, mappedDbTasks]);
 
   const editTask = (taskId: string, updatedFields: Partial<Task>) => {
     const { id, ...fields } = updatedFields;

@@ -46,6 +46,8 @@ export default defineSchema({
     pendingTransferComment: v.optional(v.string()),
     transferResult: v.optional(v.string()), // "accepted" or "declined"
     transferResultSeen: v.optional(v.boolean()),
+    activeFrom: v.optional(v.string()),
+    nextOccurrence: v.optional(v.string()),
   }),
 
   taskUpdates: defineTable({

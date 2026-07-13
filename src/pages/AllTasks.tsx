@@ -26,6 +26,9 @@ const AllTasks: React.FC = () => {
     if (task.status === 'completed' || task.status === 'blocked' || task.status === 'could_not_complete') {
       return false;
     }
+    if (task.activeFrom && new Date(task.activeFrom) > new Date()) {
+      return false;
+    }
     return true;
   });
 

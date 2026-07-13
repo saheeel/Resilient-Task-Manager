@@ -15,7 +15,11 @@ const ManageTasks: React.FC = () => {
   if (!currentUser) return null;
 
   const issues = tasks.filter(t => t.status === 'could_not_complete' || t.status === 'blocked');
-  const activeTasks = tasks.filter(t => t.status === 'open' || t.status === 'in_progress');
+  const activeTasks = tasks.filter((t) => {
+    if (t.status !== 'open' && t.status !== 'in_progress') return false;
+    if (t.activeFrom && new Date(t.activeFrom) > new Date()) return false;
+    return true;
+  });
   const completedTasks = tasks.filter(t => t.status === 'completed');
   const recurringTasks = tasks.filter((task) => task.type !== 'one-time');
 

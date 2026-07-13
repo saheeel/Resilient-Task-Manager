@@ -43,6 +43,9 @@ const EmployeeDashboard: React.FC = () => {
     if (task.status === 'completed' || task.status === 'blocked' || task.status === 'could_not_complete') {
       return false;
     }
+    if (task.activeFrom && new Date(task.activeFrom) > new Date()) {
+      return false;
+    }
     if (task.status === 'in_progress') return true;
     if (task.dueDate) {
       const dueDate = new Date(task.dueDate);
