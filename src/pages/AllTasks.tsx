@@ -196,7 +196,7 @@ const AllTasks: React.FC = () => {
           </div>
         ) : sortBy === 'employee' ? (
           <div className="space-y-8">
-            {users.map(user => {
+            {users.filter(u => u.name.toLowerCase() !== 'saheel').map(user => {
                const userTasks = groupedTasks[user.id];
                if (!userTasks || userTasks.length === 0) return null;
                return (

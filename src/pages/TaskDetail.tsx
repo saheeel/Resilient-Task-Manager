@@ -272,7 +272,7 @@ const TaskDetail: React.FC = () => {
     });
   };
 
-  const otherUsers = users.filter(u => u.id !== currentUser.id && !task.assignedTo.includes(u.id));
+  const otherUsers = users.filter(u => u.id !== currentUser.id && !task.assignedTo.includes(u.id) && u.name.toLowerCase() !== 'saheel');
 
   return (
     <div className="max-w-xl mx-auto px-4 py-8">

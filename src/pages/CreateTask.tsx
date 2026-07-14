@@ -36,7 +36,7 @@ const CreateTask: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
-  const assignableUsers = users;
+  const assignableUsers = users.filter(u => u.name.toLowerCase() !== 'saheel');
 
   const toggleAssignee = (id: string) => {
     setAssignedTo(prev =>
