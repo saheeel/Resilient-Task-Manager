@@ -85,7 +85,7 @@ const EmployeeHistory: React.FC = () => {
       <div className="bg-white p-6 border border-slate-200 rounded-xl shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-700 border border-blue-150 flex items-center justify-center text-xl font-bold">
-            {employee.name.split(' ').map(n => n[0]).join('')}
+            {(employee.name || 'User').split(' ').map(n => n[0]).join('')}
           </div>
           <div>
             <div className="flex items-center gap-2">

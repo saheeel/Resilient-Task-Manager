@@ -235,7 +235,7 @@ const EmployeeDashboard: React.FC = () => {
       <header className="mb-8 border-b border-slate-150 pb-6">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('app.myWorkspace')}</h1>
         <p className="mt-1 text-sm text-slate-500">
-          {t('employeeDashboard.welcome', { name: currentUser.name.split(' ')[0] })}
+          {t('employeeDashboard.welcome', { name: (currentUser.name || 'User').split(' ')[0] })}
         </p>
       </header>
 

@@ -237,7 +237,7 @@ const ManageTasks: React.FC = () => {
                                </td>
                                <td className="px-5 py-3.5 align-top text-slate-600">
                                  {task.assignedTo.length > 0 
-                                   ? task.assignedTo.map(id => users.find(u => u.id === id)?.name.split(' ')[0]).join(', ')
+                                   ? task.assignedTo.map(id => users.find(u => u.id === id)?.name?.split(' ')[0] || 'Unknown').join(', ')
                                    : t('common.unassigned')}
                                </td>
                                <td className="px-5 py-3.5 w-[130px] whitespace-nowrap align-top">
@@ -331,7 +331,7 @@ const ManageTasks: React.FC = () => {
                              </td>
                              <td className="px-5 py-3.5 align-top text-slate-600">
                                {task.assignedTo.length > 0 
-                                 ? task.assignedTo.map(id => users.find(u => u.id === id)?.name.split(' ')[0]).join(', ')
+                                 ? task.assignedTo.map(id => users.find(u => u.id === id)?.name?.split(' ')[0] || 'Unknown').join(', ')
                                  : t('common.unassigned')}
                              </td>
                              <td className="px-5 py-3.5 w-[130px] whitespace-nowrap align-top">
@@ -423,7 +423,7 @@ const ManageTasks: React.FC = () => {
                       </td>
                       <td className="px-5 py-3.5 align-top text-slate-600">
                         {task.assignedTo.length > 0 
-                          ? task.assignedTo.map(id => users.find(u => u.id === id)?.name.split(' ')[0]).join(', ')
+                          ? task.assignedTo.map(id => users.find(u => u.id === id)?.name?.split(' ')[0] || 'Unknown').join(', ')
                           : t('common.unassigned')}
                       </td>
                       <td className="px-5 py-3.5 w-[130px] whitespace-nowrap align-top">
@@ -497,7 +497,7 @@ const ManageTasks: React.FC = () => {
                     <p className="mt-2.5 text-sm font-medium text-slate-700">{recurringScheduleLabel(task)}</p>
                     <p className="mt-2 text-xs text-slate-500 font-medium">
                       {task.assignedTo.length > 0
-                        ? task.assignedTo.map((id: string) => users.find(u => u.id === id)?.name.split(' ')[0]).join(', ')
+                        ? task.assignedTo.map((id: string) => users.find(u => u.id === id)?.name?.split(' ')[0] || 'Unknown').join(', ')
                         : t('common.unassigned')}
                     </p>
                   </div>
@@ -546,7 +546,7 @@ const ManageTasks: React.FC = () => {
                       <td className="px-5 py-3.5 font-medium text-slate-500 line-through decoration-slate-300">{task.title}</td>
                       <td className="px-5 py-3.5 text-slate-600">
                         {task.assignedTo.length > 0 
-                          ? task.assignedTo.map(id => users.find(u => u.id === id)?.name.split(' ')[0]).join(', ')
+                          ? task.assignedTo.map(id => users.find(u => u.id === id)?.name?.split(' ')[0] || 'Unknown').join(', ')
                           : t('common.unassigned')}
                       </td>
                       <td className="px-5 py-3.5 text-slate-500">

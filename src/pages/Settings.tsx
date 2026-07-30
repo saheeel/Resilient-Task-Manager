@@ -116,7 +116,7 @@ const Settings: React.FC = () => {
                   <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 font-medium text-slate-900 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-xs font-bold">
-                        {user.name.split(' ').map(n => n[0]).join('')}
+                        {(user.name || 'User').split(' ').map(n => n[0]).join('')}
                       </div>
                       {user.name}
                     </td>
@@ -161,7 +161,7 @@ const Settings: React.FC = () => {
                   <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 font-medium text-slate-900 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold shrink-0">
-                        {user.name.split(' ').map(n => n[0]).join('')}
+                        {(user.name || 'User').split(' ').map(n => n[0]).join('')}
                       </div>
                       <div className="flex flex-col">
                         <span>{user.name}</span>

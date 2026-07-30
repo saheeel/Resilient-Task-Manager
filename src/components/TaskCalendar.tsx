@@ -60,7 +60,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({
       const startDate = new Date(task.dueDate!);
       const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
       const assigneeNames = task.assignedTo
-        .map((id) => users.find((user) => user.id === id)?.name.split(' ')[0])
+        .map((id) => users.find((user) => user.id === id)?.name?.split(' ')[0] || 'Unknown')
         .filter(Boolean)
         .join(', ');
 
