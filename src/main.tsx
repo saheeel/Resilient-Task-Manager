@@ -9,11 +9,54 @@ import { authClient } from './lib/auth-client'
 const convexUrl = import.meta.env.VITE_CONVEX_URL || "https://dummy-convex-url.convex.cloud";
 const convex = new ConvexReactClient(convexUrl);
 
+import React from 'react'
+
+class GlobalErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', color: 'red', fontFamily: 'monospace', wordBreak: 'break-all', backgroundColor: '#fee2e2', minHeight: '100vh' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>Fatal App Crash</h2>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '12px' }}>{this.state.error?.message}</pre>
+          <hr style={{ margin: '10px 0' }} />
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '10px' }}>{this.state.error?.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+window.onerror = function(message, source, lineno, colno, error) {
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fee2e2;color:red;padding:20px;z-index:99999;font-family:monospace;word-break:break-all;max-height:100vh;overflow:auto;';
+  div.innerHTML = '<h3 style="margin-top:0">Global JS Error</h3><p>' + message + '</p><p>' + source + ':' + lineno + ':' + colno + '</p><pre style="white-space:pre-wrap;font-size:10px">' + (error && error.stack ? error.stack : '') + '</pre>';
+  document.body.appendChild(div);
+};
+
+window.addEventListener('unhandledrejection', function(event) {
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fee2e2;color:red;padding:20px;z-index:99999;font-family:monospace;word-break:break-all;max-height:100vh;overflow:auto;';
+  div.innerHTML = '<h3 style="margin-top:0">Unhandled Promise Rejection</h3><p>' + event.reason + '</p><pre style="white-space:pre-wrap;font-size:10px">' + (event.reason && event.reason.stack ? event.reason.stack : '') + '</pre>';
+  document.body.appendChild(div);
+});
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ConvexBetterAuthProvider client={convex} authClient={authClient}>
-      <App />
-    </ConvexBetterAuthProvider>
+    <GlobalErrorBoundary>
+      <ConvexBetterAuthProvider client={convex} authClient={authClient}>
+        <App />
+      </ConvexBetterAuthProvider>
+    </GlobalErrorBoundary>
   </StrictMode>,
 )
 
