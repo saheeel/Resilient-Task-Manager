@@ -15,9 +15,16 @@ const NotificationListener: React.FC = () => {
   // 1. Request Browser System Notification Permission
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().then((permission) => {
-        console.log('System Notification permission:', permission);
-      });
+      try {
+        const promise = Notification.requestPermission();
+        if (promise && promise.then) {
+          promise.then((permission) => {
+            console.log('System Notification permission:', permission);
+          }).catch(console.error);
+        }
+      } catch (err) {
+        console.error('Failed to request notification permission:', err);
+      }
     }
   }, []);
 
@@ -104,7 +111,7 @@ const NotificationListener: React.FC = () => {
         const registration = await navigator.serviceWorker.ready;
         
         // Wait for notification permission to be granted
-        if (Notification.permission === 'granted') {
+        if ('Notification' in window && Notification.permission === 'granted') {
           await registration.update();
           await ensurePushSubscription(currentUser.id, savePushSubscription);
           console.log("Successfully registered PWA Web Push token in Convex database.");
