@@ -788,7 +788,7 @@ const resolveTranslation = (tree: TranslationTree, key: string): string | undefi
 const interpolate = (template: string, params?: TranslateParams) => {
   if (!params) return template;
   return Object.entries(params).reduce((result, [key, value]) => {
-    return result.replaceAll(`{{${key}}}`, String(value));
+    return result.split(`{{${key}}}`).join(String(value));
   }, template);
 };
 
