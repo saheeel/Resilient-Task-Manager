@@ -8,6 +8,11 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    hmr: {
+      overlay: false
+    }
+  }
 })
 
 // Triggering Vite Dev Server Restart
