@@ -152,10 +152,14 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
 
   const handleSetCurrentUser = (user: User | null) => {
-    if (user) {
-      localStorage.setItem('rtm_current_user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('rtm_current_user');
+    try {
+      if (user) {
+        localStorage.setItem('rtm_current_user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('rtm_current_user');
+      }
+    } catch (err) {
+      console.warn('Failed to save user to localStorage:', err);
     }
     setCurrentUser(user);
   };
@@ -164,14 +168,22 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (dbUsersRaw === undefined) return;
     const usersSnapshot = dbUsersRaw as any[];
     setCachedUsersRaw(usersSnapshot);
-    localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(usersSnapshot));
+    try {
+      localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(usersSnapshot));
+    } catch (err) {
+      console.warn('Failed to cache users (quota exceeded?):', err);
+    }
   }, [dbUsersRaw]);
 
   useEffect(() => {
     if (dbTasksRaw === undefined) return;
     const tasksSnapshot = dbTasksRaw as any[];
     setCachedTasksRaw(tasksSnapshot);
-    localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(tasksSnapshot));
+    try {
+      localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(tasksSnapshot));
+    } catch (err) {
+      console.warn('Failed to cache tasks (quota exceeded?):', err);
+    }
   }, [dbTasksRaw]);
 
   // Map Convex database users to type-safe User objects

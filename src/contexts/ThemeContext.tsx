@@ -31,7 +31,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [resolvedTheme]);
 
   const setThemeMode = (mode: ThemeMode) => {
-    localStorage.setItem(STORAGE_KEY, mode);
+    try {
+      localStorage.setItem(STORAGE_KEY, mode);
+    } catch (err) {
+      console.warn('Failed to save theme (quota exceeded?)');
+    }
     setThemeModeState(mode);
   };
 

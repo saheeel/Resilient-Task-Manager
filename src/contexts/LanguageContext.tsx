@@ -819,7 +819,11 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
 
     const updateLanguage = (nextLanguage: Language) => {
-      localStorage.setItem('rtm_language', nextLanguage);
+      try {
+        localStorage.setItem('rtm_language', nextLanguage);
+      } catch (err) {
+        console.warn('Failed to save language (quota exceeded?)');
+      }
       setLanguage(nextLanguage);
     };
 
