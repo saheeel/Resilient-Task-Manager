@@ -48,7 +48,8 @@ export default defineSchema({
     transferResultSeen: v.optional(v.boolean()),
     activeFrom: v.optional(v.string()),
     nextOccurrence: v.optional(v.string()),
-  }),
+    isArchived: v.optional(v.boolean()),
+  }).index("by_isArchived", ["isArchived"]),
 
   taskUpdates: defineTable({
     taskId: v.string(),

@@ -4,14 +4,12 @@ import { paginationOptsValidator } from "convex/server";
 
 export const listPaginatedHistory = query({
   args: { paginationOpts: paginationOptsValidator },
-  handler: async (ctx: any, args) => {
-    // Note: since Convex doesn't easily support complex compound filtering on paginated queries without custom indexes,
-    // we fetch everything and paginate on the server side using filter if no index exists, OR we just pull history.
-    // Wait, `.paginate` is only available on database queries, not filtered arrays.
-    // If we want to paginate only completed tasks, we should add an index in `schema.ts`.
-    // But adding an index requires changing schema.ts.
-    // Let's check if there is a status index.
-    return await ctx.db.query("tasks").order("desc").paginate(args.paginationOpts);
+  handler: async (ctx: any, args: any) => {
+    return await ctx.db
+      .query("tasks")
+      .withIndex("by_isArchived", (q: any) => q.eq("isArchived", true))
+      .order("desc")
+      .paginate(args.paginationOpts);
   },
 });
 
@@ -20,22 +18,29 @@ export const list = query({
   args: {
     cutoffDate: v.optional(v.string()),
   },
-  handler: async (ctx: any, args) => {
-    const tasks = await ctx.db.query("tasks").collect();
-    if (!args.cutoffDate) return tasks;
+  handler: async (ctx: any, args: any) => {
+    // 1. Fetch all active tasks instantly via index
+    const activeTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_isArchived", (q: any) => q.eq("isArchived", false))
+      .collect();
 
-    // Only filter tasks that are completed AND whose completedAt is older than cutoffDate
-    return tasks.filter((task: any) => {
-      if (task.status !== 'completed' && task.status !== 'could_not_complete') {
-        return true; // Keep all active tasks
-      }
-      
-      // If completed but no timestamp, keep it just in case
+    if (!args.cutoffDate) return activeTasks;
+
+    // 2. Fetch recent history tasks (last 300 max) to find ones within cutoff date
+    const recentArchived = await ctx.db
+      .query("tasks")
+      .withIndex("by_isArchived", (q: any) => q.eq("isArchived", true))
+      .order("desc")
+      .take(300);
+
+    const validRecentArchived = recentArchived.filter((task: any) => {
       if (!task.completedAt && !task.markedIssueAt) return true;
-      
       const finishDate = task.completedAt || task.markedIssueAt;
       return finishDate >= args.cutoffDate!;
     });
+
+    return [...activeTasks, ...validRecentArchived];
   },
 });
 
@@ -93,6 +98,7 @@ export const create = mutation({
       pendingTransferComment: args.pendingTransferComment,
       activeFrom: args.activeFrom,
       nextOccurrence: args.nextOccurrence,
+      isArchived: ["completed", "could_not_complete", "blocked"].includes(args.status),
     });
     return taskId;
   },
@@ -137,6 +143,9 @@ export const update = mutation({
   },
   handler: async (ctx: any, args: any) => {
     const { id, ...fields } = args;
+    if (fields.status !== undefined) {
+      fields.isArchived = ["completed", "could_not_complete", "blocked"].includes(fields.status);
+    }
     await ctx.db.patch(id, fields);
   },
 });
@@ -159,7 +168,8 @@ export const rolloverRecurringTask = mutation({
     // Mark old as could_not_complete and change to one-time
     await ctx.db.patch(args.id, {
       status: "could_not_complete",
-      type: "one-time"
+      type: "one-time",
+      isArchived: true
     });
     
     // Create new recurring task
@@ -169,6 +179,7 @@ export const rolloverRecurringTask = mutation({
       status: "open",
       activeFrom: args.newActiveFrom,
       nextOccurrence: args.newNextOccurrence,
+      isArchived: false
     });
   },
 });
@@ -220,7 +231,23 @@ export const seed = mutation({
         assignedTo: [tomId],
         assignedByName: "System Administrator",
         createdAt: new Date().toISOString(),
+        isArchived: false,
       });
     }
+  },
+});
+
+export const backfillIsArchived = mutation({
+  handler: async (ctx: any) => {
+    const tasks = await ctx.db.query("tasks").collect();
+    let updated = 0;
+    for (const task of tasks) {
+      if (task.isArchived === undefined) {
+        const isArchived = ["completed", "could_not_complete", "blocked"].includes(task.status);
+        await ctx.db.patch(task._id, { isArchived });
+        updated++;
+      }
+    }
+    return `Backfilled ${updated} tasks.`;
   },
 });
