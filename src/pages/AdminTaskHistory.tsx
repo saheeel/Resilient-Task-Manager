@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import StatusBadge from '../components/StatusBadge';
 import { Calendar, X } from 'lucide-react';
 
 const AdminTaskHistory: React.FC = () => {
   const navigate = useNavigate();
-  const { tasks, users, currentUser } = useTasks();
+  const { users, currentUser } = useTasks();
+  const dbTasksRaw = useQuery(api.tasks.list, {}); // Fetch ALL history without cutoff
+  const tasks = (dbTasksRaw as any[]) || [];
   const { t, formatDate, formatDateTime } = useLanguage();
   const [selectedDate, setSelectedDate] = useState('');
 
@@ -108,8 +112,8 @@ const AdminTaskHistory: React.FC = () => {
                           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500">
                             {task.assignedByName && <span>{t('common.assignedBy')}: {task.assignedByName}</span>}
                             <span>
-                              {t('taskDetail.assignedTo')}: {task.assignedTo.length > 0
-                                ? task.assignedTo.map((id) => users.find((user) => user.id === id)?.name).join(', ')
+                              {t('taskDetail.assignedTo')}: {task.assignedTo && task.assignedTo.length > 0
+                                ? task.assignedTo.map((id: string) => users.find((user) => user.id === id)?.name).join(', ')
                                 : t('common.unassigned')}
                             </span>
                             {eventTime(task) && (

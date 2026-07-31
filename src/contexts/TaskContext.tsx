@@ -102,7 +102,12 @@ const readCachedCollection = (key: string) => {
 export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Convex Queries and Mutations
   const dbUsersRaw = useQuery(api.users.list);
-  const dbTasksRaw = useQuery(api.tasks.list);
+  const cutoffDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 15);
+    return d.toISOString();
+  }, []);
+  const dbTasksRaw = useQuery(api.tasks.list, { cutoffDate });
   
   const seedUsers = useMutation(api.users.seed);
   const seedTasks = useMutation(api.tasks.seed);
@@ -112,9 +117,9 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const dbUpdateTask = useMutation(api.tasks.update).withOptimisticUpdate(
     (localStore, args) => {
       const { id, ...updates } = args;
-      const currentTasks = localStore.getQuery(api.tasks.list);
+      const currentTasks = localStore.getQuery(api.tasks.list, { cutoffDate });
       if (currentTasks !== undefined) {
-        localStore.setQuery(api.tasks.list, {}, currentTasks.map((task: any) => {
+        localStore.setQuery(api.tasks.list, { cutoffDate }, currentTasks.map((task: any) => {
           if (task._id === id) {
             return { ...task, ...updates };
           }

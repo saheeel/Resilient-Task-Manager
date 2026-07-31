@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { CheckCircle2, Clock, Calendar, ChevronDown, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const CompletedHistory: React.FC = () => {
   const navigate = useNavigate();
-  const { tasks, currentUser } = useTasks();
+  const { currentUser } = useTasks();
+  const dbTasksRaw = useQuery(api.tasks.list, {}); // Fetch ALL history without cutoff
+  const tasks = (dbTasksRaw as any[]) || [];
   const { t, formatDate, formatTime, priorityLabel, taskTypeLabel, relativeDayLabel } = useLanguage();
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 

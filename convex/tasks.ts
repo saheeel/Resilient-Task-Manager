@@ -1,10 +1,27 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-// Get all tasks
+// Get all tasks, with optional cutoff for completed tasks
 export const list = query({
-  handler: async (ctx: any) => {
-    return await ctx.db.query("tasks").collect();
+  args: {
+    cutoffDate: v.optional(v.string()),
+  },
+  handler: async (ctx: any, args) => {
+    const tasks = await ctx.db.query("tasks").collect();
+    if (!args.cutoffDate) return tasks;
+
+    // Only filter tasks that are completed AND whose completedAt is older than cutoffDate
+    return tasks.filter((task: any) => {
+      if (task.status !== 'completed' && task.status !== 'could_not_complete') {
+        return true; // Keep all active tasks
+      }
+      
+      // If completed but no timestamp, keep it just in case
+      if (!task.completedAt && !task.markedIssueAt) return true;
+      
+      const finishDate = task.completedAt || task.markedIssueAt;
+      return finishDate >= args.cutoffDate!;
+    });
   },
 });
 
