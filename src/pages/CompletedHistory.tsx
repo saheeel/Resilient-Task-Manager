@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
-import { usePaginatedQuery } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { CheckCircle2, Clock, Calendar, ChevronDown, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -9,12 +9,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 const CompletedHistory: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useTasks();
-  const { results, status, loadMore } = usePaginatedQuery(
-    api.tasks.listPaginatedHistory,
-    {},
-    { initialNumItems: 50 }
-  );
-  const tasks = results || [];
+  const dbTasksRaw = useQuery(api.tasks.list, {}); // Fetch ALL history without cutoff
+  const tasks = (dbTasksRaw as any[]) || [];
   const { t, formatDate, formatTime, priorityLabel, taskTypeLabel, relativeDayLabel } = useLanguage();
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
@@ -209,22 +205,6 @@ const CompletedHistory: React.FC = () => {
         <div className="mt-6 bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
           <span className="text-sm text-slate-500 font-medium">{t('completedHistory.totalCompletedBeforeToday')}</span>
           <span className="text-lg font-bold text-slate-800">{pastCompleted.length}</span>
-        </div>
-      )}
-
-      {status === 'CanLoadMore' && (
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={() => loadMore(50)}
-            className="rounded-full bg-slate-100 px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-200"
-          >
-            Load More Tasks
-          </button>
-        </div>
-      )}
-      {status === 'LoadingMore' && (
-        <div className="mt-8 flex justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800"></div>
         </div>
       )}
     </div>

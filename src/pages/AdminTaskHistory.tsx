@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { usePaginatedQuery } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import StatusBadge from '../components/StatusBadge';
 import { Calendar, X } from 'lucide-react';
@@ -10,12 +10,8 @@ import { Calendar, X } from 'lucide-react';
 const AdminTaskHistory: React.FC = () => {
   const navigate = useNavigate();
   const { users, currentUser } = useTasks();
-  const { results, status, loadMore } = usePaginatedQuery(
-    api.tasks.listPaginatedHistory,
-    {},
-    { initialNumItems: 50 }
-  );
-  const tasks = results || [];
+  const dbTasksRaw = useQuery(api.tasks.list, {}); // Fetch ALL history without cutoff
+  const tasks = (dbTasksRaw as any[]) || [];
   const { t, formatDate, formatDateTime } = useLanguage();
   const [selectedDate, setSelectedDate] = useState('');
 
@@ -146,22 +142,6 @@ const AdminTaskHistory: React.FC = () => {
           </div>
         )
       }
-
-      {status === 'CanLoadMore' && (
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={() => loadMore(50)}
-            className="rounded-full bg-slate-100 px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-200"
-          >
-            Load More Tasks
-          </button>
-        </div>
-      )}
-      {status === 'LoadingMore' && (
-        <div className="mt-8 flex justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800"></div>
-        </div>
-      )}
     </div>
   );
 };

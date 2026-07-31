@@ -83,9 +83,6 @@ interface TaskContextType {
 
 export const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
-// Define a variable to track if migration ran this session
-let migrationRan = false;
-
 export const isAdminRole = (role?: Role | string | null) => role === 'admin' || role === 'superadmin' || role === 'manager';
 
 const USERS_CACHE_KEY = 'rtm_cached_users';
@@ -152,15 +149,6 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       syncSuperAdminAllowlist();
     });
   }, [seedUsers, seedTasks, syncSuperAdminAllowlist]);
-
-  // TEMPORARY: Auto-run the backfill migration securely from the frontend
-  const backfillTasks = useMutation(api.tasks.backfillIsArchived);
-  useEffect(() => {
-    if (!migrationRan) {
-      migrationRan = true;
-      backfillTasks().then(res => console.log('Migration Complete:', res)).catch(console.error);
-    }
-  }, [backfillTasks]);
 
   // Session state for tracking active logged-in user profile
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
