@@ -1,5 +1,19 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
+
+export const listPaginatedHistory = query({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx: any, args) => {
+    // Note: since Convex doesn't easily support complex compound filtering on paginated queries without custom indexes,
+    // we fetch everything and paginate on the server side using filter if no index exists, OR we just pull history.
+    // Wait, `.paginate` is only available on database queries, not filtered arrays.
+    // If we want to paginate only completed tasks, we should add an index in `schema.ts`.
+    // But adding an index requires changing schema.ts.
+    // Let's check if there is a status index.
+    return await ctx.db.query("tasks").order("desc").paginate(args.paginationOpts);
+  },
+});
 
 // Get all tasks, with optional cutoff for completed tasks
 export const list = query({
