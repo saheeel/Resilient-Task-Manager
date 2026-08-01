@@ -4,12 +4,13 @@ import { useTasks } from '../contexts/TaskContext';
 import type { Task } from '../contexts/TaskContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import StatusBadge from '../components/StatusBadge';
+import { TaskListSkeleton } from '../components/TaskSkeleton';
 
 import { Pin, MoreVertical, ArrowDownUp } from 'lucide-react';
 
 const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { tasks, currentUser, editTask, users, addTaskUpdate, sendPushNotification } = useTasks();
+  const { tasks, currentUser, editTask, users, addTaskUpdate, sendPushNotification, isLoading } = useTasks();
   const {
     t,
     formatDate,
@@ -366,7 +367,9 @@ const EmployeeDashboard: React.FC = () => {
 
       <div className="mb-8">
         <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900">{t('app.currentAssignments')}</h2>
-        {sortedActiveTasks.length > 0 ? (
+        {isLoading ? (
+          <TaskListSkeleton count={4} />
+        ) : sortedActiveTasks.length > 0 ? (
           <div className="grid gap-3">
             {sortedActiveTasks.map((task) => (
               <div

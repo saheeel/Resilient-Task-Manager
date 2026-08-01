@@ -5,11 +5,12 @@ import StatusBadge from '../components/StatusBadge';
 import { PlusCircle, Edit, Trash2, PackageCheck, UserRoundCog, ArrowDownUp } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { materialStatusToneMap } from '../lib/taskOptions';
+import { TaskListSkeleton } from '../components/TaskSkeleton';
 
 const ManageTasks: React.FC = () => {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState<'default' | 'employee'>('employee');
-  const { tasks, users, currentUser, deleteTask } = useTasks();
+  const { tasks, users, currentUser, deleteTask, isLoading } = useTasks();
   const { t, formatDateTime, formatTime, taskTypeLabel, weekdayLabel, monthDayOrdinalLabel } = useLanguage();
 
   if (!currentUser) return null;
@@ -180,8 +181,12 @@ const ManageTasks: React.FC = () => {
             </select>
           </div>
         </div>
-        {sortBy === 'employee' ? (
-          <div>
+        {isLoading ? (
+          <div className="mt-8">
+            <TaskListSkeleton count={5} />
+          </div>
+        ) : sortBy === 'employee' ? (
+          <div className="space-y-8 mt-6">
             {users.filter(u => u.name.toLowerCase() !== 'saheel').map(user => {
                const userTasks = groupedTasks[user.id];
                if (!userTasks || userTasks.length === 0) return null;

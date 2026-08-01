@@ -5,6 +5,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { CheckCircle2, Clock, Calendar, ChevronDown, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { TaskListSkeleton } from '../components/TaskSkeleton';
 
 const CompletedHistory: React.FC = () => {
   const navigate = useNavigate();
@@ -91,7 +92,9 @@ const CompletedHistory: React.FC = () => {
         </p>
       </header>
 
-      {sortedDates.length === 0 ? (
+      {dbTasksRaw === undefined ? (
+        <TaskListSkeleton count={5} />
+      ) : sortedDates.length === 0 ? (
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-10 text-center">
           <CheckCircle2 size={40} className="mx-auto text-slate-300 mb-3" />
           <h3 className="text-slate-700 font-semibold mb-1">{t('completedHistory.emptyTitle')}</h3>

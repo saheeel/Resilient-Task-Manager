@@ -6,6 +6,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import StatusBadge from '../components/StatusBadge';
 import { Calendar, X } from 'lucide-react';
+import { TaskListSkeleton } from '../components/TaskSkeleton';
 
 const AdminTaskHistory: React.FC = () => {
   const navigate = useNavigate();
@@ -84,9 +85,11 @@ const AdminTaskHistory: React.FC = () => {
           )}
         </div>
       </div>
-
-      {historyTasks.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
+      {/* Task List */}
+      {dbTasksRaw === undefined ? (
+        <TaskListSkeleton count={5} />
+      ) : sortedDates.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 py-12 text-center text-slate-500">
           {t('adminHistory.empty')}
         </div>
       ) : (

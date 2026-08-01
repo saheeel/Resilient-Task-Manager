@@ -66,7 +66,8 @@ interface TaskContextType {
   users: User[];
   currentUser: User | null;
   setCurrentUser: (user: User | null) => void;
-  addTask: (task: Omit<Task, 'id'>) => void;
+  isLoading: boolean;
+  addTask: (task: Omit<Task, 'id'>) => Promise<void>;
   updateTaskStatus: (taskId: string, status: TaskStatus, details?: Partial<Task>) => void;
   addUser: (name: string, role: Role, username?: string, password?: string, employeeRole?: string) => User;
   addAdminUser: (name: string, email?: string, role?: Extract<Role, 'admin' | 'superadmin'>) => Promise<string>;
@@ -287,7 +288,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return candidate;
   };
 
-  const addTask = (taskData: Omit<Task, 'id'>) => {
+  const addTask = async (taskData: Omit<Task, 'id'>) => {
     const assignmentMetadata = currentUser && currentUser.role !== 'employee'
       ? {
           assignedById: currentUser.id,
@@ -303,7 +304,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       nextOccur = calculateNextOccurrence(taskData.type, taskData.recurringDay, taskData.recurringTime, new Date());
     }
 
-    dbAddTask({
+    await dbAddTask({
       title: taskData.title,
       description: taskData.description,
       type: taskData.type,
@@ -553,6 +554,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       users: mappedDbUsers, 
       currentUser, 
       setCurrentUser: handleSetCurrentUser, 
+      isLoading: dbTasksRaw === undefined && !cachedTasksRaw,
       addTask, 
       updateTaskStatus,
       addUser,

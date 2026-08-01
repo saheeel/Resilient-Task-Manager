@@ -6,10 +6,11 @@ import { useLanguage } from '../contexts/LanguageContext';
 import StatusBadge from '../components/StatusBadge';
 import { PackageCheck, UserRoundCog, ArrowDownUp } from 'lucide-react';
 import { materialStatusToneMap } from '../lib/taskOptions';
+import { TaskListSkeleton } from '../components/TaskSkeleton';
 
 const AllTasks: React.FC = () => {
   const navigate = useNavigate();
-  const { tasks, currentUser, users } = useTasks();
+  const { tasks, currentUser, users, isLoading } = useTasks();
   const {
     t,
     formatDate,
@@ -189,7 +190,9 @@ const AllTasks: React.FC = () => {
       </div>
 
       <div className="mb-8">
-        {sortedActiveTasks.length === 0 ? (
+        {isLoading ? (
+          <TaskListSkeleton count={5} />
+        ) : activeTasks.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center">
             <h3 className="mb-1 font-semibold text-slate-700">{t('employeeDashboard.allCaughtUp')}</h3>
             <p className="text-sm text-slate-500">{t('employeeDashboard.noActiveTasks')}</p>
