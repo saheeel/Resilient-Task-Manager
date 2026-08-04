@@ -7,12 +7,11 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { materialStatusToneMap } from '../lib/taskOptions';
-import { readFileAsDataUrl } from '../lib/fileDataUrl';
 
 const TaskDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { tasks, updateTaskStatus, currentUser, deleteTask, users, editTask, addTaskUpdate, sendPushNotification } = useTasks();
+  const { tasks, updateTaskStatus, currentUser, deleteTask, users, editTask, addTaskUpdate, sendPushNotification, uploadFile } = useTasks();
   const { t, formatDate, formatDateTime, formatTime, priorityLabel, taskTypeLabel, weekdayLabel, monthDayOrdinalLabel, roleLabel } = useLanguage();
   
   const task = tasks.find(t => t.id === id);
@@ -38,7 +37,7 @@ const TaskDetail: React.FC = () => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       try {
-        setUpdatePhotoUrl(await readFileAsDataUrl(file));
+        setUpdatePhotoUrl(await uploadFile(file));
       } catch (error) {
         console.error('Failed to prepare update photo:', error);
         alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
@@ -60,7 +59,7 @@ const TaskDetail: React.FC = () => {
       const newUrls: string[] = [];
       for (const file of files) {
         try {
-          const url = await readFileAsDataUrl(file);
+          const url = await uploadFile(file);
           newUrls.push(url);
         } catch (error) {
           console.error('Failed to prepare completion photo:', error);
@@ -147,6 +146,23 @@ const TaskDetail: React.FC = () => {
     return `${mins} min`;
   };
 
+  const notifyAssigneesAndAssigner = async (title: string, body: string) => {
+    if (!task) return;
+    const userIdsToNotify = new Set(task.assignedTo);
+    if (task.assignedById) {
+      userIdsToNotify.add(task.assignedById);
+    }
+    
+    for (const userId of Array.from(userIdsToNotify)) {
+      await sendPushNotification({
+        userId,
+        title,
+        body,
+        url: `/task/${task.id}`
+      }).catch(err => console.error("Failed to send push notification:", err));
+    }
+  };
+
   const handleStart = () => {
     updateTaskStatus(task.id, 'in_progress', {
       startedAt: new Date().toISOString()
@@ -161,6 +177,7 @@ const TaskDetail: React.FC = () => {
       proofPhotoUrls: photoUrls.length > 0 ? photoUrls : undefined
     });
     addTaskUpdate(task.id, `${currentUser.name} completed the task.`);
+    notifyAssigneesAndAssigner('Task Completed', `${currentUser.name} has completed the task: ${task.title}`);
     navigate(-1);
   };
 
@@ -174,6 +191,7 @@ const TaskDetail: React.FC = () => {
       markedIssueAt: new Date().toISOString()
     });
     addTaskUpdate(task.id, `${currentUser.name} marked the task as an issue.`);
+    notifyAssigneesAndAssigner('Task Issue Reported', `${currentUser.name} reported an issue for task: ${task.title}`);
     navigate(-1);
   };
 
@@ -740,6 +758,7 @@ const TaskDetail: React.FC = () => {
               setIsPostingUpdate(true);
               try {
                 await addTaskUpdate(task.id, updateText, updatePhotoUrl || undefined);
+                notifyAssigneesAndAssigner('New Task Update', `${currentUser.name} posted an update on: ${task.title}`);
                 setUpdateText('');
                 setUpdatePhotoUrl(null);
               } catch (err) {

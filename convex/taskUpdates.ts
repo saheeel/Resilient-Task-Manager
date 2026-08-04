@@ -5,10 +5,18 @@ import { v } from "convex/values";
 export const list = query({
   args: { taskId: v.string() },
   handler: async (ctx: any, args: any) => {
-    return await ctx.db
+    const updates = await ctx.db
       .query("taskUpdates")
       .withIndex("by_taskId", (q: any) => q.eq("taskId", args.taskId))
       .collect();
+      
+    return await Promise.all(updates.map(async (update: any) => {
+      let photoUrl = update.photoUrl;
+      if (photoUrl && !photoUrl.startsWith("data:") && !photoUrl.startsWith("http") && !photoUrl.startsWith("blob:")) {
+        photoUrl = (await ctx.storage.getUrl(photoUrl)) || photoUrl;
+      }
+      return { ...update, photoUrl };
+    }));
   },
 });
 

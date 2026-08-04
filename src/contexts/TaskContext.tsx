@@ -80,6 +80,7 @@ interface TaskContextType {
   addTaskUpdate: (taskId: string, text: string, photoUrl?: string) => Promise<void>;
   isBackendConnected: boolean;
   sendPushNotification: (args: { userId: string; title: string; body: string; url?: string }) => Promise<null>;
+  uploadFile: (file: File) => Promise<string>;
 }
 
 export const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -136,6 +137,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const dbRemoveUser = useMutation(api.users.remove);
   const dbAddTaskUpdate = useMutation(api.taskUpdates.create);
   const syncSuperAdminAllowlist = useMutation(api.users.syncSuperAdminAllowlist);
+  // @ts-ignore - files api is generated dynamically by Convex
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   
   const sendPushNotification = useAction(api.pushActions.sendNotification);
   const notifyAdmins = useAction(api.pushActions.notifyAdmins);
@@ -568,6 +571,17 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       addTaskUpdate,
       isBackendConnected,
       sendPushNotification,
+      uploadFile: async (file: File) => {
+        const postUrl = await generateUploadUrl();
+        const result = await fetch(postUrl, {
+          method: "POST",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        if (!result.ok) throw new Error("Failed to upload file to Convex Storage");
+        const { storageId } = await result.json();
+        return storageId;
+      }
     }}>
       {children}
     </TaskContext.Provider>

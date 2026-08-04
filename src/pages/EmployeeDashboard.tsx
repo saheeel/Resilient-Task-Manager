@@ -96,10 +96,24 @@ const EmployeeDashboard: React.FC = () => {
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       });
     }
+    
+    // Default sorting: Due Date first, then Priority
     return listCopy.sort((a, b) => {
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
-      return 0;
+      
+      // Sort by Due Date
+      if (a.dueDate && b.dueDate) {
+         const timeDiff = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+         if (timeDiff !== 0) return timeDiff;
+      } else if (a.dueDate) {
+         return -1;
+      } else if (b.dueDate) {
+         return 1;
+      }
+      
+      // If Due Dates are the same (or both null), sort by Priority
+      return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
     });
   };
 
@@ -414,11 +428,17 @@ const EmployeeDashboard: React.FC = () => {
 
                 <div className="mt-4 flex flex-wrap items-center gap-2.5">
                   {renderPriorityBadge(task.priority)}
-                  {task.assignedByName && (
-                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
-                      {t('common.assignedBy')}: {task.assignedByName}
+                  
+                  {task.assignedTo && task.assignedTo.length > 0 ? (
+                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                      {t('taskDetail.assignedTo')}: {task.assignedTo.map(id => users.find(u => u.id === id)?.name).join(', ')}
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-400">
+                      {t('common.unassigned')}
                     </span>
                   )}
+                  
                   {task.dueDate && (
                     <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
                       {t('employeeDashboard.dueOn', {

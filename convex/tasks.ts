@@ -2,14 +2,44 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 
+const resolveFileUrls = async (ctx: any, task: any) => {
+  let attachments = task.attachments;
+  if (attachments) {
+    attachments = await Promise.all(attachments.map(async (id: string) => {
+      if (id.startsWith("data:") || id.startsWith("http") || id.startsWith("blob:")) return id;
+      return (await ctx.storage.getUrl(id)) || id;
+    }));
+  }
+  
+  let proofPhotoUrls = task.proofPhotoUrls;
+  if (proofPhotoUrls) {
+    proofPhotoUrls = await Promise.all(proofPhotoUrls.map(async (id: string) => {
+      if (id.startsWith("data:") || id.startsWith("http") || id.startsWith("blob:")) return id;
+      return (await ctx.storage.getUrl(id)) || id;
+    }));
+  }
+
+  let proofPhotoUrl = task.proofPhotoUrl;
+  if (proofPhotoUrl && !proofPhotoUrl.startsWith("data:") && !proofPhotoUrl.startsWith("http") && !proofPhotoUrl.startsWith("blob:")) {
+    proofPhotoUrl = (await ctx.storage.getUrl(proofPhotoUrl)) || proofPhotoUrl;
+  }
+  
+  return { ...task, attachments, proofPhotoUrls, proofPhotoUrl };
+};
+
 export const listPaginatedHistory = query({
   args: { paginationOpts: paginationOptsValidator },
   handler: async (ctx: any, args: any) => {
-    return await ctx.db
+    const result = await ctx.db
       .query("tasks")
       .withIndex("by_isArchived", (q: any) => q.eq("isArchived", true))
       .order("desc")
       .paginate(args.paginationOpts);
+      
+    return {
+      ...result,
+      page: await Promise.all(result.page.map((task: any) => resolveFileUrls(ctx, task)))
+    };
   },
 });
 
@@ -20,10 +50,12 @@ export const list = query({
   },
   handler: async (ctx: any, args: any) => {
     // 1. Fetch all active tasks instantly via index
-    const activeTasks = await ctx.db
+    const rawActiveTasks = await ctx.db
       .query("tasks")
       .withIndex("by_isArchived", (q: any) => q.eq("isArchived", false))
       .collect();
+      
+    const activeTasks = await Promise.all(rawActiveTasks.map((t: any) => resolveFileUrls(ctx, t)));
 
     if (!args.cutoffDate) return activeTasks;
 
@@ -34,11 +66,13 @@ export const list = query({
       .order("desc")
       .take(300);
 
-    const validRecentArchived = recentArchived.filter((task: any) => {
+    const validRecentArchivedRaw = recentArchived.filter((task: any) => {
       if (!task.completedAt && !task.markedIssueAt) return true;
       const finishDate = task.completedAt || task.markedIssueAt;
       return finishDate >= args.cutoffDate!;
     });
+    
+    const validRecentArchived = await Promise.all(validRecentArchivedRaw.map((t: any) => resolveFileUrls(ctx, t)));
 
     return [...activeTasks, ...validRecentArchived];
   },

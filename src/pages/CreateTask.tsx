@@ -5,14 +5,13 @@ import type { TaskType, Priority } from '../contexts/TaskContext';
 import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MATERIAL_STATUS_OPTIONS } from '../lib/taskOptions';
-import { readFileAsDataUrl } from '../lib/fileDataUrl';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const IN_CHARGE_OPTIONS = ['Nicolas', 'Ivo', 'Carlo', 'Sun', 'Juliane', 'Diana'];
 
 const CreateTask: React.FC = () => {
   const navigate = useNavigate();
-  const { users, addTask } = useTasks();
+  const { users, addTask, uploadFile } = useTasks();
   const { t, priorityLabel, taskTypeLabel, shortWeekdayLabel, weekdayLabel, monthDayOrdinalLabel, formatDate } = useLanguage();
   
   const [title, setTitle] = useState('');
@@ -83,7 +82,7 @@ const CreateTask: React.FC = () => {
 
     let attachmentUrls: string[] | undefined;
     try {
-      attachmentUrls = attachment ? [await readFileAsDataUrl(attachment)] : undefined;
+      attachmentUrls = attachment ? [await uploadFile(attachment)] : undefined;
     } catch (error) {
       console.error('Failed to prepare task attachment:', error);
       alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
@@ -353,8 +352,7 @@ const CreateTask: React.FC = () => {
                       <input
                         ref={dateInputRef}
                         type="date"
-                        className="absolute opacity-0 pointer-events-none"
-                        style={{ width: '1px', height: '1px', top: 0, left: 0 }}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
                         value={dueDate}
                         onChange={e => setDueDate(e.target.value)}
                       />
