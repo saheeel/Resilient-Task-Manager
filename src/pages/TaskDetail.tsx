@@ -154,6 +154,7 @@ const TaskDetail: React.FC = () => {
     }
     
     for (const userId of Array.from(userIdsToNotify)) {
+      if (currentUser && userId === currentUser.id) continue;
       await sendPushNotification({
         userId,
         title,

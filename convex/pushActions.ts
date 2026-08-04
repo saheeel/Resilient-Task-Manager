@@ -66,6 +66,7 @@ export const notifyAdmins = action({
     taskTitle: v.string(),
     employeeName: v.string(),
     taskId: v.string(),
+    excludeUserId: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     const adminIds: string[] = await ctx.runQuery(api.pushMutations.getAdminIds);
@@ -77,6 +78,7 @@ export const notifyAdmins = action({
     });
 
     for (const adminId of adminIds) {
+      if (args.excludeUserId && adminId === args.excludeUserId) continue;
       const subscriptions = await ctx.runQuery(api.pushMutations.getSubscriptions, { userId: adminId });
       for (const sub of subscriptions) {
         try {
@@ -95,3 +97,4 @@ export const notifyAdmins = action({
     }
   }
 });
+

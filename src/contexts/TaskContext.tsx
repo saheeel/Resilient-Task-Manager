@@ -329,8 +329,9 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       activeFrom: taskData.activeFrom,
       nextOccurrence: nextOccur,
     }).then(() => {
-      // Loop through assignees and fire off background Web Push notifications
+      // Loop through assignees and fire off background Web Push notifications (excluding creator)
       taskData.assignedTo.forEach((userId) => {
+        if (currentUser && userId === currentUser.id) return;
         sendPushNotification({
           userId,
           title: "New Task Assigned! 🚀",
@@ -377,18 +378,31 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
     }
 
-    // Fire push notification to all admin-side users when anyone completes a task
+    // Fire push notification to task assigner when a task is completed (excluding self)
     if (status === 'completed' && currentUser) {
       const completedTask = mappedDbTasks.find(t => t.id === taskId);
       if (completedTask) {
-        notifyAdmins({
-          taskTitle: completedTask.title,
-          employeeName: currentUser.name,
-          taskId,
-        }).catch((err: any) => console.error('Admin notification error:', err));
+        if (completedTask.assignedById && completedTask.assignedById !== currentUser.id) {
+          sendPushNotification({
+            userId: completedTask.assignedById,
+            title: "✅ Task Completed",
+            body: `${currentUser.name} completed: ${completedTask.title}`,
+            url: `/task/${taskId}`,
+          }).catch(err => console.error(err));
+        } else if (!completedTask.assignedById) {
+          // Only fallback to notifying admins if there is no specific assigner
+          notifyAdmins({
+            taskTitle: completedTask.title,
+            employeeName: currentUser.name,
+            taskId,
+            excludeUserId: currentUser.id,
+          }).catch((err: any) => console.error('Admin notification error:', err));
+        }
       }
     }
   };
+
+
 
   const addUser = (name: string, role: Role, username?: string, password?: string, employeeRole?: string) => {
     const tempId = `temp_${Date.now()}`;
@@ -534,22 +548,24 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
     } else {
       // Employee commented, notify assigner (or admins if not assigned by a specific admin)
-      if (task.assignedById) {
+      if (task.assignedById && task.assignedById !== currentUser.id) {
         sendPushNotification({
           userId: task.assignedById,
           title: `💬 Update from ${currentUser.name}`,
           body: `"${text}"\nTask: ${task.title}`,
           url: `/task/${taskId}`
         }).catch((err) => console.error("Push notification action trigger error:", err));
-      } else {
+      } else if (!task.assignedById) {
         notifyAdmins({
           taskTitle: task.title,
           employeeName: currentUser.name,
           taskId: task.id,
+          excludeUserId: currentUser.id,
         }).catch((err) => console.error("Admin notification trigger error:", err));
       }
     }
   };
+
 
   return (
     <TaskContext.Provider value={{ 
