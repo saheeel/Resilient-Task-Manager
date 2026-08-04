@@ -178,7 +178,6 @@ const TaskDetail: React.FC = () => {
       proofPhotoUrls: photoUrls.length > 0 ? photoUrls : undefined
     });
     addTaskUpdate(task.id, `${currentUser.name} completed the task.`);
-    notifyAssigneesAndAssigner('Task Completed', `${currentUser.name} has completed the task: ${task.title}`);
     navigate(-1);
   };
 
@@ -192,7 +191,6 @@ const TaskDetail: React.FC = () => {
       markedIssueAt: new Date().toISOString()
     });
     addTaskUpdate(task.id, `${currentUser.name} marked the task as an issue.`);
-    notifyAssigneesAndAssigner('Task Issue Reported', `${currentUser.name} reported an issue for task: ${task.title}`);
     navigate(-1);
   };
 

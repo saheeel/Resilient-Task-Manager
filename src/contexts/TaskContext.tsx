@@ -400,7 +400,30 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       }
     }
+
+    // Fire push notification when a task issue is reported (excluding self)
+    if ((status === 'could_not_complete' || status === 'blocked') && currentUser) {
+      const issueTask = mappedDbTasks.find(t => t.id === taskId);
+      if (issueTask) {
+        if (issueTask.assignedById && issueTask.assignedById !== currentUser.id) {
+          sendPushNotification({
+            userId: issueTask.assignedById,
+            title: "⚠️ Task Issue Reported",
+            body: `${currentUser.name} reported an issue: ${issueTask.title}`,
+            url: `/task/${taskId}`,
+          }).catch(err => console.error(err));
+        } else if (!issueTask.assignedById) {
+          notifyAdmins({
+            taskTitle: issueTask.title,
+            employeeName: currentUser.name,
+            taskId,
+            excludeUserId: currentUser.id,
+          }).catch((err: any) => console.error('Admin notification error:', err));
+        }
+      }
+    }
   };
+
 
 
 
