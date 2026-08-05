@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+@custom-variant dark (&:where(.theme-dark, .theme-dark *));
 /* Base HTML styles for clean canvas and horizontal layout lock */
 html, body {
   margin: 0;

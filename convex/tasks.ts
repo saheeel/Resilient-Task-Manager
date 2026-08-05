@@ -57,20 +57,21 @@ export const list = query({
       
     const activeTasks = await Promise.all(rawActiveTasks.map((t: any) => resolveFileUrls(ctx, t)));
 
-    if (!args.cutoffDate) return activeTasks;
-
-    // 2. Fetch recent history tasks (last 300 max) to find ones within cutoff date
+    // 2. Fetch recent history tasks (last 300 max)
     const recentArchived = await ctx.db
       .query("tasks")
       .withIndex("by_isArchived", (q: any) => q.eq("isArchived", true))
       .order("desc")
       .take(300);
 
-    const validRecentArchivedRaw = recentArchived.filter((task: any) => {
-      if (!task.completedAt && !task.markedIssueAt) return true;
-      const finishDate = task.completedAt || task.markedIssueAt;
-      return finishDate >= args.cutoffDate!;
-    });
+    let validRecentArchivedRaw = recentArchived;
+    if (args.cutoffDate) {
+      validRecentArchivedRaw = recentArchived.filter((task: any) => {
+        if (!task.completedAt && !task.markedIssueAt) return true;
+        const finishDate = task.completedAt || task.markedIssueAt;
+        return finishDate >= args.cutoffDate!;
+      });
+    }
     
     const validRecentArchived = await Promise.all(validRecentArchivedRaw.map((t: any) => resolveFileUrls(ctx, t)));
 

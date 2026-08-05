@@ -4,11 +4,15 @@ import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
 import { ArrowLeft, BarChart2, CheckCircle2, AlertOctagon, RefreshCw, Calendar, Clock, MessageSquare } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 
 const EmployeeHistory: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { tasks, users, currentUser } = useTasks();
+  const { users, currentUser } = useTasks();
+  const dbTasksRaw = useQuery(api.tasks.list, {});
+  const tasks = (dbTasksRaw as any[]) || [];
   const { t, formatDateTime, roleLabel, priorityLabel } = useLanguage();
 
   const employee = users.find(u => u.id === id);
