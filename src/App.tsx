@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { TaskProvider, useTasks, isAdminRole } from './contexts/TaskContext';
 import BottomNav from './components/BottomNav';
