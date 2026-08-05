@@ -425,3 +425,47 @@ body.theme-dark {
 .theme-dark .employee-completed-status {
   color: #4ade80;
 }
+
+/* Premium Accordion Styling & Animation */
+.accordion-header-btn {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.accordion-header-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.theme-dark .accordion-header-btn {
+  background-color: #1a1d24 !important;
+  border-color: #2c313a !important;
+  color: #f3f4f6 !important;
+}
+
+.theme-dark .accordion-header-btn * {
+  color: inherit;
+}
+
+.theme-dark .accordion-header-btn:hover {
+  background-color: #232731 !important;
+  border-color: #373e4b !important;
+}
+
+/* Accordion Smooth Expand/Collapse Grid Animation */
+.accordion-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.accordion-wrapper.open {
+  grid-template-rows: 1fr;
+}
+
+.accordion-inner {
+  overflow: hidden;
+}
+

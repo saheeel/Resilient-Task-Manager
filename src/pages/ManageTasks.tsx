@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { PlusCircle, Edit, Trash2, PackageCheck, UserRoundCog, ArrowDownUp, ChevronDown, ChevronRight, User } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, PackageCheck, UserRoundCog, ArrowDownUp, ChevronRight, User } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { materialStatusToneMap } from '../lib/taskOptions';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
@@ -197,236 +197,241 @@ const ManageTasks: React.FC = () => {
             <TaskListSkeleton count={5} />
           </div>
         ) : sortBy === 'employee' ? (
-          <div className="space-y-4 mt-6">
+          <div className="space-y-2.5 mt-6">
             {users.filter(u => u.name.toLowerCase() !== 'saheel').map(user => {
                const userTasks = groupedTasks[user.id];
                if (!userTasks || userTasks.length === 0) return null;
                const isCollapsed = collapsedSections.has(user.id);
                return (
-                 <div key={user.id} className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden transition-all">
+                 <div key={user.id} className="rounded-xl overflow-hidden">
                    <button
                      onClick={() => toggleSection(user.id)}
-                     className="w-full flex items-center justify-between px-5 py-4 bg-slate-50/80 hover:bg-slate-100/70 transition-colors text-left border-none cursor-pointer"
+                     className="accordion-header-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-left cursor-pointer border shadow-xs"
                    >
-                     <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 border border-blue-200 flex items-center justify-center font-bold text-xs">
+                     <div className="flex items-center gap-2.5">
+                       <div className="w-6 h-6 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
                          {user.name.split(' ').map(n => n[0]).join('')}
                        </div>
-                       <span className="font-bold text-slate-800 text-sm tracking-tight">{user.name}</span>
-                       <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+                       <span className="font-semibold text-sm tracking-tight">{user.name}</span>
+                       <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700 text-[11px] font-bold">
                          {userTasks.length} {userTasks.length === 1 ? 'task' : 'tasks'}
                        </span>
                      </div>
-                     <div className="text-slate-400">
-                       {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+                     <div className={`text-slate-400 transition-transform duration-200 ${!isCollapsed ? 'rotate-90' : ''}`}>
+                       <ChevronRight size={16} />
                      </div>
                    </button>
 
-                   {!isCollapsed && (
-                     <div className="border-t border-slate-150">
-                       <div className="overflow-x-auto">
-                         <table className="w-full min-w-[600px] border-collapse text-left text-sm">
-                           <thead className="bg-slate-50/50 border-b border-slate-200 text-slate-600 font-semibold">
-                             <tr>
-                               <th className="px-5 py-3">{t('manageTasks.taskTitle')}</th>
-                               <th className="px-5 py-3">{t('manageTasks.assignedTeamMembers')}</th>
-                               <th className="px-5 py-3 w-[130px] whitespace-nowrap">{t('common.status')}</th>
-                               <th className="px-5 py-3 text-right">{t('common.actions')}</th>
-                             </tr>
-                           </thead>
-                           <tbody className="divide-y divide-slate-100">
-                             {userTasks.map(task => (
-                               <tr 
-                                 key={`${user.id}-${task.id}`} 
-                                 className="hover:bg-slate-50 cursor-pointer transition-colors" 
-                                 onClick={() => navigate(`/task/${task.id}`)}
-                               >
-                                 <td className="px-5 py-3.5 font-medium text-slate-900 align-top">
-                                   <div className="flex flex-col gap-2.5">
-                                     <span className="text-base leading-snug">{task.title}</span>
-                                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                                       {task.type !== 'one-time' ? (
-                                         <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-indigo-700">
-                                           {taskTypeLabel(task.type)}
-                                         </span>
-                                       ) : null}
-                                       {task.isPaused ? (
-                                         <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                                           {t('manageTasks.paused')}
-                                         </span>
-                                       ) : null}
-                                     {task.inCharge ? (
-                                       <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium">
-                                         <UserRoundCog size={12} />
-                                         {t('taskDetail.inCharge')}: {task.inCharge}
-                                       </span>
-                                     ) : null}
-                                     {task.materialStatus ? (
-                                       <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-medium ${materialStatusToneMap[task.materialStatus].badge}`}>
-                                         <PackageCheck size={12} />
-                                         {t(`materials.${task.materialStatus}`)}
-                                       </span>
-                                     ) : null}
-                                     </div>
-                                   </div>
-                                 </td>
-                                 <td className="px-5 py-3.5 align-top text-slate-600">
-                                   {task.assignedTo.length > 0 
-                                     ? task.assignedTo.map(id => users.find(u => u.id === id)?.name?.split(' ')[0] || 'Unknown').join(', ')
-                                     : t('common.unassigned')}
-                                 </td>
-                                 <td className="px-5 py-3.5 w-[130px] whitespace-nowrap align-top">
-                                   <StatusBadge status={task.status} />
-                                 </td>
-                                 <td className="px-5 py-3.5 text-right">
-                                   <div className="flex justify-end gap-2">
-                                     <button 
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         navigate(`/task/${task.id}/edit`);
-                                       }}
-                                       className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
-                                       title={t('manageTasks.editTask')}
-                                     >
-                                       <Edit size={16} />
-                                     </button>
-                                     <button 
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         if (confirm(t('common.confirmDeleteTask'))) {
-                                           deleteTask(task.id);
-                                         }
-                                       }}
-                                       className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
-                                       title={t('manageTasks.deleteTask')}
-                                     >
-                                       <Trash2 size={16} />
-                                     </button>
-                                   </div>
-                                 </td>
+                   <div className={`accordion-wrapper ${!isCollapsed ? 'open' : ''}`}>
+                     <div className="accordion-inner">
+                       <div className="pt-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-2">
+                         <div className="overflow-x-auto">
+                           <table className="w-full min-w-[600px] border-collapse text-left text-sm">
+                             <thead className="bg-slate-50/50 border-b border-slate-200 text-slate-600 font-semibold">
+                               <tr>
+                                 <th className="px-5 py-3">{t('manageTasks.taskTitle')}</th>
+                                 <th className="px-5 py-3">{t('manageTasks.assignedTeamMembers')}</th>
+                                 <th className="px-5 py-3 w-[130px] whitespace-nowrap">{t('common.status')}</th>
+                                 <th className="px-5 py-3 text-right">{t('common.actions')}</th>
                                </tr>
-                             ))}
-                           </tbody>
-                         </table>
+                             </thead>
+                             <tbody className="divide-y divide-slate-100">
+                               {userTasks.map(task => (
+                                 <tr 
+                                   key={`${user.id}-${task.id}`} 
+                                   className="hover:bg-slate-50 cursor-pointer transition-colors" 
+                                   onClick={() => navigate(`/task/${task.id}`)}
+                                 >
+                                   <td className="px-5 py-3.5 font-medium text-slate-900 align-top">
+                                     <div className="flex flex-col gap-2.5">
+                                       <span className="text-base leading-snug">{task.title}</span>
+                                       <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                         {task.type !== 'one-time' ? (
+                                           <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-indigo-700">
+                                             {taskTypeLabel(task.type)}
+                                           </span>
+                                         ) : null}
+                                         {task.isPaused ? (
+                                           <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                             {t('manageTasks.paused')}
+                                           </span>
+                                         ) : null}
+                                       {task.inCharge ? (
+                                         <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium">
+                                           <UserRoundCog size={12} />
+                                           {t('taskDetail.inCharge')}: {task.inCharge}
+                                         </span>
+                                       ) : null}
+                                       {task.materialStatus ? (
+                                         <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-medium ${materialStatusToneMap[task.materialStatus].badge}`}>
+                                           <PackageCheck size={12} />
+                                           {t(`materials.${task.materialStatus}`)}
+                                         </span>
+                                       ) : null}
+                                       </div>
+                                     </div>
+                                   </td>
+                                   <td className="px-5 py-3.5 align-top text-slate-600">
+                                     {task.assignedTo.length > 0 
+                                       ? task.assignedTo.map(id => users.find(u => u.id === id)?.name?.split(' ')[0] || 'Unknown').join(', ')
+                                       : t('common.unassigned')}
+                                   </td>
+                                   <td className="px-5 py-3.5 w-[130px] whitespace-nowrap align-top">
+                                     <StatusBadge status={task.status} />
+                                   </td>
+                                   <td className="px-5 py-3.5 text-right">
+                                     <div className="flex justify-end gap-2">
+                                       <button 
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           navigate(`/task/${task.id}/edit`);
+                                         }}
+                                         className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
+                                         title={t('manageTasks.editTask')}
+                                       >
+                                         <Edit size={16} />
+                                       </button>
+                                       <button 
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           if (confirm(t('common.confirmDeleteTask'))) {
+                                             deleteTask(task.id);
+                                           }
+                                         }}
+                                         className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
+                                         title={t('manageTasks.deleteTask')}
+                                       >
+                                         <Trash2 size={16} />
+                                       </button>
+                                     </div>
+                                   </td>
+                                 </tr>
+                               ))}
+                             </tbody>
+                           </table>
+                         </div>
                        </div>
                      </div>
-                   )}
+                   </div>
                  </div>
                );
             })}
             
             {groupedTasks['unassigned']?.length > 0 && (
-              <div key="unassigned" className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden transition-all">
+              <div key="unassigned" className="rounded-xl overflow-hidden">
                 <button
                   onClick={() => toggleSection('unassigned')}
-                  className="w-full flex items-center justify-between px-5 py-4 bg-slate-50/80 hover:bg-slate-100/70 transition-colors text-left border-none cursor-pointer"
+                  className="accordion-header-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-left cursor-pointer border shadow-xs"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
-                      <User size={14} />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-6 h-6 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                      <User size={12} />
                     </div>
-                    <span className="font-bold text-slate-800 text-sm tracking-tight">{t('common.unassigned')}</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold">
+                    <span className="font-semibold text-sm tracking-tight">{t('common.unassigned')}</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700 text-[11px] font-bold">
                       {groupedTasks['unassigned'].length} {groupedTasks['unassigned'].length === 1 ? 'task' : 'tasks'}
                     </span>
                   </div>
-                  <div className="text-slate-400">
-                    {collapsedSections.has('unassigned') ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+                  <div className={`text-slate-400 transition-transform duration-200 ${!collapsedSections.has('unassigned') ? 'rotate-90' : ''}`}>
+                    <ChevronRight size={16} />
                   </div>
                 </button>
 
-                {!collapsedSections.has('unassigned') && (
-                  <div className="border-t border-slate-150">
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[600px] border-collapse text-left text-sm">
-                        <thead className="bg-slate-50/50 border-b border-slate-200 text-slate-600 font-semibold">
-                          <tr>
-                            <th className="px-5 py-3">{t('manageTasks.taskTitle')}</th>
-                            <th className="px-5 py-3">{t('manageTasks.assignedTeamMembers')}</th>
-                            <th className="px-5 py-3 w-[130px] whitespace-nowrap">{t('common.status')}</th>
-                            <th className="px-5 py-3 text-right">{t('common.actions')}</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {groupedTasks['unassigned'].map(task => (
-                            <tr 
-                              key={`unassigned-${task.id}`} 
-                              className="hover:bg-slate-50 cursor-pointer transition-colors" 
-                              onClick={() => navigate(`/task/${task.id}`)}
-                            >
-                              <td className="px-5 py-3.5 font-medium text-slate-900 align-top">
-                                <div className="flex flex-col gap-2.5">
-                                  <span className="text-base leading-snug">{task.title}</span>
-                                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                                    {task.type !== 'one-time' ? (
-                                      <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-indigo-700">
-                                        {taskTypeLabel(task.type)}
-                                      </span>
-                                    ) : null}
-                                    {task.isPaused ? (
-                                      <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                                        {t('manageTasks.paused')}
-                                      </span>
-                                    ) : null}
-                                  {task.inCharge ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium">
-                                      <UserRoundCog size={12} />
-                                      {t('taskDetail.inCharge')}: {task.inCharge}
-                                    </span>
-                                  ) : null}
-                                  {task.materialStatus ? (
-                                    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-medium ${materialStatusToneMap[task.materialStatus].badge}`}>
-                                      <PackageCheck size={12} />
-                                      {t(`materials.${task.materialStatus}`)}
-                                    </span>
-                                  ) : null}
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-5 py-3.5 align-top text-slate-600">
-                                {task.assignedTo.length > 0 
-                                  ? task.assignedTo.map(id => users.find(u => u.id === id)?.name?.split(' ')[0] || 'Unknown').join(', ')
-                                  : t('common.unassigned')}
-                              </td>
-                              <td className="px-5 py-3.5 w-[130px] whitespace-nowrap align-top">
-                                <StatusBadge status={task.status} />
-                              </td>
-                              <td className="px-5 py-3.5 text-right">
-                                <div className="flex justify-end gap-2">
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      navigate(`/task/${task.id}/edit`);
-                                    }}
-                                    className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
-                                    title={t('manageTasks.editTask')}
-                                  >
-                                    <Edit size={16} />
-                                  </button>
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (confirm(t('common.confirmDeleteTask'))) {
-                                        deleteTask(task.id);
-                                      }
-                                    }}
-                                    className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
-                                    title={t('manageTasks.deleteTask')}
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
-                                </div>
-                              </td>
+                <div className={`accordion-wrapper ${!collapsedSections.has('unassigned') ? 'open' : ''}`}>
+                  <div className="accordion-inner">
+                    <div className="pt-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-2">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[600px] border-collapse text-left text-sm">
+                          <thead className="bg-slate-50/50 border-b border-slate-200 text-slate-600 font-semibold">
+                            <tr>
+                              <th className="px-5 py-3">{t('manageTasks.taskTitle')}</th>
+                              <th className="px-5 py-3">{t('manageTasks.assignedTeamMembers')}</th>
+                              <th className="px-5 py-3 w-[130px] whitespace-nowrap">{t('common.status')}</th>
+                              <th className="px-5 py-3 text-right">{t('common.actions')}</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {groupedTasks['unassigned'].map(task => (
+                              <tr 
+                                key={`unassigned-${task.id}`} 
+                                className="hover:bg-slate-50 cursor-pointer transition-colors" 
+                                onClick={() => navigate(`/task/${task.id}`)}
+                              >
+                                <td className="px-5 py-3.5 font-medium text-slate-900 align-top">
+                                  <div className="flex flex-col gap-2.5">
+                                    <span className="text-base leading-snug">{task.title}</span>
+                                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                      {task.type !== 'one-time' ? (
+                                        <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-indigo-700">
+                                          {taskTypeLabel(task.type)}
+                                        </span>
+                                      ) : null}
+                                      {task.isPaused ? (
+                                        <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                          {t('manageTasks.paused')}
+                                        </span>
+                                      ) : null}
+                                    {task.inCharge ? (
+                                      <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium">
+                                        <UserRoundCog size={12} />
+                                        {t('taskDetail.inCharge')}: {task.inCharge}
+                                      </span>
+                                    ) : null}
+                                    {task.materialStatus ? (
+                                      <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-medium ${materialStatusToneMap[task.materialStatus].badge}`}>
+                                        <PackageCheck size={12} />
+                                        {t(`materials.${task.materialStatus}`)}
+                                      </span>
+                                    ) : null}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-5 py-3.5 align-top text-slate-600">
+                                  {task.assignedTo.length > 0 
+                                    ? task.assignedTo.map(id => users.find(u => u.id === id)?.name?.split(' ')[0] || 'Unknown').join(', ')
+                                    : t('common.unassigned')}
+                                </td>
+                                <td className="px-5 py-3.5 w-[130px] whitespace-nowrap align-top">
+                                  <StatusBadge status={task.status} />
+                                </td>
+                                <td className="px-5 py-3.5 text-right">
+                                  <div className="flex justify-end gap-2">
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/task/${task.id}/edit`);
+                                      }}
+                                      className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
+                                      title={t('manageTasks.editTask')}
+                                    >
+                                      <Edit size={16} />
+                                    </button>
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (confirm(t('common.confirmDeleteTask'))) {
+                                          deleteTask(task.id);
+                                        }
+                                      }}
+                                      className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
+                                      title={t('manageTasks.deleteTask')}
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             )}
           </div>
+
 
         ) : (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6">
