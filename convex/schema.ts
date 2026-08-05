@@ -12,7 +12,7 @@ export default defineSchema({
     employeeRole: v.optional(v.string()),
     authUserId: v.optional(v.string()),
     authType: v.optional(v.string()),
-  }).index("by_username", ["username"]).index("by_email", ["email"]).index("by_authUserId", ["authUserId"]),
+  }).index("by_username", ["username"]).index("by_email", ["email"]).index("by_authUserId", ["authUserId"]).index("by_role", ["role"]),
 
   tasks: defineTable({
     title: v.string(),
@@ -65,5 +65,5 @@ export default defineSchema({
     endpoint: v.string(),
     p256dh: v.string(),
     auth: v.string(),
-  }).index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]).index("by_endpoint", ["endpoint"]),
 });

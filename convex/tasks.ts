@@ -3,6 +3,10 @@ import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 
 const resolveFileUrls = async (ctx: any, task: any) => {
+  if (!task.attachments?.length && !task.proofPhotoUrls?.length && !task.proofPhotoUrl) {
+    return task;
+  }
+
   let attachments = task.attachments;
   if (attachments) {
     attachments = await Promise.all(attachments.map(async (id: string) => {
@@ -57,12 +61,13 @@ export const list = query({
       
     const activeTasks = await Promise.all(rawActiveTasks.map((t: any) => resolveFileUrls(ctx, t)));
 
-    // 2. Fetch recent history tasks (last 300 max)
+    // 2. Fetch recent history tasks (capped dynamically: 80 with cutoff, 300 without)
+    const historyLimit = args.cutoffDate ? 80 : 300;
     const recentArchived = await ctx.db
       .query("tasks")
       .withIndex("by_isArchived", (q: any) => q.eq("isArchived", true))
       .order("desc")
-      .take(300);
+      .take(historyLimit);
 
     let validRecentArchivedRaw = recentArchived;
     if (args.cutoffDate) {

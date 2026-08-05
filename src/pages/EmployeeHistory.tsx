@@ -48,8 +48,31 @@ const EmployeeHistory: React.FC = () => {
     );
   }
 
-  // Filter tasks assigned to this employee
-  const employeeTasks = tasks.filter(t => t.assignedTo.includes(employee.id));
+  const getPriorityWeight = (priority: string) => {
+    if (priority === 'high') return 3;
+    if (priority === 'medium') return 2;
+    return 1;
+  };
+
+  // Filter & sort tasks assigned to this employee (Due Date first, then Priority)
+  const employeeTasks = tasks
+    .filter(t => t.assignedTo.includes(employee.id))
+    .sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+
+      if (a.dueDate && b.dueDate) {
+        const timeDiff = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        if (timeDiff !== 0) return timeDiff;
+      } else if (a.dueDate) {
+        return -1;
+      } else if (b.dueDate) {
+        return 1;
+      }
+
+      return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
+    });
+
   const activeTasks = employeeTasks.filter(t => t.status === 'open' || t.status === 'in_progress');
   const completedTasks = employeeTasks.filter(t => t.status === 'completed');
   const issueTasks = employeeTasks.filter(t => t.status === 'could_not_complete' || t.status === 'blocked');
@@ -195,6 +218,12 @@ const EmployeeHistory: React.FC = () => {
                       </td>
 
                       <td className="px-5 py-4 text-xs space-y-1">
+                        {task.dueDate && (
+                          <div className="flex items-center gap-1 text-slate-500">
+                            <span className="font-semibold text-indigo-700 min-w-[70px]">{t('createTask.dueDate') || 'Fälligkeit'}:</span>
+                            <span className="font-semibold text-indigo-900">{formatDate(task.dueDate)}</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1 text-slate-500">
                             <span className="font-medium text-slate-700 min-w-[70px]">{t('employeeHistory.assigned')}:</span>
                           <span>{formatDate(task.createdAt)}</span>

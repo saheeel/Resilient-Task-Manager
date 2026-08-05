@@ -12,7 +12,7 @@ export const subscribe = mutation({
   handler: async (ctx: any, args: any) => {
     // Check if subscription endpoint already exists
     const existing = await ctx.db.query("pushSubscriptions")
-      .filter((q: any) => q.eq(q.field("endpoint"), args.endpoint))
+      .withIndex("by_endpoint", (q: any) => q.eq("endpoint", args.endpoint))
       .first();
       
     if (!existing) {
