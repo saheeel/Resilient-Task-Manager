@@ -6,6 +6,8 @@ import TopHeader from './components/TopHeader';
 import NotificationListener from './components/NotificationListener';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { useMutation } from 'convex/react';
+import { api } from '../convex/_generated/api';
 import { Loader2 } from 'lucide-react';
 import './index.css';
 
@@ -33,6 +35,11 @@ const PageLoader = () => (
 
 const AppContent = () => {
   const { currentUser } = useTasks();
+  
+  const backfill = useMutation(api.tasks.backfillArchived);
+  useEffect(() => {
+    backfill().catch(console.error);
+  }, [backfill]);
 
   if (!currentUser) {
     return (

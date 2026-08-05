@@ -185,6 +185,23 @@ export const update = mutation({
   },
 });
 
+// Backfill missing isArchived flags on old tasks
+export const backfillArchived = mutation({
+  args: {},
+  handler: async (ctx: any) => {
+    const allTasks = await ctx.db.query("tasks").collect();
+    let count = 0;
+    for (const t of allTasks) {
+      if (t.isArchived === undefined) {
+        const archived = ["completed", "could_not_complete", "blocked"].includes(t.status);
+        await ctx.db.patch(t._id, { isArchived: archived });
+        count++;
+      }
+    }
+    return count;
+  }
+});
+
 // Delete a task
 export const remove = mutation({
   args: { id: v.id("tasks") },
