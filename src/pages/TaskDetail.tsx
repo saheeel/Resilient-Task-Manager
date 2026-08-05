@@ -594,36 +594,6 @@ const TaskDetail: React.FC = () => {
           </div>
         )}
 
-        {(task.proofPhotoUrls || task.proofPhotoUrl) && (
-          <div className="mb-4">
-            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('taskDetail.completionPhotoProof')}</h3>
-            <div className="flex flex-wrap gap-3">
-              {(task.proofPhotoUrls || (task.proofPhotoUrl ? [task.proofPhotoUrl] : [])).map((url, index) => (
-                <React.Fragment key={index}>
-                  {isRenderableSavedImage(url) ? (
-                    <div className="relative inline-block group cursor-zoom-in" onClick={() => setActiveZoomUrl(url || null)}>
-                      <img 
-                        src={url} 
-                        alt={`Completion Proof ${index + 1}`} 
-                        className="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
-                        onError={() => markImageBroken(url!)}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
-                        <Eye className="text-white" size={20} />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
-                      <ImageOff size={14} className="shrink-0" />
-                      <span>{t('taskDetail.legacyImageUnavailable')}</span>
-                    </div>
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-        )}
-
         {task.attachments && task.attachments.length > 0 && (
           <div className="mb-4">
             <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('taskDetail.attachmentsReference')}</h3>
@@ -673,6 +643,36 @@ const TaskDetail: React.FC = () => {
             </div>
           </div>
         )}
+
+        {task.status === 'completed' && (task.proofPhotoUrls?.length || task.proofPhotoUrl) ? (
+          <div className="mb-4">
+            <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('taskDetail.completionPhotoProof')}</h3>
+            <div className="flex flex-wrap gap-3">
+              {(task.proofPhotoUrls && task.proofPhotoUrls.length > 0 ? task.proofPhotoUrls : (task.proofPhotoUrl ? [task.proofPhotoUrl] : [])).map((url, index) => (
+                <React.Fragment key={index}>
+                  {isRenderableSavedImage(url) ? (
+                    <div className="relative inline-block group cursor-zoom-in" onClick={() => setActiveZoomUrl(url || null)}>
+                      <img 
+                        src={url} 
+                        alt={`Completion Proof ${index + 1}`} 
+                        className="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
+                        onError={() => markImageBroken(url!)}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
+                        <Eye className="text-white" size={20} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                      <ImageOff size={14} className="shrink-0" />
+                      <span>{t('taskDetail.legacyImageUnavailable')}</span>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* Progress Updates & Communication Thread */}
