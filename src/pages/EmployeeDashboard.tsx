@@ -439,11 +439,15 @@ const EmployeeDashboard: React.FC = () => {
                     </span>
                   )}
                   
-                  {task.dueDate && (
+                  {task.dueDate ? (
                     <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
                       {t('employeeDashboard.dueOn', {
                         date: formatDate(task.dueDate, { month: 'short', day: 'numeric' }),
                       })}
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-400">
+                      No due date
                     </span>
                   )}
                   {task.type !== 'one-time' ? (
@@ -510,6 +514,15 @@ const EmployeeDashboard: React.FC = () => {
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-2.5">
                   {renderPriorityBadge(task.priority)}
+                  {task.assignedTo && task.assignedTo.length > 0 ? (
+                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                      {t('taskDetail.assignedTo')}: {task.assignedTo.map(id => users.find(u => u.id === id)?.name).join(', ')}
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-400">
+                      {t('common.unassigned')}
+                    </span>
+                  )}
                   {task.assignedByName && (
                     <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
                       {t('common.assignedBy')}: {task.assignedByName}

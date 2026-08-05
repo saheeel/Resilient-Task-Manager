@@ -382,19 +382,27 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
     }
 
-    // Fire push notification to task assigner when a task is completed (excluding self)
+    // Fire push notification to assigner AND assigned team members when a task is completed (excluding self)
     if (status === 'completed' && currentUser) {
       const completedTask = mappedDbTasks.find(t => t.id === taskId);
       if (completedTask) {
-        if (completedTask.assignedById && completedTask.assignedById !== currentUser.id) {
-          sendPushNotification({
-            userId: completedTask.assignedById,
-            title: "✅ Task Completed",
-            body: `${currentUser.name} completed: ${completedTask.title}`,
-            url: `/task/${taskId}`,
-          }).catch(err => console.error(err));
-        } else if (!completedTask.assignedById) {
-          // Only fallback to notifying admins if there is no specific assigner
+        const recipientIds = new Set<string>();
+        if (completedTask.assignedById) recipientIds.add(completedTask.assignedById);
+        if (Array.isArray(completedTask.assignedTo)) {
+          completedTask.assignedTo.forEach((id: string) => recipientIds.add(id));
+        }
+        recipientIds.delete(currentUser.id);
+
+        if (recipientIds.size > 0) {
+          recipientIds.forEach((userId) => {
+            sendPushNotification({
+              userId,
+              title: "✅ Task Completed",
+              body: `${currentUser.name} completed: ${completedTask.title}`,
+              url: `/task/${taskId}`,
+            }).catch(err => console.error(err));
+          });
+        } else {
           notifyAdmins({
             taskTitle: completedTask.title,
             employeeName: currentUser.name,
@@ -561,35 +569,30 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const task = mappedDbTasks.find(t => t.id === taskId);
     if (!task) return;
 
-    if (isAdminRole(currentUser.role)) {
-      // Admin commented, notify all assignees
-      task.assignedTo.forEach((userId: string) => {
-        if (userId !== currentUser.id) {
-          sendPushNotification({
-            userId,
-            title: `💬 Comment from Admin: ${currentUser.name}`,
-            body: `"${text}"\nTask: ${task.title}`,
-            url: `/task/${taskId}`
-          }).catch((err) => console.error("Push notification action trigger error:", err));
-        }
+    // Fire push notification to both assigner AND assigned team members (excluding self)
+    const recipientIds = new Set<string>();
+    if (task.assignedById) recipientIds.add(task.assignedById);
+    if (Array.isArray(task.assignedTo)) {
+      task.assignedTo.forEach((id: string) => recipientIds.add(id));
+    }
+    recipientIds.delete(currentUser.id);
+
+    if (recipientIds.size > 0) {
+      recipientIds.forEach((userId) => {
+        sendPushNotification({
+          userId,
+          title: `💬 Update on: ${task.title}`,
+          body: `${currentUser.name}: "${text}"`,
+          url: `/task/${taskId}`
+        }).catch((err) => console.error("Push notification error:", err));
       });
     } else {
-      // Employee commented, notify assigner (or admins if not assigned by a specific admin)
-      if (task.assignedById && task.assignedById !== currentUser.id) {
-        sendPushNotification({
-          userId: task.assignedById,
-          title: `💬 Update from ${currentUser.name}`,
-          body: `"${text}"\nTask: ${task.title}`,
-          url: `/task/${taskId}`
-        }).catch((err) => console.error("Push notification action trigger error:", err));
-      } else if (!task.assignedById) {
-        notifyAdmins({
-          taskTitle: task.title,
-          employeeName: currentUser.name,
-          taskId: task.id,
-          excludeUserId: currentUser.id,
-        }).catch((err) => console.error("Admin notification trigger error:", err));
-      }
+      notifyAdmins({
+        taskTitle: task.title,
+        employeeName: currentUser.name,
+        taskId: task.id,
+        excludeUserId: currentUser.id,
+      }).catch((err) => console.error("Admin notification trigger error:", err));
     }
   };
 

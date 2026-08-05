@@ -71,6 +71,11 @@ const AdminTaskHistory: React.FC = () => {
             type="date"
             value={selectedDate}
             onChange={(event) => setSelectedDate(event.target.value)}
+            onClick={(e) => {
+              try {
+                (e.target as HTMLInputElement).showPicker();
+              } catch {}
+            }}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
 

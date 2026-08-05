@@ -412,9 +412,14 @@ const EditTask: React.FC = () => {
                       <input
                         ref={dateInputRef}
                         type="date"
-                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
                         value={dueDate}
                         onChange={e => setDueDate(e.target.value)}
+                        onClick={(e) => {
+                          try {
+                            (e.target as HTMLInputElement).showPicker();
+                          } catch {}
+                        }}
                       />
                       {dueDate && (
                         <button
