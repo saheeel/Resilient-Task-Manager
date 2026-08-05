@@ -146,13 +146,17 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [cachedTasksRaw, setCachedTasksRaw] = useState<any[] | undefined>(() => readCachedCollection(TASKS_CACHE_KEY));
   const isBackendConnected = dbUsersRaw !== undefined && dbTasksRaw !== undefined;
 
-  // Trigger Convex Auto-Seeding if table is empty
+  // Trigger Convex Auto-Seeding ONLY if database tables are completely empty
   useEffect(() => {
-    seedUsers().then(() => {
+    if (dbUsersRaw && dbUsersRaw.length === 0) {
+      seedUsers().then(() => {
+        syncSuperAdminAllowlist();
+      });
+    }
+    if (dbTasksRaw && dbTasksRaw.length === 0) {
       seedTasks();
-      syncSuperAdminAllowlist();
-    });
-  }, [seedUsers, seedTasks, syncSuperAdminAllowlist]);
+    }
+  }, [dbUsersRaw, dbTasksRaw, seedUsers, seedTasks, syncSuperAdminAllowlist]);
 
   // Session state for tracking active logged-in user profile
   const [currentUser, setCurrentUser] = useState<User | null>(() => {

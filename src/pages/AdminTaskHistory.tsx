@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -11,7 +11,12 @@ import { TaskListSkeleton } from '../components/TaskSkeleton';
 const AdminTaskHistory: React.FC = () => {
   const navigate = useNavigate();
   const { users, currentUser } = useTasks();
-  const dbTasksRaw = useQuery(api.tasks.list, {}); // Fetch ALL history without cutoff
+  const cutoffDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString();
+  }, []);
+  const dbTasksRaw = useQuery(api.tasks.list, { cutoffDate });
   const tasks = (dbTasksRaw as any[]) || [];
   const { t, formatDate, formatDateTime } = useLanguage();
   const [selectedDate, setSelectedDate] = useState('');

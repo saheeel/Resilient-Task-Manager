@@ -27,7 +27,7 @@ const TaskDetail: React.FC = () => {
   const [transferToId, setTransferToId] = useState('');
   const [transferComment, setTransferComment] = useState('');
 
-  const updates = useQuery(api.taskUpdates.list, { taskId: task?.id || "" }) || [];
+  const updates = useQuery(api.taskUpdates.list, task?.id ? { taskId: task.id } : "skip") || [];
   const [updateText, setUpdateText] = useState('');
   const [updatePhotoUrl, setUpdatePhotoUrl] = useState<string | null>(null);
   const [isPostingUpdate, setIsPostingUpdate] = useState(false);

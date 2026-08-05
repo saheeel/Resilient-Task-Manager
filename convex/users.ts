@@ -252,8 +252,11 @@ export const remove = mutation({
       throw new Error("Super Admins cannot be deleted.");
     }
 
-    const tasks = await ctx.db.query("tasks").collect();
-    for (const task of tasks) {
+    const activeTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_isArchived", (q: any) => q.eq("isArchived", false))
+      .collect();
+    for (const task of activeTasks) {
       if (!Array.isArray(task.assignedTo) || !task.assignedTo.includes(args.id)) continue;
       await ctx.db.patch(task._id, {
         assignedTo: task.assignedTo.filter((assignedId: string) => assignedId !== args.id),

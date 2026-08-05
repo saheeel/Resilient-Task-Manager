@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import { useQuery } from 'convex/react';
@@ -10,7 +10,12 @@ import { TaskListSkeleton } from '../components/TaskSkeleton';
 const CompletedHistory: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useTasks();
-  const dbTasksRaw = useQuery(api.tasks.list, {}); // Fetch ALL history without cutoff
+  const cutoffDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString();
+  }, []);
+  const dbTasksRaw = useQuery(api.tasks.list, { cutoffDate });
   const tasks = (dbTasksRaw as any[]) || [];
   const { t, formatDate, formatTime, priorityLabel, taskTypeLabel, relativeDayLabel } = useLanguage();
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
