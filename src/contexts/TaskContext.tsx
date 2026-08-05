@@ -4,6 +4,7 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { MaterialStatus } from '../lib/taskOptions';
 import { calculateNextOccurrence } from '../lib/recurrence';
+import { compressImageFile } from '../lib/fileDataUrl';
 
 export type Role = 'employee' | 'admin' | 'superadmin' | 'manager';
 export type TaskType = 'daily' | 'weekly' | 'monthly' | 'one-time';
@@ -618,11 +619,25 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isBackendConnected,
       sendPushNotification,
       uploadFile: async (file: File) => {
+        let fileToUpload: Blob | File = file;
+        const shouldCompress =
+          file.type.startsWith('image/') &&
+          file.type !== 'image/gif' &&
+          file.type !== 'image/svg+xml';
+
+        if (shouldCompress) {
+          try {
+            fileToUpload = await compressImageFile(file);
+          } catch (err) {
+            console.warn("Image compression fallback to raw file:", err);
+          }
+        }
+
         const postUrl = await generateUploadUrl();
         const result = await fetch(postUrl, {
           method: "POST",
-          headers: { "Content-Type": file.type },
-          body: file,
+          headers: { "Content-Type": fileToUpload.type || file.type || "image/jpeg" },
+          body: fileToUpload,
         });
         if (!result.ok) throw new Error("Failed to upload file to Convex Storage");
         const { storageId } = await result.json();

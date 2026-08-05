@@ -50,7 +50,9 @@ const TaskDetail: React.FC = () => {
   };
 
   const isImageFile = (url: string) => {
-    return url.startsWith('blob:') || url.startsWith('data:image') || /\.(jpg|jpeg|png|webp|gif)$/i.test(url);
+    if (!url) return false;
+    if (url.startsWith('blob:') || url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) return true;
+    return /\.(jpg|jpeg|png|webp|gif|svg|avif|bmp)$/i.test(url);
   };
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

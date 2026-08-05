@@ -67,7 +67,7 @@ const exportCanvasBlob = async (canvas: HTMLCanvasElement, quality: number) => {
   return (await toBlob('image/webp')) ?? (await toBlob('image/jpeg'));
 };
 
-const compressImageFile = async (file: File) => {
+export const compressImageFile = async (file: File) => {
   const image = await loadImageBitmap(file);
   const sourceWidth = image instanceof HTMLImageElement ? image.naturalWidth : image.width;
   const sourceHeight = image instanceof HTMLImageElement ? image.naturalHeight : image.height;
