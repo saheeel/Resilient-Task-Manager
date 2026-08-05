@@ -203,19 +203,23 @@ const ManageTasks: React.FC = () => {
                if (!userTasks || userTasks.length === 0) return null;
                const isCollapsed = collapsedSections.has(user.id);
                return (
-                 <div key={user.id} className="rounded-xl overflow-hidden">
+                 <div key={user.id} className="overflow-hidden">
                    <button
                      onClick={() => toggleSection(user.id)}
-                     className="accordion-header-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-left cursor-pointer border shadow-xs"
+                     className={`accordion-header-btn w-full flex items-center justify-between px-3.5 py-2.5 text-left cursor-pointer border shadow-xs ${
+                       !isCollapsed ? 'rounded-t-lg rounded-b-none border-b-0' : 'rounded-lg'
+                     }`}
                    >
                      <div className="flex items-center gap-2.5">
                        <div className="w-6 h-6 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
                          {user.name.split(' ').map(n => n[0]).join('')}
                        </div>
                        <span className="font-semibold text-sm tracking-tight">{user.name}</span>
-                       <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700 text-[11px] font-bold">
-                         {userTasks.length} {userTasks.length === 1 ? 'task' : 'tasks'}
-                       </span>
+                       {isCollapsed && (
+                         <span className="accordion-count-badge inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold">
+                           {userTasks.length} {userTasks.length === 1 ? 'task' : 'tasks'}
+                         </span>
+                       )}
                      </div>
                      <div className={`text-slate-400 transition-transform duration-200 ${!isCollapsed ? 'rotate-90' : ''}`}>
                        <ChevronRight size={16} />
@@ -224,7 +228,7 @@ const ManageTasks: React.FC = () => {
 
                    <div className={`accordion-wrapper ${!isCollapsed ? 'open' : ''}`}>
                      <div className="accordion-inner">
-                       <div className="pt-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-2">
+                       <div className="bg-white dark:bg-slate-900 border border-t-0 rounded-b-lg border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                          <div className="overflow-x-auto">
                            <table className="w-full min-w-[600px] border-collapse text-left text-sm">
                              <thead className="bg-slate-50/50 border-b border-slate-200 text-slate-600 font-semibold">
@@ -318,19 +322,23 @@ const ManageTasks: React.FC = () => {
             })}
             
             {groupedTasks['unassigned']?.length > 0 && (
-              <div key="unassigned" className="rounded-xl overflow-hidden">
+              <div key="unassigned" className="overflow-hidden">
                 <button
                   onClick={() => toggleSection('unassigned')}
-                  className="accordion-header-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-left cursor-pointer border shadow-xs"
+                  className={`accordion-header-btn w-full flex items-center justify-between px-3.5 py-2.5 text-left cursor-pointer border shadow-xs ${
+                    !collapsedSections.has('unassigned') ? 'rounded-t-lg rounded-b-none border-b-0' : 'rounded-lg'
+                  }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <div className="w-6 h-6 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
                       <User size={12} />
                     </div>
                     <span className="font-semibold text-sm tracking-tight">{t('common.unassigned')}</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700 text-[11px] font-bold">
-                      {groupedTasks['unassigned'].length} {groupedTasks['unassigned'].length === 1 ? 'task' : 'tasks'}
-                    </span>
+                    {collapsedSections.has('unassigned') && (
+                      <span className="accordion-count-badge inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold">
+                        {groupedTasks['unassigned'].length} {groupedTasks['unassigned'].length === 1 ? 'task' : 'tasks'}
+                      </span>
+                    )}
                   </div>
                   <div className={`text-slate-400 transition-transform duration-200 ${!collapsedSections.has('unassigned') ? 'rotate-90' : ''}`}>
                     <ChevronRight size={16} />
@@ -339,7 +347,7 @@ const ManageTasks: React.FC = () => {
 
                 <div className={`accordion-wrapper ${!collapsedSections.has('unassigned') ? 'open' : ''}`}>
                   <div className="accordion-inner">
-                    <div className="pt-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-2">
+                    <div className="bg-white dark:bg-slate-900 border border-t-0 rounded-b-lg border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="w-full min-w-[600px] border-collapse text-left text-sm">
                           <thead className="bg-slate-50/50 border-b border-slate-200 text-slate-600 font-semibold">
@@ -431,6 +439,7 @@ const ManageTasks: React.FC = () => {
               </div>
             )}
           </div>
+
 
 
         ) : (
