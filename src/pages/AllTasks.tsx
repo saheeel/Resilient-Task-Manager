@@ -53,17 +53,37 @@ const AllTasks: React.FC = () => {
     const listCopy = [...taskList];
     if (sortBy === 'priority') {
       return listCopy.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
         return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
       });
     }
     if (sortBy === 'dueDate') {
       return listCopy.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       });
     }
-    return listCopy;
+    
+    // Default sorting: Pinned first, then Due Date, then Priority
+    return listCopy.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+
+      if (a.dueDate && b.dueDate) {
+        const timeDiff = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        if (timeDiff !== 0) return timeDiff;
+      } else if (a.dueDate) {
+        return -1;
+      } else if (b.dueDate) {
+        return 1;
+      }
+
+      return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
+    });
   };
 
   const sortedActiveTasks = sortTasks(activeTasks);

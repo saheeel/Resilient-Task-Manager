@@ -31,6 +31,31 @@ const ManageTasks: React.FC = () => {
     if (t.activeFrom && new Date(t.activeFrom) > new Date()) return false;
     return true;
   });
+  const getPriorityWeight = (priority: string) => {
+    if (priority === 'high') return 3;
+    if (priority === 'medium') return 2;
+    return 1;
+  };
+
+  const sortTasks = (taskList: Task[]) => {
+    return [...taskList].sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+
+      if (a.dueDate && b.dueDate) {
+        const timeDiff = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        if (timeDiff !== 0) return timeDiff;
+      } else if (a.dueDate) {
+        return -1;
+      } else if (b.dueDate) {
+        return 1;
+      }
+
+      return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
+    });
+  };
+
+  const sortedActiveTasks = sortTasks(activeTasks);
   const completedTasks = tasks.filter(t => t.status === 'completed');
   const recurringTasks = tasks.filter((task) => task.type !== 'one-time');
 
@@ -41,7 +66,7 @@ const ManageTasks: React.FC = () => {
     });
     groupedTasks['unassigned'] = [];
 
-    activeTasks.forEach(task => {
+    sortedActiveTasks.forEach(task => {
       if (task.assignedTo.length === 0) {
         groupedTasks['unassigned'].push(task);
       } else {
