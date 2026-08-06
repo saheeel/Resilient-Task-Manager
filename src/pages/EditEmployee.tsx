@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Navigate } from 'react-router-dom';
-import { useTasks } from '../contexts/TaskContext';
+import { useTasks, isAdminRole } from '../contexts/TaskContext';
 import { ArrowLeft, UserCheck, Trash2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -32,7 +32,7 @@ const EditEmployee: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
-  if (currentUser.role !== 'superadmin') {
+  if (!isAdminRole(currentUser.role)) {
     return <Navigate to="/settings" replace />;
   }
 

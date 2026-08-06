@@ -53,18 +53,20 @@ const Settings: React.FC = () => {
             </div>
           </div>
 
-          {isSuperAdmin ? (
+          {isAdminRole(currentUser?.role) ? (
             <div className="grid grid-cols-2 gap-3 md:flex md:flex-wrap md:justify-end">
-              <button
-                onClick={() => navigate('/add-admin')}
-                className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-center text-slate-800 shadow-sm transition-colors hover:bg-slate-50 cursor-pointer md:min-h-0 md:flex-row md:rounded-lg md:px-4 md:py-2.5 md:text-left"
-              >
-                <ShieldPlus size={18} />
-                <span className="text-sm font-semibold">Add Admin</span>
-              </button>
+              {isSuperAdmin && (
+                <button
+                  onClick={() => navigate('/add-admin')}
+                  className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-center text-slate-800 shadow-xs transition-colors hover:bg-slate-50 cursor-pointer md:min-h-0 md:flex-row md:rounded-lg md:px-4 md:py-2.5 md:text-left"
+                >
+                  <ShieldPlus size={18} />
+                  <span className="text-sm font-semibold">Add Admin</span>
+                </button>
+              )}
               <button 
                 onClick={() => navigate('/add-employee')}
-                className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-4 text-center text-slate-800 shadow-sm transition-colors hover:bg-slate-200 cursor-pointer md:min-h-0 md:flex-row md:rounded-lg md:px-4 md:py-2.5 md:text-left"
+                className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-4 text-center text-slate-800 shadow-xs transition-colors hover:bg-slate-200 cursor-pointer md:min-h-0 md:flex-row md:rounded-lg md:px-4 md:py-2.5 md:text-left"
               >
                 <UserPlus size={18} />
                 <span className="text-sm font-semibold">{t('settings.addEmployee')}</span>
@@ -134,24 +136,24 @@ const Settings: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {isSuperAdmin || (currentUser && currentUser.id === user.id) ? (
-                        <div className="flex justify-end gap-1.5">
-                          <button 
-                            onClick={() => navigate(`/settings/employee/${user.id}/history`)}
-                            className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
-                            title={t('settings.viewProfileHistory')}
-                          >
-                            <Eye size={16} />
-                          </button>
+                      <div className="flex justify-end gap-1.5">
+                        <button 
+                          onClick={() => navigate(`/settings/employee/${user.id}/history`)}
+                          className="p-1.5 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors border-none bg-transparent cursor-pointer"
+                          title={t('settings.viewProfileHistory')}
+                        >
+                          <Eye size={16} />
+                        </button>
+                        {isSuperAdmin || (currentUser && currentUser.id === user.id) ? (
                           <button
                             onClick={() => navigate(`/settings/admin/${user.id}/edit`)}
-                            className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded transition-colors border-none bg-transparent cursor-pointer"
+                            className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors border-none bg-transparent cursor-pointer"
                             title="Edit admin details"
                           >
                             <Edit size={16} />
                           </button>
-                        </div>
-                      ) : null}
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}
