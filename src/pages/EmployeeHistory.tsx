@@ -109,27 +109,27 @@ const EmployeeHistory: React.FC = () => {
       </button>
 
       {/* Profile Info Card */}
-      <div className="bg-white p-6 border border-slate-200 rounded-xl shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white dark:bg-slate-800 p-6 border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-xs mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-700 border border-blue-150 flex items-center justify-center text-xl font-bold">
+          <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-150 dark:border-blue-800 flex items-center justify-center text-xl font-bold">
             {(employee.name || 'User').split(' ').map(n => n[0]).join('')}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">{employee.name}</h1>
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-100 uppercase tracking-wider">
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{employee.name}</h1>
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-100 dark:border-blue-800 uppercase tracking-wider">
                 {roleLabel('employee')}
               </span>
             </div>
-            <p className="text-sm text-slate-500 mt-0.5">{employee.employeeRole || t('employeeHistory.generalStaff')}</p>
-            <p className="text-xs text-slate-400 mt-1 font-mono">{t('employeeHistory.usernameLabel')}: {employee.username}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{employee.employeeRole || t('employeeHistory.generalStaff')}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 font-mono">{t('employeeHistory.usernameLabel')}: {employee.username}</p>
           </div>
         </div>
 
         {/* Action button */}
         <button 
           onClick={() => navigate(`/settings/employee/${employee.id}/edit`)}
-          className="border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-colors cursor-pointer text-center"
+          className="border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg px-4 py-2 text-sm font-semibold shadow-xs transition-colors cursor-pointer text-center bg-white dark:bg-slate-800"
         >
           {t('employeeHistory.modifyEmployeeDetails')}
         </button>
@@ -137,51 +137,51 @@ const EmployeeHistory: React.FC = () => {
 
       {/* Analytics Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
-          <div className="flex justify-between items-center text-slate-500 mb-2">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700/80 shadow-xs">
+          <div className="flex justify-between items-center text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">{t('employeeHistory.totalTasks')}</span>
             <BarChart2 size={18} />
           </div>
-          <span className="text-2xl font-bold text-slate-800">{employeeTasks.length}</span>
+          <span className="text-2xl font-bold text-slate-900 dark:text-white">{employeeTasks.length}</span>
         </div>
 
-        <div className="bg-green-50/50 p-5 rounded-xl border border-green-150">
-          <div className="flex justify-between items-center text-green-700 mb-2">
+        <div className="bg-emerald-50/50 dark:bg-emerald-950/30 p-5 rounded-xl border border-emerald-150 dark:border-emerald-800/60 shadow-xs">
+          <div className="flex justify-between items-center text-emerald-700 dark:text-emerald-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">{t('employeeHistory.completed')}</span>
             <CheckCircle2 size={18} />
           </div>
-          <span className="text-2xl font-bold text-green-950">{completedTasks.length}</span>
+          <span className="text-2xl font-bold text-emerald-950 dark:text-emerald-300">{completedTasks.length}</span>
         </div>
 
-        <div className="bg-red-50/50 p-5 rounded-xl border border-red-150">
-          <div className="flex justify-between items-center text-red-700 mb-2">
+        <div className="bg-rose-50/50 dark:bg-rose-950/30 p-5 rounded-xl border border-rose-150 dark:border-rose-800/60 shadow-xs">
+          <div className="flex justify-between items-center text-rose-700 dark:text-rose-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">{t('employeeHistory.incompleteIssues')}</span>
             <AlertOctagon size={18} />
           </div>
-          <span className="text-2xl font-bold text-red-950">{issueTasks.length}</span>
+          <span className="text-2xl font-bold text-rose-950 dark:text-rose-300">{issueTasks.length}</span>
         </div>
 
-        <div className="bg-blue-50/50 p-5 rounded-xl border border-blue-150">
-          <div className="flex justify-between items-center text-blue-700 mb-2">
+        <div className="bg-blue-50/50 dark:bg-blue-950/30 p-5 rounded-xl border border-blue-150 dark:border-blue-800/60 shadow-xs">
+          <div className="flex justify-between items-center text-blue-700 dark:text-blue-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">{t('employeeHistory.active')}</span>
             <RefreshCw size={18} className="animate-spin-slow" />
           </div>
-          <span className="text-2xl font-bold text-blue-950">{activeTasks.length}</span>
+          <span className="text-2xl font-bold text-blue-950 dark:text-blue-300">{activeTasks.length}</span>
         </div>
       </div>
 
       {/* Detailed Work History Table */}
       <div>
-        <h2 className="font-bold text-slate-900 text-lg mb-4 tracking-tight flex items-center gap-2">
-          <Calendar size={18} className="text-slate-500" />
+        <h2 className="font-bold text-slate-900 dark:text-slate-100 text-lg mb-4 tracking-tight flex items-center gap-2">
+          <Calendar size={18} className="text-slate-500 dark:text-slate-400" />
           {t('employeeHistory.workHistory')}
         </h2>
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700/80 shadow-xs overflow-hidden">
           {employeeTasks.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                <thead className="bg-slate-50 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold">
                   <tr>
                     <th className="px-5 py-3.5">{t('employeeHistory.taskDetail')}</th>
                     <th className="px-5 py-3.5">{t('common.priority')}</th>
@@ -191,23 +191,23 @@ const EmployeeHistory: React.FC = () => {
                     <th className="px-5 py-3.5">{t('employeeHistory.commentsExplanations')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-slate-700 dark:text-slate-200">
                   {employeeTasks.map(task => (
                     <tr 
                       key={task.id} 
-                      className="hover:bg-slate-50 transition-colors cursor-pointer"
+                      className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
                       onClick={() => navigate(`/task/${task.id}`)}
                     >
                       <td className="px-5 py-4">
-                        <span className="font-medium text-slate-900 block">{task.title}</span>
-                        <span className="text-xs text-slate-400 mt-0.5 block capitalize">{task.type} {t('employeeHistory.scheduleSuffix')}</span>
+                        <span className="font-medium text-slate-900 dark:text-slate-100 block">{task.title}</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 block capitalize">{task.type} {t('employeeHistory.scheduleSuffix')}</span>
                       </td>
 
                       <td className="px-5 py-4">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${
-                          task.priority === 'high' ? 'bg-red-50 text-red-700' :
-                          task.priority === 'medium' ? 'bg-amber-50 text-amber-700' :
-                          'bg-slate-100 text-slate-700'
+                          task.priority === 'high' ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800' :
+                          task.priority === 'medium' ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800' :
+                          'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600'
                         }`}>
                           {priorityLabel(task.priority)}
                         </span>
@@ -219,65 +219,65 @@ const EmployeeHistory: React.FC = () => {
 
                       <td className="px-5 py-4 text-xs space-y-1">
                         {task.dueDate && (
-                          <div className="flex items-center gap-1 text-slate-500">
-                            <span className="font-semibold text-indigo-700 min-w-[70px]">{t('createTask.dueDate') || 'Fälligkeit'}:</span>
-                            <span className="font-semibold text-indigo-900">{formatDate(task.dueDate)}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold text-blue-600 dark:text-blue-400 min-w-[70px]">{t('common.dueDate')}:</span>
+                            <span className="font-semibold text-slate-900 dark:text-slate-100">{formatDate(task.dueDate)}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-1 text-slate-500">
-                            <span className="font-medium text-slate-700 min-w-[70px]">{t('employeeHistory.assigned')}:</span>
-                          <span>{formatDate(task.createdAt)}</span>
+                        <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                          <span className="font-medium text-slate-600 dark:text-slate-400 min-w-[70px]">{t('employeeHistory.assigned')}:</span>
+                          <span className="text-slate-700 dark:text-slate-300">{formatDate(task.createdAt)}</span>
                         </div>
                         {task.startedAt && (
-                          <div className="flex items-center gap-1 text-slate-500">
-                            <span className="font-medium text-slate-700 min-w-[70px]">{t('employeeHistory.started')}:</span>
-                            <span>{formatDate(task.startedAt)}</span>
+                          <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                            <span className="font-medium text-slate-600 dark:text-slate-400 min-w-[70px]">{t('employeeHistory.started')}:</span>
+                            <span className="text-slate-700 dark:text-slate-300">{formatDate(task.startedAt)}</span>
                           </div>
                         )}
                         {task.status === 'completed' && task.completedAt && (
-                          <div className="flex items-center gap-1 text-slate-500">
-                            <span className="font-medium text-slate-750 min-w-[70px]">{t('employeeHistory.finished')}:</span>
-                            <span>{formatDate(task.completedAt)}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-medium text-emerald-600 dark:text-emerald-400 min-w-[70px]">{t('employeeHistory.finished')}:</span>
+                            <span className="text-slate-700 dark:text-slate-300">{formatDate(task.completedAt)}</span>
                           </div>
                         )}
                         {(task.status === 'could_not_complete' || task.status === 'blocked') && task.markedIssueAt && (
-                          <div className="flex items-center gap-1 text-slate-500">
-                            <span className="font-medium text-red-700 min-w-[70px]">{t('employeeHistory.reported')}:</span>
-                            <span>{formatDate(task.markedIssueAt)}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-medium text-rose-600 dark:text-rose-400 min-w-[70px]">{t('employeeHistory.reported')}:</span>
+                            <span className="text-slate-700 dark:text-slate-300">{formatDate(task.markedIssueAt)}</span>
                           </div>
                         )}
                       </td>
 
                       <td className="px-5 py-4">
                         {task.startedAt && task.completedAt ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold bg-green-50 text-green-700 border border-green-150 px-2.5 py-1 rounded">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold bg-green-50 dark:bg-emerald-950/60 text-green-700 dark:text-emerald-300 border border-green-150 dark:border-emerald-800 px-2.5 py-1 rounded">
                             <Clock size={12} />
                             {formatTimeTaken(task.startedAt, task.completedAt)}
                           </span>
                         ) : task.startedAt ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-150 px-2 py-0.5 rounded animate-pulse">
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-150 dark:border-blue-800 px-2 py-0.5 rounded animate-pulse">
                             {t('employeeHistory.activeTimer')}
                           </span>
                         ) : (
-                          <span className="text-slate-400 text-xs">{t('common.notStarted')}</span>
+                          <span className="text-slate-400 dark:text-slate-500 text-xs">{t('common.notStarted')}</span>
                         )}
                       </td>
 
                       <td className="px-5 py-4 text-xs max-w-xs">
                         {task.status === 'completed' && task.completionComment && (
-                          <div className="flex gap-1 items-start text-green-800 bg-green-50 border border-green-200/50 p-2 rounded-lg">
+                          <div className="flex gap-1 items-start text-green-800 dark:text-emerald-300 bg-green-50 dark:bg-emerald-950/40 border border-green-200/50 dark:border-emerald-800/50 p-2 rounded-lg">
                             <MessageSquare size={12} className="shrink-0 mt-0.5" />
                             <span>"{task.completionComment}"</span>
                           </div>
                         )}
                         {(task.status === 'could_not_complete' || task.status === 'blocked') && task.blockReason && (
-                          <div className="flex gap-1 items-start text-red-800 bg-red-50 border border-red-200/50 p-2 rounded-lg">
+                          <div className="flex gap-1 items-start text-red-800 dark:text-rose-300 bg-red-50 dark:bg-rose-950/40 border border-red-200/50 dark:border-rose-800/50 p-2 rounded-lg">
                             <MessageSquare size={12} className="shrink-0 mt-0.5" />
                             <span>{t('common.reason')}: "{task.blockReason}"</span>
                           </div>
                         )}
                         {!task.completionComment && !task.blockReason && (
-                          <span className="text-slate-400 font-normal">{t('common.noCommentsRecorded')}</span>
+                          <span className="text-slate-400 dark:text-slate-500 font-normal">{t('common.noCommentsRecorded')}</span>
                         )}
                       </td>
                     </tr>
@@ -286,7 +286,7 @@ const EmployeeHistory: React.FC = () => {
               </table>
             </div>
           ) : (
-            <p className="p-6 text-center text-sm text-slate-500">{t('employeeHistory.noAssignedTasks')}</p>
+            <p className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">{t('employeeHistory.noAssignedTasks')}</p>
           )}
         </div>
       </div>
