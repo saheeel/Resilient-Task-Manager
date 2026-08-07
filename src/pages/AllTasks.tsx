@@ -142,7 +142,7 @@ const AllTasks: React.FC = () => {
         {task.dueDate && (
           <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
             {t('employeeDashboard.dueOn', {
-              date: formatDate(task.dueDate, { month: 'short', day: 'numeric' }),
+              date: formatDate(task.dueDate),
             })}
           </span>
         )}

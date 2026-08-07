@@ -17,15 +17,15 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   const getStatusConfig = () => {
     switch (status) {
       case 'in_progress':
-        return { label: taskStatusLabel(status), colorClass: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30' };
+        return { label: taskStatusLabel(status), colorClass: 'bg-amber-100/90 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-200 dark:border-amber-700/80 font-bold' };
       case 'completed':
-        return { label: taskStatusLabel(status), colorClass: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-500/20 dark:text-green-400 dark:border-green-500/30' };
+        return { label: taskStatusLabel(status), colorClass: 'bg-emerald-100/90 text-emerald-900 border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-200 dark:border-emerald-700/80 font-bold' };
       case 'could_not_complete':
-        return { label: taskStatusLabel(status), colorClass: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30' };
+        return { label: taskStatusLabel(status), colorClass: 'bg-red-100/90 text-red-950 border-red-300 dark:bg-red-900/60 dark:text-red-100 dark:border-red-700/80 font-bold' };
       case 'blocked':
-        return { label: taskStatusLabel(status), colorClass: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-500/20 dark:text-orange-400 dark:border-orange-500/30' };
+        return { label: taskStatusLabel(status), colorClass: 'bg-orange-100/90 text-orange-950 border-orange-300 dark:bg-orange-900/60 dark:text-orange-100 dark:border-orange-700/80 font-bold' };
       default:
-        return { label: taskStatusLabel(status), colorClass: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700' };
+        return { label: taskStatusLabel(status), colorClass: 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 font-semibold' };
     }
   };
 

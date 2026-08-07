@@ -123,24 +123,24 @@ const ManageTasks: React.FC = () => {
       {/* Attention Required Section */}
       {issues.length > 0 && (
         <div className="mb-8">
-          <h2 className="font-bold text-slate-900 text-lg mb-3 tracking-tight">{t('manageTasks.attentionRequired')}</h2>
+          <h2 className="font-bold text-slate-900 dark:text-slate-100 text-lg mb-3 tracking-tight">{t('manageTasks.attentionRequired')}</h2>
           <div className="flex flex-col gap-3">
             {issues.map(task => (
               <div 
                 key={task.id} 
-                className="bg-red-50 hover:bg-red-100/60 border border-red-200 rounded-xl p-4 cursor-pointer transition-colors"
+                className="bg-red-50/40 dark:bg-slate-900/90 hover:bg-red-50/70 dark:hover:bg-slate-800/80 border-2 border-red-500/70 dark:border-rose-500/80 rounded-xl p-4 cursor-pointer transition-colors shadow-xs"
                 onClick={() => navigate(`/task/${task.id}`)}
               >
                 <div className="flex justify-between items-start gap-4">
-                  <span className="font-semibold text-red-950 text-sm">{task.title}</span>
-                  <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base leading-snug">{task.title}</span>
+                  <div className="flex items-center gap-2 shrink-0">
                     <StatusBadge status={task.status} />
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/task/${task.id}/edit`);
                       }}
-                      className="p-1 text-slate-500 hover:text-blue-600 hover:bg-red-100 rounded transition-colors border-none bg-transparent cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors border-none bg-transparent cursor-pointer"
                       title={t('manageTasks.editTask')}
                     >
                       <Edit size={16} />
@@ -152,26 +152,27 @@ const ManageTasks: React.FC = () => {
                           deleteTask(task.id);
                         }
                       }}
-                      className="p-1 text-slate-500 hover:text-red-600 hover:bg-red-100 rounded transition-colors border-none bg-transparent cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-red-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors border-none bg-transparent cursor-pointer"
                       title={t('manageTasks.deleteTask')}
                     >
                       <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
-                <p className="text-xs text-red-800 mt-2 font-medium bg-white/60 inline-block px-2 py-1 rounded border border-red-100">
-                  {t('common.reason')}: {task.blockReason || t('manageTasks.noReasonProvided')}
-                </p>
                 
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-xs text-red-950/80">
+                <div className="mt-2.5 p-2.5 rounded-lg bg-red-100/60 dark:bg-rose-950/30 border border-red-200 dark:border-rose-800/50 text-xs sm:text-sm text-slate-800 dark:text-slate-200 font-medium">
+                  <span className="font-bold text-red-700 dark:text-rose-400">{t('common.reason')}:</span> {task.blockReason || t('manageTasks.noReasonProvided')}
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-xs text-slate-600 dark:text-slate-300 font-normal">
                   {task.assignedByName && (
                     <div className="flex items-center gap-1">
-                      <span className="font-semibold">{t('common.assignedBy')}:</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">{t('common.assignedBy')}:</span>
                       <span>{task.assignedByName}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-1">
-                    <span className="font-semibold">{t('taskDetail.assignedTo')}:</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">{t('taskDetail.assignedTo')}:</span>
                     <span>
                       {task.assignedTo.length > 0 
                         ? task.assignedTo.map(id => users.find(u => u.id === id)?.name).join(', ')
@@ -180,12 +181,12 @@ const ManageTasks: React.FC = () => {
                   </div>
                   {task.createdAt && (
                     <div className="flex items-center gap-1">
-                      <span className="font-semibold">• {t('manageTasks.assignedAt')}:</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">• {t('manageTasks.assignedAt')}:</span>
                       <span>{formatDateTime(task.createdAt, { dateStyle: 'short', timeStyle: 'short' })}</span>
                     </div>
                   )}
                   {task.markedIssueAt && (
-                    <div className="flex items-center gap-1 text-red-700 font-semibold bg-red-100/80 px-1.5 py-0.5 rounded border border-red-200/50">
+                    <div className="flex items-center gap-1 text-red-800 dark:text-rose-200 font-semibold bg-red-100 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-red-200 dark:border-rose-800/60">
                       <span>• {t('manageTasks.markedIncompleteAt')}:</span>
                       <span>{formatDateTime(task.markedIssueAt, { dateStyle: 'short', timeStyle: 'short' })}</span>
                     </div>

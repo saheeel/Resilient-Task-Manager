@@ -195,15 +195,6 @@ body.theme-dark {
   box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28) !important;
 }
 
-.theme-dark .bg-slate-900,
-.theme-dark .bg-slate-800 {
-  background-color: #f3f4f6 !important;
-}
-
-.theme-dark .text-white {
-  color: #111317 !important;
-}
-
 .theme-dark button.bg-white,
 .theme-dark a.bg-white {
   background-color: #f3f4f6 !important;
@@ -245,16 +236,11 @@ body.theme-dark {
 }
 
 .theme-dark .bg-red-50 {
-  background-color: rgba(220, 38, 38, 0.18) !important;
+  background-color: rgba(220, 38, 38, 0.12) !important;
 }
 
 .theme-dark .bg-green-50 {
-  background-color: rgba(22, 163, 74, 0.18) !important;
-}
-
-.theme-dark .bg-red-100,
-.theme-dark .bg-green-100 {
-  background-color: #2a2d34 !important;
+  background-color: rgba(22, 163, 74, 0.12) !important;
 }
 
 .task-action-primary {

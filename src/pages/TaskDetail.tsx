@@ -526,16 +526,16 @@ const TaskDetail: React.FC = () => {
           )}
 
           {(task.status === 'could_not_complete' || task.status === 'blocked') && (
-            <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
-              <span className="font-semibold shrink-0 min-w-[100px]">{t('taskDetail.incompleteAt')}:</span>
+            <div className="flex items-start gap-2 text-sm text-red-950 dark:text-red-100 bg-red-50/90 dark:bg-red-950/50 border border-red-200/90 dark:border-red-800/80 rounded-lg p-3">
+              <span className="font-semibold text-red-950 dark:text-red-200 shrink-0 min-w-[100px]">{t('taskDetail.incompleteAt')}:</span>
               <div className="flex flex-col gap-1">
-                <span className="font-bold">
+                <span className="font-bold text-red-950 dark:text-red-100">
                   {task.markedIssueAt 
                     ? formatDateTime(task.markedIssueAt, { dateStyle: 'short', timeStyle: 'short' })
                     : t('common.notRecorded')}
                 </span>
                 {task.blockReason && (
-                  <span className="text-xs text-red-800 italic mt-0.5">
+                  <span className="text-xs text-red-900 dark:text-red-200 italic mt-0.5">
                     {t('common.reason')}: "{task.blockReason}"
                   </span>
                 )}
@@ -553,21 +553,21 @@ const TaskDetail: React.FC = () => {
           )}
 
           {task.status === 'completed' && (
-            <div className="flex items-start gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
-              <span className="font-semibold shrink-0 min-w-[100px]">{t('taskDetail.completedAt')}:</span>
+            <div className="flex items-start gap-2 text-sm text-emerald-950 dark:text-emerald-100 bg-emerald-50/90 dark:bg-emerald-950/50 border border-emerald-200/90 dark:border-emerald-800/80 rounded-lg p-3">
+              <span className="font-semibold text-emerald-950 dark:text-emerald-200 shrink-0 min-w-[100px]">{t('taskDetail.completedAt')}:</span>
               <div className="flex flex-col gap-1">
-                <span className="font-bold">
+                <span className="font-bold text-emerald-950 dark:text-emerald-100">
                   {task.completedAt 
                     ? formatDateTime(task.completedAt, { dateStyle: 'short', timeStyle: 'short' })
                     : t('common.notRecorded')}
                 </span>
                 {task.startedAt && task.completedAt && (
-                  <span className="text-xs text-green-800 font-medium mt-0.5">
+                  <span className="text-xs text-emerald-900 dark:text-emerald-200 font-medium mt-0.5">
                     {t('common.timeTaken')}: {formatTimeTaken(task.startedAt, task.completedAt)}
                   </span>
                 )}
                 {task.completionComment && (
-                  <span className="text-xs text-green-800 italic mt-0.5">
+                  <span className="text-xs text-emerald-900 dark:text-emerald-200 italic mt-0.5">
                     {t('common.note')}: "{task.completionComment}"
                   </span>
                 )}

@@ -230,12 +230,12 @@ const EmployeeDashboard: React.FC = () => {
     const dueDate = new Date(task.dueDate);
     const relativeLabel = relativeDayLabel(dueDate, today);
     if (relativeLabel) {
-      return `${relativeLabel} - ${formatDate(dueDate, { month: 'short', day: 'numeric' })}`;
+      return `${relativeLabel} - ${formatDate(dueDate)}`;
     }
 
     const diffMs = dueDate.getTime() - today.getTime();
     const diffDays = Math.round(diffMs / 86400000);
-    return `${diffDays}d - ${formatDate(dueDate, { month: 'short', day: 'numeric' })}`;
+    return `${diffDays}d - ${formatDate(dueDate)}`;
   };
 
   const handlePinClick = (e: React.MouseEvent, task: Task) => {

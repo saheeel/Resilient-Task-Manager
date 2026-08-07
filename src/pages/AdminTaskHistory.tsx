@@ -136,13 +136,13 @@ const AdminTaskHistory: React.FC = () => {
                             )}
                           </div>
                           {task.blockReason && (
-                            <p className="mt-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
-                              {t('common.reason')}: {task.blockReason}
+                            <p className="mt-3 rounded-lg border border-red-200/90 dark:border-red-800/80 bg-red-50/90 dark:bg-red-950/40 px-3 py-2 text-sm text-red-950 dark:text-red-100 font-medium">
+                              <span className="font-semibold">{t('common.reason')}:</span> {task.blockReason}
                             </p>
                           )}
                           {task.completionComment && (
-                            <p className="mt-3 rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-sm text-green-700">
-                              {t('common.note')}: {task.completionComment}
+                            <p className="mt-3 rounded-lg border border-emerald-200/90 dark:border-emerald-800/80 bg-emerald-50/90 dark:bg-emerald-950/40 px-3 py-2 text-sm text-emerald-950 dark:text-emerald-100 font-medium">
+                              <span className="font-semibold">{t('common.note')}:</span> {task.completionComment}
                             </p>
                           )}
                         </div>

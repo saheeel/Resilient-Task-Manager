@@ -799,8 +799,16 @@ const getOrdinalSuffix = (day: number) => {
   const mod100 = day % 100;
   if (mod10 === 1 && mod100 !== 11) return 'st';
   if (mod10 === 2 && mod100 !== 12) return 'nd';
-  if (mod10 === 3 && mod100 !== 13) return 'rd';
   return 'th';
+};
+
+const formatDDMMYYYY = (value: string | number | Date): string => {
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return '';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 };
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -834,14 +842,25 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       locale,
       setLanguage: updateLanguage,
       t,
-      formatDate: (value, options) =>
-        new Intl.DateTimeFormat(locale, options).format(new Date(value)),
-      formatDateTime: (value, options) =>
-        new Intl.DateTimeFormat(locale, {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-          ...options,
-        }).format(new Date(value)),
+      formatDate: (value, options) => {
+        const d = new Date(value);
+        if (isNaN(d.getTime())) return '';
+        if (!options || Object.keys(options).length === 0 || options.dateStyle === 'short' || options.dateStyle === 'medium') {
+          return formatDDMMYYYY(d);
+        }
+        return new Intl.DateTimeFormat(locale, options).format(d);
+      },
+      formatDateTime: (value, _options) => {
+        const d = new Date(value);
+        if (isNaN(d.getTime())) return '';
+        const dateStr = formatDDMMYYYY(d);
+        const timeFormatter = new Intl.DateTimeFormat(locale, {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: language === 'en',
+        });
+        return `${dateStr}, ${timeFormatter.format(d)}`;
+      },
       formatTime: (value, options) =>
         new Intl.DateTimeFormat(locale, {
           hour: '2-digit',
