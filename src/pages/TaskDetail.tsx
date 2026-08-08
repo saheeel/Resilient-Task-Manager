@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useTasks, isAdminRole } from '../contexts/TaskContext';
+import { useTasks, isAdminRole, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
+import { TaskListSkeleton } from '../components/TaskSkeleton';
 import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, Image, PackageCheck, UserRoundCog, ImageOff, ArrowRightLeft } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
@@ -14,7 +15,12 @@ const TaskDetail: React.FC = () => {
   const { tasks, updateTaskStatus, currentUser, deleteTask, users, editTask, addTaskUpdate, sendPushNotification, uploadFile } = useTasks();
   const { t, formatDate, formatDateTime, formatTime, priorityLabel, taskTypeLabel, weekdayLabel, monthDayOrdinalLabel, roleLabel } = useLanguage();
   
-  const task = tasks.find(t => t.id === id);
+  const localTask = tasks.find(t => t.id === id);
+  const fetchedTaskRaw = useQuery(api.tasks.getById, id && !localTask ? { id } : "skip");
+  const isFetchingTask = id && !localTask && fetchedTaskRaw === undefined;
+
+  const fetchedTask: Task | undefined = fetchedTaskRaw ? ({ ...fetchedTaskRaw, id: fetchedTaskRaw._id } as unknown as Task) : undefined;
+  const task = localTask || fetchedTask;
   
   const [comment, setComment] = useState('');
   const [showBlockReason, setShowBlockReason] = useState(false);
@@ -117,6 +123,14 @@ const TaskDetail: React.FC = () => {
   }, [activeZoomUrl]);
 
   if (!currentUser) return null;
+
+  if (isFetchingTask) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <TaskListSkeleton count={2} />
+      </div>
+    );
+  }
 
   const isAuthorized = task && (isAdminRole(currentUser.role) || task.assignedTo.includes(currentUser.id));
 

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
-import type { TaskType, Priority } from '../contexts/TaskContext';
+import type { TaskType, Priority, Task } from '../contexts/TaskContext';
 import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { MATERIAL_STATUS_OPTIONS } from '../lib/taskOptions';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -15,7 +17,10 @@ const EditTask: React.FC = () => {
   const { tasks, users, editTask, currentUser, uploadFile } = useTasks();
   const { t, priorityLabel, taskTypeLabel, shortWeekdayLabel, weekdayLabel, monthDayOrdinalLabel, formatDate } = useLanguage();
 
-  const task = tasks.find(t => t.id === id);
+  const localTask = tasks.find(t => t.id === id);
+  const fetchedTaskRaw = useQuery(api.tasks.getById, id && !localTask ? { id } : "skip");
+  const fetchedTask: Task | undefined = fetchedTaskRaw ? ({ ...fetchedTaskRaw, id: fetchedTaskRaw._id } as unknown as Task) : undefined;
+  const task = localTask || fetchedTask;
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -55,7 +60,7 @@ const EditTask: React.FC = () => {
       // Load recurring day(s)
       if (task.type === 'weekly' && task.recurringDay) {
         // Comma-separated days → array
-        setRecurringDays(task.recurringDay.split(',').map(d => d.trim()).filter(Boolean));
+        setRecurringDays(task.recurringDay.split(',').map((d: string) => d.trim()).filter(Boolean));
         setRecurringDay('');
       } else if (task.type === 'monthly' && task.recurringDay) {
         setRecurringDay(task.recurringDay);

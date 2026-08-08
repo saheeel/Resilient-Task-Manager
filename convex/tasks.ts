@@ -47,6 +47,24 @@ export const listPaginatedHistory = query({
   },
 });
 
+// Get a single task by ID
+export const getById = query({
+  args: {
+    id: v.string(),
+  },
+  handler: async (ctx: any, args: any) => {
+    try {
+      const normalizedId = ctx.db.normalizeId("tasks", args.id);
+      if (!normalizedId) return null;
+      const task = await ctx.db.get(normalizedId);
+      if (!task) return null;
+      return await resolveFileUrls(ctx, task);
+    } catch {
+      return null;
+    }
+  },
+});
+
 // Get all tasks, with optional cutoff for completed tasks
 export const list = query({
   args: {
