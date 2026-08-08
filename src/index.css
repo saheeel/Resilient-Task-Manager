@@ -90,14 +90,9 @@ body.theme-dark {
   background-color: rgba(16, 185, 129, 0.18) !important;
 }
 
-.theme-dark .bg-violet-50 {
-  background-color: #24272d !important;
-}
-
 .theme-dark .bg-blue-100,
 .theme-dark .bg-indigo-100,
-.theme-dark .bg-amber-100,
-.theme-dark .bg-violet-100 {
+.theme-dark .bg-amber-100 {
   background-color: #2a2d34 !important;
 }
 
@@ -112,17 +107,10 @@ body.theme-dark {
   border-color: #3a3f47 !important;
 }
 
-.theme-dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
-.theme-dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #2c313a !important;
-}
-
 .theme-dark .border-blue-100,
 .theme-dark .border-blue-200,
 .theme-dark .border-indigo-100,
-.theme-dark .border-indigo-200,
-.theme-dark .border-violet-100,
-.theme-dark .border-violet-200 {
+.theme-dark .border-indigo-200 {
   border-color: #4b5563 !important;
 }
 
@@ -141,19 +129,8 @@ body.theme-dark {
 .theme-dark .text-blue-700,
 .theme-dark .text-blue-800,
 .theme-dark .text-indigo-700,
-.theme-dark .text-indigo-800,
-.theme-dark .text-violet-700,
-.theme-dark .text-violet-800 {
+.theme-dark .text-indigo-800 {
   color: #e5e7eb !important;
-}
-
-.theme-dark .text-violet-500 {
-  color: #c4b5fd !important;
-}
-
-.theme-dark select option {
-  background-color: #16181d !important;
-  color: #f3f4f6 !important;
 }
 
 .theme-dark .text-amber-700,
