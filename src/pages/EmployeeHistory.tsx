@@ -12,7 +12,7 @@ const EmployeeHistory: React.FC = () => {
   const navigate = useNavigate();
   const { users, currentUser } = useTasks();
   const dbTasksRaw = useQuery(api.tasks.list, {});
-  const tasks = (dbTasksRaw as any[]) || [];
+  const tasks = React.useMemo(() => ((dbTasksRaw as any[]) || []).map(t => ({ ...t, id: t.id || t._id })), [dbTasksRaw]);
   const { t, formatDateTime, roleLabel, priorityLabel } = useLanguage();
 
   const employee = users.find(u => u.id === id);

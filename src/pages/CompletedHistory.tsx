@@ -16,7 +16,7 @@ const CompletedHistory: React.FC = () => {
     return d.toISOString();
   }, []);
   const dbTasksRaw = useQuery(api.tasks.list, { cutoffDate });
-  const tasks = (dbTasksRaw as any[]) || [];
+  const tasks = useMemo(() => ((dbTasksRaw as any[]) || []).map(t => ({ ...t, id: t.id || t._id })), [dbTasksRaw]);
   const { t, formatDate, formatTime, priorityLabel, taskTypeLabel, relativeDayLabel } = useLanguage();
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 

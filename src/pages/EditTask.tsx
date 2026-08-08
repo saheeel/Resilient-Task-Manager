@@ -17,8 +17,9 @@ const EditTask: React.FC = () => {
   const { tasks, users, editTask, currentUser, uploadFile } = useTasks();
   const { t, priorityLabel, taskTypeLabel, shortWeekdayLabel, weekdayLabel, monthDayOrdinalLabel, formatDate } = useLanguage();
 
-  const localTask = tasks.find(t => t.id === id);
-  const fetchedTaskRaw = useQuery(api.tasks.getById, id && !localTask ? { id } : "skip");
+  const isValidId = Boolean(id && id !== 'undefined' && id !== 'null' && id.trim() !== '');
+  const localTask = isValidId ? tasks.find(t => t.id === id) : undefined;
+  const fetchedTaskRaw = useQuery(api.tasks.getById, isValidId && !localTask ? { id: id! } : "skip");
   const fetchedTask: Task | undefined = fetchedTaskRaw ? ({ ...fetchedTaskRaw, id: fetchedTaskRaw._id } as unknown as Task) : undefined;
   const task = localTask || fetchedTask;
 
