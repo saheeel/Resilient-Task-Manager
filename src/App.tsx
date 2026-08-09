@@ -51,9 +51,10 @@ const AppContent = () => {
 
   return (
     <div 
-      className="bg-white min-h-screen pb-36 font-sans text-slate-800"
+      className="bg-white min-h-screen font-sans text-slate-800"
       style={{
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 5rem)'
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 5rem)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10rem)'
       }}
     >
       <TopHeader />
