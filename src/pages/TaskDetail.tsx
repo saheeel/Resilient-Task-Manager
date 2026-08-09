@@ -972,7 +972,7 @@ const TaskDetail: React.FC = () => {
         >
           <div className="relative max-w-4xl max-h-[90vh] bg-transparent rounded-lg overflow-hidden flex items-center justify-center">
             <button 
-              className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-900 shadow-lg transition-colors hover:bg-slate-100 cursor-pointer"
+              className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-900 shadow-lg transition-colors hover:bg-slate-100 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 setActiveZoomUrl(null);
