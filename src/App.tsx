@@ -54,7 +54,7 @@ const AppContent = () => {
       className="bg-white min-h-screen font-sans text-slate-800"
       style={{
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 5rem)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10rem)'
+        paddingBottom: 'calc(max(16px, env(safe-area-inset-bottom, 16px)) + 9rem)'
       }}
     >
       <TopHeader />

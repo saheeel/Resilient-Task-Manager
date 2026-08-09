@@ -680,7 +680,7 @@ const ManageTasks: React.FC = () => {
         onClick={() => navigate('/create')}
         className="fixed right-4 z-[60] inline-flex items-center gap-2.5 rounded-full bg-white text-slate-900 border border-slate-200/90 dark:bg-slate-100 dark:text-slate-950 dark:border-white px-5 py-3 text-sm font-bold shadow-xl transition-all duration-200 hover:bg-slate-50 hover:scale-105 hover:shadow-2xl cursor-pointer md:right-8"
         style={{
-          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)'
+          bottom: 'calc(max(16px, env(safe-area-inset-bottom, 16px)) + 4.75rem)'
         }}
       >
         <PlusCircle size={22} className="text-slate-900 dark:text-slate-950" />
