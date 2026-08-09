@@ -12,10 +12,9 @@ const BottomNav: React.FC = () => {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex items-center justify-around z-50 px-2 shadow-lg"
+      className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-slate-200 flex items-center justify-around z-50 px-2 shadow-lg"
       style={{
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        height: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)'
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)'
       }}
     >
       <NavLink 

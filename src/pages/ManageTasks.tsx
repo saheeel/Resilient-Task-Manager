@@ -678,9 +678,9 @@ const ManageTasks: React.FC = () => {
       <button
         type="button"
         onClick={() => navigate('/create')}
-        className="fixed bottom-20 right-4 z-[60] inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-slate-800 cursor-pointer md:bottom-20 md:right-8"
+        className="fixed bottom-20 right-4 z-[60] inline-flex items-center gap-2.5 rounded-full bg-white text-slate-900 border border-slate-200/90 dark:bg-slate-100 dark:text-slate-950 dark:border-white px-5 py-3 text-sm font-bold shadow-xl transition-all duration-200 hover:bg-slate-50 hover:scale-105 hover:shadow-2xl cursor-pointer md:bottom-22 md:right-8"
       >
-        <PlusCircle size={18} />
+        <PlusCircle size={22} className="text-slate-900 dark:text-slate-950" />
         {t('manageTasks.newTask')}
       </button>
     </div>
