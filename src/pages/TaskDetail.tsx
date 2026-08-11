@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTasks, isAdminRole, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
-import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, Image, PackageCheck, UserRoundCog, ImageOff, ArrowRightLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, Image, PackageCheck, UserRoundCog, ImageOff, ArrowRightLeft, Upload, Loader2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -25,7 +25,7 @@ const TaskDetail: React.FC = () => {
   
   const [comment, setComment] = useState('');
   const [showBlockReason, setShowBlockReason] = useState(false);
-  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [completionPhotos, setCompletionPhotos] = useState<{ storageId: string; previewUrl: string }[]>([]);
   const [activeZoomUrl, setActiveZoomUrl] = useState<string | null>(null);
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
   const photoInputRef = React.useRef<HTMLInputElement>(null);
@@ -36,24 +36,57 @@ const TaskDetail: React.FC = () => {
 
   const updates = useQuery(api.taskUpdates.list, task?.id ? { taskId: task.id } : "skip") || [];
   const [updateText, setUpdateText] = useState('');
-  const [updatePhotoUrl, setUpdatePhotoUrl] = useState<string | null>(null);
+  const [updatePhotoStorageId, setUpdatePhotoStorageId] = useState<string | null>(null);
+  const [updatePhotoPreviewUrl, setUpdatePhotoPreviewUrl] = useState<string | null>(null);
   const [isPostingUpdate, setIsPostingUpdate] = useState(false);
   const updatePhotoInputRef = React.useRef<HTMLInputElement>(null);
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState<'compressing' | 'preparing' | 'uploading' | 'done'>('uploading');
+  const [uploadFileName, setUploadFileName] = useState('');
+
+  useEffect(() => {
+    if (!isUploading) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isUploading]);
 
   const handleUpdatePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+      const localPreview = URL.createObjectURL(file);
+      setUpdatePhotoPreviewUrl(localPreview);
+      setIsUploading(true);
+      setUploadProgress(5);
+      setUploadStage('compressing');
+      setUploadFileName(file.name);
       try {
-        setUpdatePhotoUrl(await uploadFile(file));
+        const storageId = await uploadFile(file, (percent, stage) => {
+          setUploadProgress(percent);
+          setUploadStage(stage as any);
+        });
+        setUpdatePhotoStorageId(storageId);
       } catch (error) {
         console.error('Failed to prepare update photo:', error);
         alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
+        setUpdatePhotoPreviewUrl(null);
+      } finally {
+        setIsUploading(false);
+        setUploadProgress(0);
+        setUploadFileName('');
+        if (e.target) e.target.value = '';
       }
     }
   };
 
   const handleRemoveUpdatePhoto = () => {
-    setUpdatePhotoUrl(null);
+    setUpdatePhotoStorageId(null);
+    setUpdatePhotoPreviewUrl(null);
   };
 
   const isImageFile = (url: string) => {
@@ -65,24 +98,38 @@ const TaskDetail: React.FC = () => {
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
-      const newUrls: string[] = [];
-      for (const file of files) {
-        try {
-          const url = await uploadFile(file);
-          newUrls.push(url);
-        } catch (error) {
-          console.error('Failed to prepare completion photo:', error);
-          alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
+      setIsUploading(true);
+      const newItems: { storageId: string; previewUrl: string }[] = [];
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const localPreview = URL.createObjectURL(file);
+          setUploadFileName(files.length > 1 ? `${file.name} (${i + 1}/${files.length})` : file.name);
+          setUploadProgress(5);
+          setUploadStage('compressing');
+          const storageId = await uploadFile(file, (percent, stage) => {
+            setUploadProgress(percent);
+            setUploadStage(stage as any);
+          });
+          newItems.push({ storageId, previewUrl: localPreview });
         }
-      }
-      if (newUrls.length > 0) {
-        setPhotoUrls(prev => [...prev, ...newUrls]);
+        if (newItems.length > 0) {
+          setCompletionPhotos(prev => [...prev, ...newItems]);
+        }
+      } catch (error) {
+        console.error('Failed to prepare completion photo:', error);
+        alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
+      } finally {
+        setIsUploading(false);
+        setUploadProgress(0);
+        setUploadFileName('');
+        if (e.target) e.target.value = '';
       }
     }
   };
 
   const handleRemovePhoto = (index: number) => {
-    setPhotoUrls(prev => prev.filter((_, i) => i !== index));
+    setCompletionPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
   const isLegacyUnavailableImage = (url: string) => url.startsWith('blob:');
@@ -192,7 +239,7 @@ const TaskDetail: React.FC = () => {
     updateTaskStatus(task.id, 'completed', { 
       completedAt: new Date().toISOString(),
       completionComment: comment,
-      proofPhotoUrls: photoUrls.length > 0 ? photoUrls : undefined
+      proofPhotoUrls: completionPhotos.length > 0 ? completionPhotos.map(p => p.storageId) : undefined
     });
     addTaskUpdate(task.id, `${currentUser.name} completed the task.`);
     navigate(-1);
@@ -313,8 +360,9 @@ const TaskDetail: React.FC = () => {
       {/* Header action bar */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <button 
-          onClick={() => navigate(-1)} 
-          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0 self-start"
+          onClick={() => !isUploading && navigate(-1)} 
+          disabled={isUploading}
+          className={`inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0 self-start ${isUploading ? 'opacity-40 cursor-not-allowed' : ''}`}
         >
           <ArrowLeft size={16} />
           {t('common.back')}
@@ -323,55 +371,61 @@ const TaskDetail: React.FC = () => {
           {isAdminRole(currentUser.role) && (
             <>
               {(task.status === 'could_not_complete' || task.status === 'blocked') && (
-              <button
-                onClick={handleReopen}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center"
+                <button
+                  onClick={handleReopen}
+                  disabled={isUploading}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <CheckCircle size={14} />
+                  {t('taskDetail.reopenTask')}
+                </button>
+              )}
+              <button 
+                onClick={() => !isUploading && navigate(`/task/${task.id}/edit`)}
+                disabled={isUploading}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <CheckCircle size={14} />
-                {t('taskDetail.reopenTask')}
+                <Edit size={14} />
+                {t('taskDetail.editTask')}
               </button>
-            )}
-            <button 
-              onClick={() => navigate(`/task/${task.id}/edit`)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center"
-            >
-              <Edit size={14} />
-              {t('taskDetail.editTask')}
-            </button>
-            {task.type !== 'one-time' && (
-              <>
-                <button
-                  onClick={toggleRecurringPause}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center ${
-                    task.isPaused
-                      ? 'border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
-                      : 'border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100'
-                  }`}
-                >
-                  {task.isPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
-                  {task.isPaused ? t('manageTasks.resumeRecurring') : t('manageTasks.pauseRecurring')}
-                </button>
-                <button
-                  onClick={handleStopRecurring}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center"
-                >
-                  <Square size={14} />
-                  {t('manageTasks.stopRecurring')}
-                </button>
-              </>
-            )}
-            <button 
-              onClick={() => {
-                if (confirm(t('common.confirmDeleteTask'))) {
-                  deleteTask(task.id);
-                  navigate('/');
-                }
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-200 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center"
-            >
-              <Trash2 size={14} />
-              {t('taskDetail.deleteTask')}
-            </button>
+              {task.type !== 'one-time' && (
+                <>
+                  <button
+                    onClick={toggleRecurringPause}
+                    disabled={isUploading}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
+                      task.isPaused
+                        ? 'border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+                        : 'border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100'
+                    }`}
+                  >
+                    {task.isPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
+                    {task.isPaused ? t('manageTasks.resumeRecurring') : t('manageTasks.pauseRecurring')}
+                  </button>
+                  <button
+                    onClick={handleStopRecurring}
+                    disabled={isUploading}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Square size={14} />
+                    {t('manageTasks.stopRecurring')}
+                  </button>
+                </>
+              )}
+              <button 
+                onClick={() => {
+                  if (isUploading) return;
+                  if (confirm(t('common.confirmDeleteTask'))) {
+                    deleteTask(task.id);
+                    navigate('/');
+                  }
+                }}
+                disabled={isUploading}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-200 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Trash2 size={14} />
+                {t('taskDetail.deleteTask')}
+              </button>
             </>
           )}
 
@@ -773,10 +827,11 @@ const TaskDetail: React.FC = () => {
               if (!updateText.trim()) return;
               setIsPostingUpdate(true);
               try {
-                await addTaskUpdate(task.id, updateText, updatePhotoUrl || undefined);
+                await addTaskUpdate(task.id, updateText, updatePhotoStorageId || undefined);
                 notifyAssigneesAndAssigner('New Task Update', `${currentUser.name} posted an update on: ${task.title}`);
                 setUpdateText('');
-                setUpdatePhotoUrl(null);
+                setUpdatePhotoStorageId(null);
+                setUpdatePhotoPreviewUrl(null);
               } catch (err) {
                 console.error("Failed to add progress update:", err);
                 alert('Unable to send this update right now. If you attached a large image, please try a smaller photo.');
@@ -791,7 +846,7 @@ const TaskDetail: React.FC = () => {
                 value={updateText}
                 onChange={(e) => setUpdateText(e.target.value)}
                 placeholder={t('taskDetail.updatePlaceholder')}
-                disabled={isPostingUpdate}
+                disabled={isPostingUpdate || isUploading}
                 rows={2}
                 className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 disabled:bg-slate-50 disabled:text-slate-400"
               />
@@ -804,14 +859,14 @@ const TaskDetail: React.FC = () => {
                     className="hidden"
                     ref={updatePhotoInputRef}
                     onChange={handleUpdatePhotoChange}
-                    disabled={isPostingUpdate}
+                    disabled={isPostingUpdate || isUploading}
                   />
                   
-                  {!updatePhotoUrl ? (
+                  {!updatePhotoPreviewUrl && !updatePhotoStorageId ? (
                     <button
                       type="button"
                       onClick={() => updatePhotoInputRef.current?.click()}
-                      disabled={isPostingUpdate}
+                      disabled={isPostingUpdate || isUploading}
                       className="task-action-secondary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <Image size={13} className="text-slate-400" />
@@ -820,16 +875,16 @@ const TaskDetail: React.FC = () => {
                   ) : (
                     <div className="relative inline-block">
                       <img
-                        src={updatePhotoUrl}
+                        src={updatePhotoPreviewUrl || updatePhotoStorageId || ''}
                         alt="Update attachment preview"
                         className="w-10 h-10 object-cover rounded border border-slate-200 shadow-sm cursor-zoom-in"
-                        onClick={() => setActiveZoomUrl(updatePhotoUrl)}
+                        onClick={() => setActiveZoomUrl(updatePhotoPreviewUrl || updatePhotoStorageId)}
                       />
                       <button
                         type="button"
                         onClick={handleRemoveUpdatePhoto}
-                        disabled={isPostingUpdate}
-                        className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-0.5 shadow border-none cursor-pointer"
+                        disabled={isPostingUpdate || isUploading}
+                        className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-0.5 shadow border-none cursor-pointer disabled:opacity-50"
                         title={t('taskDetail.removePhoto')}
                       >
                         <X size={10} />
@@ -840,8 +895,8 @@ const TaskDetail: React.FC = () => {
 
                 <button
                   type="submit"
-                  disabled={isPostingUpdate || !updateText.trim()}
-                  className="task-action-primary inline-flex items-center justify-center text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  disabled={isPostingUpdate || isUploading || !updateText.trim()}
+                  className="task-action-primary inline-flex items-center justify-center text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isPostingUpdate ? t('taskDetail.posting') : t('taskDetail.sendUpdate')}
                 </button>
@@ -882,31 +937,34 @@ const TaskDetail: React.FC = () => {
               className="hidden" 
               ref={photoInputRef}
               onChange={handlePhotoChange}
+              disabled={isUploading}
             />
             
             <button 
               type="button"
               onClick={() => photoInputRef.current?.click()}
-              className="task-action-secondary inline-flex items-center justify-center gap-2 w-full rounded-lg py-2 text-sm font-semibold transition-colors cursor-pointer mb-3"
+              disabled={isUploading}
+              className="task-action-secondary inline-flex items-center justify-center gap-2 w-full rounded-lg py-2 text-sm font-semibold transition-colors cursor-pointer mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Camera size={18} />
               {t('taskDetail.addCompletionPhoto')}
             </button>
             
-            {photoUrls.length > 0 && (
+            {completionPhotos.length > 0 && (
               <div className="flex flex-wrap gap-3">
-                {photoUrls.map((url, index) => (
+                {completionPhotos.map((item, index) => (
                   <div key={index} className="relative inline-block mt-1">
                     <img 
-                      src={url} 
+                      src={item.previewUrl} 
                       alt={`Proof Preview ${index + 1}`} 
                       className="w-24 h-24 object-cover rounded-lg border border-slate-200 shadow-sm cursor-zoom-in"
-                      onClick={() => setActiveZoomUrl(url)}
+                      onClick={() => setActiveZoomUrl(item.previewUrl)}
                     />
                     <button
                       type="button"
                       onClick={() => handleRemovePhoto(index)}
-                      className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow transition-colors border-none cursor-pointer"
+                      disabled={isUploading}
+                      className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow transition-colors border-none cursor-pointer disabled:opacity-50"
                       title={t('taskDetail.removePhoto')}
                     >
                       <X size={12} />
@@ -922,7 +980,8 @@ const TaskDetail: React.FC = () => {
               {task.status === 'open' ? (
                 <button 
                   onClick={handleStart}
-                  className="task-action-primary inline-flex items-center justify-center gap-2 w-full rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
+                  disabled={isUploading}
+                  className="task-action-primary inline-flex items-center justify-center gap-2 w-full rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <Play size={18} className="fill-current" />
                   {t('taskDetail.startTask')}
@@ -930,7 +989,8 @@ const TaskDetail: React.FC = () => {
               ) : (
                 <button 
                   onClick={handleComplete}
-                  className="task-action-success inline-flex items-center justify-center gap-2 w-full rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
+                  disabled={isUploading}
+                  className="task-action-success inline-flex items-center justify-center gap-2 w-full rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <CheckCircle size={18} />
                   {t('taskDetail.markCompleted')}
@@ -939,7 +999,8 @@ const TaskDetail: React.FC = () => {
               
               <button 
                 onClick={() => setShowBlockReason(true)}
-                className="task-action-danger-soft inline-flex items-center justify-center gap-2 w-full rounded-lg py-2.5 font-semibold text-sm transition-colors cursor-pointer"
+                disabled={isUploading}
+                className="task-action-danger-soft inline-flex items-center justify-center gap-2 w-full rounded-lg py-2.5 font-semibold text-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <AlertTriangle size={18} />
                 {t('taskDetail.cannotComplete')}
@@ -950,13 +1011,15 @@ const TaskDetail: React.FC = () => {
               <p className="text-xs text-red-700 font-semibold">{t('taskDetail.explainIssue')}</p>
               <button 
                 onClick={handleBlock}
-                className="task-action-danger inline-flex items-center justify-center w-full rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
+                disabled={isUploading}
+                className="task-action-danger inline-flex items-center justify-center w-full rounded-lg py-2.5 font-semibold text-sm shadow-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {t('taskDetail.submitIssue')}
               </button>
               <button 
                 onClick={() => setShowBlockReason(false)}
-                className="task-action-secondary inline-flex items-center justify-center w-full rounded-lg py-2.5 font-semibold text-sm transition-colors cursor-pointer"
+                disabled={isUploading}
+                className="task-action-secondary inline-flex items-center justify-center w-full rounded-lg py-2.5 font-semibold text-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {t('common.cancel')}
               </button>
@@ -986,6 +1049,50 @@ const TaskDetail: React.FC = () => {
               className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl border border-white/10"
               onClick={(e) => e.stopPropagation()}
             />
+          </div>
+        </div>
+      )}
+      {/* Upload Progress Modal Overlay */}
+      {isUploading && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
+            <div className="relative mb-4 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin flex items-center justify-center"></div>
+              <Upload className="w-6 h-6 text-indigo-600 absolute" />
+            </div>
+
+            <h3 className="font-bold text-slate-900 text-lg mb-1">
+              {t('taskDetail.uploadInProgress')}
+            </h3>
+
+            <p className="text-xs text-slate-500 mb-4 max-w-[240px] truncate font-medium" title={uploadFileName}>
+              {uploadFileName || t('taskDetail.uploadingMedia')}
+            </p>
+
+            <div className="w-full bg-slate-100 rounded-full h-3 mb-2 overflow-hidden border border-slate-200/60">
+              <div
+                className="bg-indigo-600 h-full rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${Math.max(5, uploadProgress)}%` }}
+              ></div>
+            </div>
+
+            <div className="flex justify-between w-full text-xs text-slate-600 font-semibold mb-4 px-0.5">
+              <span>
+                {uploadStage === 'compressing'
+                  ? t('taskDetail.compressingImage')
+                  : uploadStage === 'preparing'
+                  ? t('taskDetail.preparingUpload')
+                  : t('taskDetail.uploadingMedia')}
+              </span>
+              <span className="text-indigo-600 font-bold">{uploadProgress}%</span>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200/60 rounded-xl p-3 w-full flex items-center gap-2.5 text-left">
+              <Loader2 className="w-4 h-4 text-amber-600 animate-spin shrink-0" />
+              <p className="text-[11px] text-amber-900 font-medium leading-tight">
+                {t('taskDetail.doNotCloseWindow')}
+              </p>
+            </div>
           </div>
         </div>
       )}

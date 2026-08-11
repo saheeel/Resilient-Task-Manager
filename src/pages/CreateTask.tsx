@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import type { TaskType, Priority } from '../contexts/TaskContext';
-import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw, Upload, Loader2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MATERIAL_STATUS_OPTIONS } from '../lib/taskOptions';
 
@@ -25,6 +25,25 @@ const CreateTask: React.FC = () => {
   const [materialStatus, setMaterialStatus] = useState<(typeof MATERIAL_STATUS_OPTIONS)[number] | ''>('');
   const [assignedTo, setAssignedTo] = useState<string[]>([]);
   const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentStorageId, setAttachmentStorageId] = useState<string | null>(null);
+  const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState<string | null>(null);
+  const [attachmentFileName, setAttachmentFileName] = useState<string | null>(null);
+  const [activeZoomUrl, setActiveZoomUrl] = useState<string | null>(null);
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState<'compressing' | 'preparing' | 'uploading' | 'done'>('uploading');
+  const [uploadFileName, setUploadFileName] = useState('');
+
+  useEffect(() => {
+    if (!isUploading) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isUploading]);
 
   // Recurring schedule fields
   // For weekly: array of selected days (stored as comma-separated on save)
@@ -49,10 +68,48 @@ const CreateTask: React.FC = () => {
     );
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setAttachment(e.target.files[0]);
+      const file = e.target.files[0];
+      setAttachment(file);
+      setAttachmentFileName(file.name);
+      
+      const isImg = file.type.startsWith('image/');
+      const localPreview = isImg ? URL.createObjectURL(file) : null;
+      setAttachmentPreviewUrl(localPreview);
+
+      setIsUploading(true);
+      setUploadProgress(5);
+      setUploadStage('compressing');
+      setUploadFileName(file.name);
+
+      try {
+        const storageId = await uploadFile(file, (percent, stage) => {
+          setUploadProgress(percent);
+          setUploadStage(stage as any);
+        });
+        setAttachmentStorageId(storageId);
+      } catch (error) {
+        console.error('Failed to prepare task attachment:', error);
+        alert(error instanceof Error ? error.message : 'Unable to prepare this file. Please choose a smaller file.');
+        setAttachment(null);
+        setAttachmentStorageId(null);
+        setAttachmentPreviewUrl(null);
+        setAttachmentFileName(null);
+      } finally {
+        setIsUploading(false);
+        setUploadProgress(0);
+        setUploadFileName('');
+        if (e.target) e.target.value = '';
+      }
     }
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachment(null);
+    setAttachmentStorageId(null);
+    setAttachmentPreviewUrl(null);
+    setAttachmentFileName(null);
   };
 
   const formatDisplayTime = (time: string) => {
@@ -81,12 +138,16 @@ const CreateTask: React.FC = () => {
     }
 
     let attachmentUrls: string[] | undefined;
-    try {
-      attachmentUrls = attachment ? [await uploadFile(attachment)] : undefined;
-    } catch (error) {
-      console.error('Failed to prepare task attachment:', error);
-      alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
-      return;
+    if (attachmentStorageId) {
+      attachmentUrls = [attachmentStorageId];
+    } else if (attachment) {
+      try {
+        attachmentUrls = [await uploadFile(attachment)];
+      } catch (error) {
+        console.error('Failed to prepare task attachment:', error);
+        alert(error instanceof Error ? error.message : 'Unable to prepare this file. Please choose a smaller file.');
+        return;
+      }
     }
 
     addTask({
@@ -499,28 +560,48 @@ const CreateTask: React.FC = () => {
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
                   {t('createTask.attachReference')}
                 </label>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="inline-flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-                  >
-                    <Paperclip size={16} />
-                    {attachment ? t('common.changeFile') : t('common.uploadFile')}
-                  </button>
-                  <input
-                    type="file"
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept="image/*,.pdf,.doc,.docx"
-                  />
-                  {attachment && (
-                    <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg max-w-[200px]">
-                      <span className="truncate">{attachment.name}</span>
-                      <button type="button" onClick={() => setAttachment(null)} className="text-slate-400 hover:text-red-500 cursor-pointer">
-                        <X size={14} />
-                      </button>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="inline-flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <Paperclip size={16} />
+                      {attachmentFileName ? t('common.changeFile') : t('common.uploadFile')}
+                    </button>
+                    <input
+                      type="file"
+                      className="hidden"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/*,.pdf,.doc,.docx"
+                      disabled={isUploading}
+                    />
+                  </div>
+
+                  {attachmentFileName && (
+                    <div className="flex items-center gap-3 mt-1 flex-wrap">
+                      {attachmentPreviewUrl && (
+                        <img
+                          src={attachmentPreviewUrl}
+                          alt="Attachment preview"
+                          className="w-12 h-12 object-cover rounded-lg border border-slate-200 shadow-sm cursor-zoom-in"
+                          onClick={() => setActiveZoomUrl(attachmentPreviewUrl)}
+                        />
+                      )}
+                      <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg max-w-[240px]">
+                        <span className="truncate">{attachmentFileName}</span>
+                        <button 
+                          type="button" 
+                          onClick={handleRemoveAttachment}
+                          disabled={isUploading}
+                          className="text-slate-400 hover:text-red-500 cursor-pointer border-none bg-transparent p-0 disabled:opacity-50"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -561,13 +642,85 @@ const CreateTask: React.FC = () => {
           <div className="pt-6 border-t border-slate-100">
             <button
               type="submit"
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-lg py-3 font-semibold text-sm shadow-sm transition-colors cursor-pointer"
+              disabled={isUploading}
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-lg py-3 font-semibold text-sm shadow-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {t('createTask.addTask')}
             </button>
           </div>
         </form>
       </div>
+
+      {/* Upload Progress Modal Overlay */}
+      {isUploading && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
+            <div className="relative mb-4 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin flex items-center justify-center"></div>
+              <Upload className="w-6 h-6 text-indigo-600 absolute" />
+            </div>
+
+            <h3 className="font-bold text-slate-900 text-lg mb-1">
+              {t('taskDetail.uploadInProgress')}
+            </h3>
+
+            <p className="text-xs text-slate-500 mb-4 max-w-[240px] truncate font-medium" title={uploadFileName}>
+              {uploadFileName || t('taskDetail.uploadingMedia')}
+            </p>
+
+            <div className="w-full bg-slate-100 rounded-full h-3 mb-2 overflow-hidden border border-slate-200/60">
+              <div
+                className="bg-indigo-600 h-full rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${Math.max(5, uploadProgress)}%` }}
+              ></div>
+            </div>
+
+            <div className="flex justify-between w-full text-xs text-slate-600 font-semibold mb-4 px-0.5">
+              <span>
+                {uploadStage === 'compressing'
+                  ? t('taskDetail.compressingImage')
+                  : uploadStage === 'preparing'
+                  ? t('taskDetail.preparingUpload')
+                  : t('taskDetail.uploadingMedia')}
+              </span>
+              <span className="text-indigo-600 font-bold">{uploadProgress}%</span>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200/60 rounded-xl p-3 w-full flex items-center gap-2.5 text-left">
+              <Loader2 className="w-4 h-4 text-amber-600 animate-spin shrink-0" />
+              <p className="text-[11px] text-amber-900 font-medium leading-tight">
+                {t('taskDetail.doNotCloseWindow')}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* High-Fidelity Zoom Modal */}
+      {activeZoomUrl && (
+        <div 
+          className="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs transition-opacity cursor-zoom-out"
+          onClick={() => setActiveZoomUrl(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] bg-transparent rounded-lg overflow-hidden flex items-center justify-center">
+            <button 
+              className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-900 shadow-lg transition-colors hover:bg-slate-100 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveZoomUrl(null);
+              }}
+            >
+              <X size={20} />
+            </button>
+            <img 
+              src={activeZoomUrl} 
+              alt="Zoomed Reference" 
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl border border-white/10"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

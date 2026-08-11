@@ -81,7 +81,7 @@ interface TaskContextType {
   addTaskUpdate: (taskId: string, text: string, photoUrl?: string) => Promise<void>;
   isBackendConnected: boolean;
   sendPushNotification: (args: { userId: string; title: string; body: string; url?: string }) => Promise<null>;
-  uploadFile: (file: File) => Promise<string>;
+  uploadFile: (file: File, onProgress?: (progress: number, stage: string) => void) => Promise<string>;
 }
 
 export const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -618,7 +618,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       addTaskUpdate,
       isBackendConnected,
       sendPushNotification,
-      uploadFile: async (file: File) => {
+      uploadFile: async (file: File, onProgress?: (progress: number, stage: string) => void) => {
         let fileToUpload: Blob | File = file;
         const shouldCompress =
           file.type.startsWith('image/') &&
@@ -627,21 +627,61 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (shouldCompress) {
           try {
+            onProgress?.(10, 'compressing');
             fileToUpload = await compressImageFile(file);
+            onProgress?.(30, 'compressing');
           } catch (err) {
             console.warn("Image compression fallback to raw file:", err);
           }
         }
 
+        onProgress?.(35, 'preparing');
         const postUrl = await generateUploadUrl();
-        const result = await fetch(postUrl, {
-          method: "POST",
-          headers: { "Content-Type": fileToUpload.type || file.type || "image/jpeg" },
-          body: fileToUpload,
+        onProgress?.(45, 'uploading');
+
+        return new Promise<string>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", postUrl);
+          xhr.setRequestHeader("Content-Type", fileToUpload.type || file.type || "image/jpeg");
+
+          if (xhr.upload) {
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const networkPercent = (event.loaded / event.total) * 50;
+                const totalPercent = Math.round(45 + networkPercent);
+                onProgress?.(totalPercent, 'uploading');
+              }
+            };
+          }
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const response = JSON.parse(xhr.responseText);
+                if (response.storageId) {
+                  onProgress?.(100, 'done');
+                  resolve(response.storageId);
+                } else {
+                  reject(new Error("Failed to upload file to Convex Storage: invalid response"));
+                }
+              } catch (e) {
+                reject(new Error("Failed to parse Convex Storage upload response"));
+              }
+            } else {
+              reject(new Error(`Failed to upload file to Convex Storage (HTTP ${xhr.status})`));
+            }
+          };
+
+          xhr.onerror = () => {
+            reject(new Error("Network error during file upload"));
+          };
+
+          xhr.onabort = () => {
+            reject(new Error("File upload aborted"));
+          };
+
+          xhr.send(fileToUpload);
         });
-        if (!result.ok) throw new Error("Failed to upload file to Convex Storage");
-        const { storageId } = await result.json();
-        return storageId;
       }
     }}>
       {children}
