@@ -4,9 +4,10 @@ import { useTasks } from '../contexts/TaskContext';
 import type { Task } from '../contexts/TaskContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import StatusBadge from '../components/StatusBadge';
-import { PackageCheck, UserRoundCog, ArrowDownUp, ChevronRight, User } from 'lucide-react';
+import { PackageCheck, UserRoundCog, ArrowDownUp, ChevronRight, User, Search, LayoutGrid, Table, PlusCircle } from 'lucide-react';
 import { materialStatusToneMap } from '../lib/taskOptions';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
+import ExcelTaskTable from '../components/ExcelTaskTable';
 
 const AllTasks: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ const AllTasks: React.FC = () => {
     taskTypeLabel,
   } = useLanguage();
   const [sortBy, setSortBy] = useState<'default' | 'priority' | 'dueDate' | 'employee'>('employee');
+  const [viewMode, setViewMode] = useState<'grid' | 'excel'>('excel');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   const toggleSection = (sectionId: string) => {
@@ -191,38 +194,90 @@ const AllTasks: React.FC = () => {
     });
   }
 
+  const filteredActiveTasks = activeTasks.filter(t => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const titleMatch = t.title.toLowerCase().includes(q);
+    const descMatch = t.description?.toLowerCase().includes(q);
+    const creatorMatch = t.createdByName?.toLowerCase().includes(q);
+    const remarksMatch = t.remarks?.toLowerCase().includes(q);
+    return titleMatch || descMatch || creatorMatch || remarksMatch;
+  });
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <header className="mb-8 border-b border-slate-150 pb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('nav.allTasks')}</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          View all active tasks in the organization
-        </p>
-      </header>
-
-      <div className="mb-6 flex items-center justify-end">
-        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm">
-          <label htmlFor="all-sort" className="text-slate-500 hover:text-slate-700 transition-colors" title={t('employeeDashboard.sortMyWork')}>
-            <ArrowDownUp size={16} />
-          </label>
-          <select
-            id="all-sort"
-            value={sortBy}
-            onChange={(event) => setSortBy(event.target.value as 'default' | 'priority' | 'dueDate' | 'employee')}
-            className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 outline-none transition-colors focus:border-slate-400"
-          >
-            <option value="default">{t('employeeDashboard.originalOrder')}</option>
-            <option value="priority">{t('employeeDashboard.priorityFirst')}</option>
-            <option value="dueDate">{t('employeeDashboard.dueDateSoon')}</option>
-            <option value="employee">{t('employeeDashboard.byEmployee')}</option>
-          </select>
+      <header className="mb-6 border-b border-slate-150 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('nav.allTasks')}</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            View all active tasks across the organization
+          </p>
         </div>
-      </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Free-Text Search Input */}
+          <div className="relative flex-1 sm:w-64">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search all tasks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center p-1 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
+            <button
+              onClick={() => setViewMode('excel')}
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all border-none cursor-pointer ${
+                viewMode === 'excel'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 bg-transparent'
+              }`}
+            >
+              <Table className="w-3.5 h-3.5" /> Excel Table
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all border-none cursor-pointer ${
+                viewMode === 'grid'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 bg-transparent'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" /> Grouped Cards
+            </button>
+          </div>
+
+          {viewMode === 'grid' && (
+            <div className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 shadow-xs">
+              <label htmlFor="all-sort" className="text-slate-500 hover:text-slate-700 transition-colors" title={t('employeeDashboard.sortMyWork')}>
+                <ArrowDownUp size={16} />
+              </label>
+              <select
+                id="all-sort"
+                value={sortBy}
+                onChange={(event) => setSortBy(event.target.value as 'default' | 'priority' | 'dueDate' | 'employee')}
+                className="rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none transition-colors focus:border-slate-400"
+              >
+                <option value="default">{t('employeeDashboard.originalOrder')}</option>
+                <option value="priority">{t('employeeDashboard.priorityFirst')}</option>
+                <option value="dueDate">{t('employeeDashboard.dueDateSoon')}</option>
+                <option value="employee">{t('employeeDashboard.byEmployee')}</option>
+              </select>
+            </div>
+          )}
+        </div>
+      </header>
 
       <div className="mb-8">
         {isLoading ? (
           <TaskListSkeleton count={5} />
-        ) : activeTasks.length === 0 ? (
+        ) : viewMode === 'excel' ? (
+          <ExcelTaskTable tasks={filteredActiveTasks} users={users} currentUser={currentUser} />
+        ) : filteredActiveTasks.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center">
             <h3 className="mb-1 font-semibold text-slate-700">{t('employeeDashboard.allCaughtUp')}</h3>
             <p className="text-sm text-slate-500">{t('employeeDashboard.noActiveTasks')}</p>
@@ -309,6 +364,19 @@ const AllTasks: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Floating White New Task Button */}
+      <button
+        type="button"
+        onClick={() => navigate('/create')}
+        className="fixed right-4 z-[60] inline-flex items-center gap-2.5 rounded-full bg-white text-slate-900 border border-slate-200/90 dark:bg-slate-100 dark:text-slate-950 dark:border-white px-5 py-3 text-sm font-bold shadow-xl transition-all duration-200 hover:bg-slate-50 hover:scale-105 hover:shadow-2xl cursor-pointer md:right-8"
+        style={{
+          bottom: 'calc(max(16px, env(safe-area-inset-bottom, 16px)) + 4.75rem)'
+        }}
+      >
+        <PlusCircle size={22} className="text-slate-900 dark:text-slate-950" />
+        {t('manageTasks.newTask') || 'New Task'}
+      </button>
     </div>
   );
 };

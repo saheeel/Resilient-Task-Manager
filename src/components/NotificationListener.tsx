@@ -5,12 +5,11 @@ import { api } from '../../convex/_generated/api';
 import { ensurePushSubscription } from '../lib/pushNotifications';
 
 const NotificationListener: React.FC = () => {
-  const { tasks, currentUser, isBackendConnected } = useTasks();
+  const { tasks, currentUser, isBackendConnected, deviceNotificationsMuted } = useTasks();
   const savePushSubscription = useMutation(api.pushMutations.subscribe);
   const knownTaskIds = useRef<Set<string>>(new Set());
   const knownTaskStates = useRef<Map<string, string>>(new Map());
   const isFirstLoad = useRef(true);
-  const supportsBackgroundPush = 'serviceWorker' in navigator && 'PushManager' in window;
 
   // 1. Request Browser System Notification Permission
   useEffect(() => {
@@ -28,10 +27,12 @@ const NotificationListener: React.FC = () => {
     }
   }, []);
 
-  // 2. Track Real-Time Foreground Task Assignments
+  // 2. Track Real-Time Foreground Task Assignments & Supervisor Activity Feed
   useEffect(() => {
     if (!currentUser || !isBackendConnected) return;
+    if (deviceNotificationsMuted) return; // Muted specifically on this device
 
+    const isDianaOrSupervisor = currentUser.name.toLowerCase().includes('diana') || currentUser.isPrimarySupervisor || isAdminRole(currentUser.role);
     const myTasks = tasks.filter(t => t.assignedTo.includes(currentUser.id));
 
     if (isFirstLoad.current) {
@@ -43,11 +44,12 @@ const NotificationListener: React.FC = () => {
       return;
     }
 
+    // A. Notify Assignee of new task assignment
     myTasks.forEach((task) => {
       if (!knownTaskIds.current.has(task.id)) {
         knownTaskIds.current.add(task.id);
 
-        if (!supportsBackgroundPush && 'Notification' in window && Notification.permission === 'granted') {
+        if ('Notification' in window && Notification.permission === 'granted') {
           try {
             const notification = new Notification("New Task Assigned! 🚀", {
               body: `${task.title}\nPriority: ${task.priority.toUpperCase()}${task.assignedByName ? `\nAssigned by: ${task.assignedByName}` : ''}`,
@@ -66,40 +68,40 @@ const NotificationListener: React.FC = () => {
         }
       }
     });
-  }, [tasks, currentUser, isBackendConnected]);
 
-  // 3. Track task completion updates for admin-side users while the app is open
-  useEffect(() => {
-    if (!currentUser || !isAdminRole(currentUser.role) || !isBackendConnected) return;
+    // B. For Diana / Primary Supervisor: Notify on all task updates (status change, images added, marked incomplete)
+    if (isDianaOrSupervisor) {
+      tasks.forEach((task) => {
+        const previousStatus = knownTaskStates.current.get(task.id);
 
-    if (isFirstLoad.current) return;
+        if (previousStatus && previousStatus !== task.status) {
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+              let title = `Task Status Update: ${task.title}`;
+              if (task.status === 'completed') title = `✅ Task Completed: ${task.title}`;
+              if (task.status === 'could_not_complete' || task.status === 'blocked') title = `⚠️ Task Issue: ${task.title}`;
 
-    tasks.forEach((task) => {
-      const previousStatus = knownTaskStates.current.get(task.id);
+              const notification = new Notification(title, {
+                body: `Status changed from ${previousStatus.toUpperCase()} to ${task.status.toUpperCase()}`,
+                icon: '/resilientlogo.svg',
+                badge: '/resilientlogo.svg',
+                vibrate: [150, 75, 150],
+              } as any);
 
-      if (previousStatus && previousStatus !== 'completed' && task.status === 'completed') {
-        if (!supportsBackgroundPush && 'Notification' in window && Notification.permission === 'granted') {
-          try {
-            const notification = new Notification('Task Completed', {
-              body: task.title,
-              icon: '/resilientlogo.svg',
-              badge: '/resilientlogo.svg',
-              vibrate: [150, 75, 150],
-            } as any);
-
-            notification.onclick = () => {
-              window.focus();
-              window.location.href = `/task/${task.id}`;
-              notification.close();
-            };
-          } catch (err) {
-            console.error('Failed to trigger completion notification:', err);
+              notification.onclick = () => {
+                window.focus();
+                window.location.href = `/task/${task.id}`;
+                notification.close();
+              };
+            } catch (err) {
+              console.error('Failed to trigger supervisor notification:', err);
+            }
           }
         }
-      }
 
-      knownTaskStates.current.set(task.id, task.status);
-    });
+        knownTaskStates.current.set(task.id, task.status);
+      });
+    }
   }, [tasks, currentUser, isBackendConnected]);
 
   // 4. Register Browser Web Push Subscription for Background alerts (app closed)

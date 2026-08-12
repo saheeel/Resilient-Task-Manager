@@ -77,17 +77,6 @@ const EmployeeHistory: React.FC = () => {
   const completedTasks = employeeTasks.filter(t => t.status === 'completed');
   const issueTasks = employeeTasks.filter(t => t.status === 'could_not_complete' || t.status === 'blocked');
 
-  const formatTimeTaken = (start?: string, end?: string) => {
-    if (!start || !end) return '';
-    const diffMs = new Date(end).getTime() - new Date(start).getTime();
-    if (diffMs < 0) return '0 min';
-    const mins = Math.floor(diffMs / 60000);
-    const hrs = Math.floor(mins / 60);
-    if (hrs > 0) {
-      return `${hrs}h ${mins % 60}m`;
-    }
-    return `${mins}m`;
-  };
 
   const formatDate = (isoString?: string) => {
     if (!isoString) return '—';
@@ -249,17 +238,13 @@ const EmployeeHistory: React.FC = () => {
                       </td>
 
                       <td className="px-5 py-4">
-                        {task.startedAt && task.completedAt ? (
+                        {task.actualDuration ? (
                           <span className="inline-flex items-center gap-1 text-xs font-semibold bg-green-50 dark:bg-emerald-950/60 text-green-700 dark:text-emerald-300 border border-green-150 dark:border-emerald-800 px-2.5 py-1 rounded">
                             <Clock size={12} />
-                            {formatTimeTaken(task.startedAt, task.completedAt)}
-                          </span>
-                        ) : task.startedAt ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-150 dark:border-blue-800 px-2 py-0.5 rounded animate-pulse">
-                            {t('employeeHistory.activeTimer')}
+                            {task.actualDuration}
                           </span>
                         ) : (
-                          <span className="text-slate-400 dark:text-slate-500 text-xs">{t('common.notStarted')}</span>
+                          <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
                         )}
                       </td>
 

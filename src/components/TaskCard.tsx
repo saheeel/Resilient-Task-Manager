@@ -32,10 +32,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
   };
 
   return (
-    <div className="task-card" onClick={handleCardClick}>
+    <div className="task-card relative" onClick={handleCardClick}>
       <div className="task-card-header flex justify-between items-start">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h3 className="task-title" style={{ margin: 0 }}>{task.title}</h3>
+          {task.isSelfAssigned && (
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-100 text-cyan-800 border border-cyan-300">
+              Self-Assigned
+            </span>
+          )}
           <button 
             onClick={handlePinClick}
             className={`p-1 rounded hover:bg-gray-100 transition-colors ${task.pinned ? 'text-blue-600' : 'text-gray-400'}`}
@@ -47,19 +52,31 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
         </div>
         <StatusBadge status={task.status} />
       </div>
+
+      <div className="text-[11px] text-slate-500 mt-1">
+        Created by: <span className="font-semibold text-slate-700">{task.createdByName || task.assignedByName || 'System'}</span>
+      </div>
       
-      <div className="task-meta mt-2">
-        <span className="flex items-center gap-2">
-          <AlertCircle size={14} />
-          <span className={getPriorityClass(task.priority)}>
-            {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+      <div className="task-meta mt-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1 text-xs">
+            <AlertCircle size={14} />
+            <span className={getPriorityClass(task.priority)}>
+              {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+            </span>
           </span>
-        </span>
-        
-        <span className="flex items-center gap-2" style={{ marginLeft: '1rem' }}>
-          <Clock size={14} />
-          <span>{task.type.charAt(0).toUpperCase() + task.type.slice(1)}</span>
-        </span>
+          
+          <span className="flex items-center gap-1 text-xs">
+            <Clock size={14} />
+            <span>{task.type.charAt(0).toUpperCase() + task.type.slice(1)}</span>
+          </span>
+        </div>
+
+        {task.actualDuration && (
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+            ⏱ {task.actualDuration}
+          </span>
+        )}
       </div>
     </div>
   );

@@ -17,15 +17,15 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   const getStatusConfig = () => {
     switch (status) {
       case 'in_progress':
-        return { label: taskStatusLabel(status), colorClass: 'bg-amber-100/90 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-200 dark:border-amber-700/80 font-bold' };
+        return { label: taskStatusLabel(status), colorClass: 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-600 dark:text-white dark:border-amber-500 font-bold shadow-xs' };
       case 'completed':
-        return { label: taskStatusLabel(status), colorClass: 'bg-emerald-100/90 text-emerald-900 border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-200 dark:border-emerald-700/80 font-bold' };
+        return { label: taskStatusLabel(status), colorClass: 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-600 dark:text-white dark:border-emerald-500 font-bold shadow-xs' };
       case 'could_not_complete':
-        return { label: taskStatusLabel(status), colorClass: 'bg-red-100/90 text-red-950 border-red-300 dark:bg-red-900/60 dark:text-red-100 dark:border-red-700/80 font-bold' };
+        return { label: taskStatusLabel(status), colorClass: 'bg-red-100 text-red-950 border-red-300 dark:bg-rose-600 dark:text-white dark:border-rose-500 font-bold shadow-xs' };
       case 'blocked':
-        return { label: taskStatusLabel(status), colorClass: 'bg-orange-100/90 text-orange-950 border-orange-300 dark:bg-orange-900/60 dark:text-orange-100 dark:border-orange-700/80 font-bold' };
+        return { label: taskStatusLabel(status), colorClass: 'bg-orange-100 text-orange-950 border-orange-300 dark:bg-orange-600 dark:text-white dark:border-orange-500 font-bold shadow-xs' };
       default:
-        return { label: taskStatusLabel(status), colorClass: 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 font-semibold' };
+        return { label: taskStatusLabel(status), colorClass: 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-700 dark:text-white dark:border-slate-600 font-semibold shadow-xs' };
     }
   };
 

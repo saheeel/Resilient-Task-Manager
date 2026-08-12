@@ -72,17 +72,6 @@ const CompletedHistory: React.FC = () => {
     return formatDate(date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   };
 
-  const formatTimeTaken = (start?: string, end?: string) => {
-    if (!start || !end) return '';
-    const diffMs = new Date(end).getTime() - new Date(start).getTime();
-    if (diffMs < 0) return '0 min';
-    const mins = Math.floor(diffMs / 60000);
-    const hrs = Math.floor(mins / 60);
-    if (hrs > 0) {
-      return `${hrs}h ${mins % 60}m`;
-    }
-    return `${mins}m`;
-  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -170,10 +159,10 @@ const CompletedHistory: React.FC = () => {
                                 {formatTime(task.completedAt)}
                               </span>
                             )}
-                            {task.startedAt && task.completedAt && (
+                            {task.actualDuration && (
                               <span className="flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-100 font-semibold">
                                 <Clock size={11} />
-                                {formatTimeTaken(task.startedAt, task.completedAt)}
+                                {task.actualDuration}
                               </span>
                             )}
                             {task.type !== 'one-time' ? (

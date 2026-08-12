@@ -36,7 +36,7 @@ const TopHeader: React.FC = () => {
   return (
     <>
       <header 
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-6"
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 sm:px-6"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           height: 'calc(env(safe-area-inset-top, 0px) + 4rem)'
@@ -44,21 +44,22 @@ const TopHeader: React.FC = () => {
       >
         <div className="flex items-center gap-2">
           <img src="/resilientlogo.svg" alt="Resilient Logo" className="w-6 h-6 object-contain" />
-          <span className="hidden text-sm font-bold tracking-tight text-slate-900 sm:inline">
+          <span className="hidden text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:inline">
             Resilient Operations
           </span>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Language Selector */}
           <div
-            className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 shadow-sm"
+            className="flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-1 shadow-xs"
             aria-label={t('common.selectLanguage')}
           >
             <button
               type="button"
               onClick={() => setLanguage('en')}
               className={`rounded-full px-2 py-1 text-[11px] font-semibold transition-colors cursor-pointer ${
-                language === 'en' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                language === 'en' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
               EN
@@ -67,18 +68,18 @@ const TopHeader: React.FC = () => {
               type="button"
               onClick={() => setLanguage('de')}
               className={`rounded-full px-2 py-1 text-[11px] font-semibold transition-colors cursor-pointer ${
-                language === 'de' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                language === 'de' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
               DE
             </button>
           </div>
 
-          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-800">
+          <div className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-xs font-bold text-blue-800 dark:text-blue-200">
               {initials}
             </div>
-            <span className="text-xs font-semibold text-slate-700">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {firstName}
             </span>
           </div>
@@ -86,7 +87,7 @@ const TopHeader: React.FC = () => {
           <button 
             onClick={() => setShowLogoutConfirm(true)}
             title={t('common.signOut')}
-            className="flex items-center justify-center w-8 h-8 rounded-full border border-slate-200 text-slate-500 hover:text-red-600 hover:bg-red-50 hover:border-red-100 transition-all cursor-pointer animate-none"
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-rose-950/40 hover:border-red-100 transition-all cursor-pointer animate-none"
           >
             <LogOut size={16} />
           </button>
@@ -97,25 +98,25 @@ const TopHeader: React.FC = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs"
             onClick={() => setShowLogoutConfirm(false)}
           />
           
           {/* Modal Container */}
           <div 
-            className="relative bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-slate-100/50 flex flex-col items-center text-center z-10 animate-scale-up"
+            className="relative bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center z-10 animate-scale-up"
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600 mb-4 ring-8 ring-red-50/50">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 dark:bg-rose-950/50 text-red-600 dark:text-rose-400 mb-4 ring-8 ring-red-50/50 dark:ring-rose-950/30">
               <LogOut size={22} className="stroke-[2.5]" />
             </div>
             
-            <h3 className="text-lg font-bold text-slate-900 mb-2">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">
               {t('common.signOut')}
             </h3>
             
-            <p className="text-sm text-slate-500 mb-6 px-2">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 px-2">
               {t('common.confirmSignOut')}
             </p>
             
@@ -123,7 +124,7 @@ const TopHeader: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-50 transition-colors cursor-pointer"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 {t('common.cancel')}
               </button>
@@ -146,4 +147,3 @@ const TopHeader: React.FC = () => {
 };
 
 export default TopHeader;
-

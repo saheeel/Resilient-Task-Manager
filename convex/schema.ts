@@ -12,6 +12,8 @@ export default defineSchema({
     employeeRole: v.optional(v.string()),
     authUserId: v.optional(v.string()),
     authType: v.optional(v.string()),
+    notificationsEnabled: v.optional(v.boolean()),
+    isPrimarySupervisor: v.optional(v.boolean()),
   }).index("by_username", ["username"]).index("by_email", ["email"]).index("by_authUserId", ["authUserId"]).index("by_role", ["role"]),
 
   tasks: defineTable({
@@ -23,6 +25,11 @@ export default defineSchema({
     assignedTo: v.array(v.string()), // Array of User IDs (string values)
     assignedById: v.optional(v.string()),
     assignedByName: v.optional(v.string()),
+    createdById: v.optional(v.string()),
+    createdByName: v.optional(v.string()),
+    isSelfAssigned: v.optional(v.boolean()),
+    followUpFromId: v.optional(v.string()),
+    actualDuration: v.optional(v.string()),
     dueDate: v.optional(v.string()),
     remarks: v.optional(v.string()),
     inCharge: v.optional(v.string()),

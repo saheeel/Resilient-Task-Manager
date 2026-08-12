@@ -22,6 +22,8 @@ export interface User {
   employeeRole?: string;
   authUserId?: string;
   authType?: string;
+  notificationsEnabled?: boolean;
+  isPrimarySupervisor?: boolean;
 }
 
 export interface Task {
@@ -34,6 +36,11 @@ export interface Task {
   assignedTo: string[]; // Array of User IDs
   assignedById?: string;
   assignedByName?: string;
+  createdById?: string;
+  createdByName?: string;
+  isSelfAssigned?: boolean;
+  followUpFromId?: string;
+  actualDuration?: string;
   dueDate?: string; // ISO date string
   remarks?: string;
   inCharge?: string;
@@ -82,6 +89,8 @@ interface TaskContextType {
   isBackendConnected: boolean;
   sendPushNotification: (args: { userId: string; title: string; body: string; url?: string }) => Promise<null>;
   uploadFile: (file: File, onProgress?: (progress: number, stage: string) => void) => Promise<string>;
+  deviceNotificationsMuted: boolean;
+  toggleDeviceNotifications: () => void;
 }
 
 export const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -159,6 +168,19 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [dbUsersRaw, dbTasksRaw, seedUsers, seedTasks, syncSuperAdminAllowlist]);
 
+  // Device-local notification mute state for Diana / current device
+  const [deviceNotificationsMuted, setDeviceNotificationsMuted] = useState<boolean>(() => {
+    return localStorage.getItem('rtm_device_notifications_muted') === 'true';
+  });
+
+  const toggleDeviceNotifications = () => {
+    setDeviceNotificationsMuted((prev) => {
+      const next = !prev;
+      localStorage.setItem('rtm_device_notifications_muted', String(next));
+      return next;
+    });
+  };
+
   // Session state for tracking active logged-in user profile
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('rtm_current_user');
@@ -215,6 +237,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       employeeRole: u.employeeRole,
       authUserId: u.authUserId,
       authType: u.authType,
+      notificationsEnabled: u.notificationsEnabled ?? true,
+      isPrimarySupervisor: u.isPrimarySupervisor ?? (u.name.toLowerCase().includes('diana') || u.role === 'superadmin'),
     }));
   }, [dbUsersRaw, cachedUsersRaw]);
 
@@ -225,7 +249,11 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       u => u.id === currentUser.id || (u.username && u.username === currentUser.username)
     );
     if (latestUserRecord) {
-      if (latestUserRecord.id !== currentUser.id || latestUserRecord.role !== currentUser.role) {
+      if (
+        latestUserRecord.id !== currentUser.id ||
+        latestUserRecord.role !== currentUser.role ||
+        latestUserRecord.notificationsEnabled !== currentUser.notificationsEnabled
+      ) {
         handleSetCurrentUser(latestUserRecord);
         console.log("Synchronized session for user:", latestUserRecord.name);
       }
@@ -246,6 +274,11 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       assignedTo: t.assignedTo || [],
       assignedById: t.assignedById,
       assignedByName: t.assignedByName,
+      createdById: t.createdById || t.assignedById,
+      createdByName: t.createdByName || t.assignedByName || "System",
+      isSelfAssigned: t.isSelfAssigned || (t.assignedTo && currentUser && t.assignedTo.includes(currentUser.id) && (t.createdById === currentUser.id || t.assignedById === currentUser.id)),
+      followUpFromId: t.followUpFromId,
+      actualDuration: t.actualDuration,
       dueDate: t.dueDate,
       remarks: t.remarks,
       inCharge: t.inCharge,
@@ -272,7 +305,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       activeFrom: t.activeFrom,
       nextOccurrence: t.nextOccurrence,
     }));
-  }, [dbTasksRaw, cachedTasksRaw]);
+  }, [dbTasksRaw, cachedTasksRaw, currentUser]);
 
   const createTemporaryEmail = (name: string) => {
     const slug = name
@@ -307,12 +340,19 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           assignedByName: taskData.assignedByName,
         };
 
+    const createdById = currentUser ? currentUser.id : taskData.createdById;
+    const createdByName = currentUser ? currentUser.name : taskData.createdByName;
+    const isSelfAssigned = Boolean(
+      taskData.isSelfAssigned || 
+      (currentUser && taskData.assignedTo.includes(currentUser.id) && taskData.assignedTo.length === 1)
+    );
+
     let nextOccur = taskData.nextOccurrence;
     if (taskData.type !== 'one-time' && !nextOccur) {
       nextOccur = calculateNextOccurrence(taskData.type, taskData.recurringDay, taskData.recurringTime, new Date());
     }
 
-    await dbAddTask({
+    const rawPayload = {
       title: taskData.title,
       description: taskData.description,
       type: taskData.type,
@@ -321,6 +361,11 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       assignedTo: taskData.assignedTo,
       assignedById: assignmentMetadata.assignedById,
       assignedByName: assignmentMetadata.assignedByName,
+      createdById,
+      createdByName,
+      isSelfAssigned,
+      followUpFromId: taskData.followUpFromId,
+      actualDuration: taskData.actualDuration,
       dueDate: taskData.dueDate,
       remarks: taskData.remarks,
       inCharge: taskData.inCharge,
@@ -333,7 +378,13 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       pinned: taskData.pinned,
       activeFrom: taskData.activeFrom,
       nextOccurrence: nextOccur,
-    }).then(() => {
+    };
+
+    const cleanPayload = Object.fromEntries(
+      Object.entries(rawPayload).filter(([_, v]) => v !== undefined)
+    );
+
+    await dbAddTask(cleanPayload as any).then(() => {
       // Loop through assignees and fire off background Web Push notifications (excluding creator)
       taskData.assignedTo.forEach((userId) => {
         if (currentUser && userId === currentUser.id) return;
@@ -682,7 +733,9 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
           xhr.send(fileToUpload);
         });
-      }
+      },
+      deviceNotificationsMuted,
+      toggleDeviceNotifications,
     }}>
       {children}
     </TaskContext.Provider>

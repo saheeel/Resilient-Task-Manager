@@ -6,7 +6,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import StatusBadge from '../components/StatusBadge';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
 
-import { Pin, MoreVertical, ArrowDownUp } from 'lucide-react';
+import { Pin, MoreVertical, ArrowDownUp, PlusCircle } from 'lucide-react';
 
 const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -195,15 +195,6 @@ const EmployeeDashboard: React.FC = () => {
     });
   };
 
-  const formatTimeTaken = (start?: string, end?: string) => {
-    if (!start || !end) return '';
-    const diffMs = new Date(end).getTime() - new Date(start).getTime();
-    if (diffMs < 0) return '0 min';
-    const mins = Math.floor(diffMs / 60000);
-    const hrs = Math.floor(mins / 60);
-    if (hrs > 0) return `${hrs}h ${mins % 60}m`;
-    return `${mins}m`;
-  };
 
   const renderPriorityBadge = (priority: Task['priority']) => {
     const colorClasses = {
@@ -247,23 +238,23 @@ const EmployeeDashboard: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <header className="mb-8 border-b border-slate-150 pb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('app.myWorkspace')}</h1>
-        <p className="mt-1 text-sm text-slate-500">
+      <header className="mb-8 border-b border-slate-150 dark:border-slate-800 pb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('app.myWorkspace')}</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           {t('employeeDashboard.welcome', { name: (currentUser.name || 'User').split(' ')[0] })}
         </p>
       </header>
 
       <div className="mb-6 flex items-center justify-end">
-        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm">
-          <label htmlFor="employee-sort" className="text-slate-500 hover:text-slate-700 transition-colors" title={t('employeeDashboard.sortMyWork')}>
+        <div className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 shadow-sm">
+          <label htmlFor="employee-sort" className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors" title={t('employeeDashboard.sortMyWork')}>
             <ArrowDownUp size={16} />
           </label>
           <select
             id="employee-sort"
             value={sortBy}
             onChange={(event) => setSortBy(event.target.value as 'default' | 'priority' | 'dueDate')}
-            className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 outline-none transition-colors focus:border-slate-400"
+            className="rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none transition-colors focus:border-slate-400"
           >
             <option value="default">{t('employeeDashboard.originalOrder')}</option>
             <option value="priority">{t('employeeDashboard.priorityFirst')}</option>
@@ -274,25 +265,25 @@ const EmployeeDashboard: React.FC = () => {
 
       {transferResults.length > 0 && (
         <div className="mb-8">
-          <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900 flex items-center gap-2">Transfer Updates</h2>
+          <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">Transfer Updates</h2>
           <div className="flex flex-col gap-3">
             {transferResults.map((task) => (
               <div
                 key={`result-${task.id}`}
-                className={`flex items-center justify-between rounded-xl border p-4 shadow-sm transition-colors cursor-pointer ${task.transferResult === 'accepted' ? 'border-green-200 bg-green-50 hover:bg-green-100/60' : 'border-red-200 bg-red-50 hover:bg-red-100/60'}`}
+                className={`flex items-center justify-between rounded-xl border p-4 shadow-sm transition-colors cursor-pointer ${task.transferResult === 'accepted' ? 'border-green-200 dark:border-emerald-800/80 bg-green-50 dark:bg-emerald-950/40 hover:bg-green-100/60' : 'border-red-200 dark:border-rose-800/80 bg-red-50 dark:bg-rose-950/40 hover:bg-red-100/60'}`}
                 onClick={() => navigate(`/task/${task.id}`)}
               >
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                     Transfer {task.transferResult === 'accepted' ? 'Accepted' : 'Declined'}
                   </p>
-                  <p className="text-xs text-slate-600">
+                  <p className="text-xs text-slate-600 dark:text-slate-300">
                     Your request to transfer <span className="font-bold">"{task.title}"</span> was {task.transferResult}.
                   </p>
                 </div>
                 <button
                   onClick={(e) => handleDismissTransferResult(e, task)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${task.transferResult === 'accepted' ? 'bg-white text-green-700 border-green-300 hover:bg-green-50' : 'bg-white text-red-700 border-red-300 hover:bg-red-50'}`}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${task.transferResult === 'accepted' ? 'bg-white dark:bg-slate-900 text-green-700 dark:text-emerald-300 border-green-300 dark:border-emerald-700 hover:bg-green-50' : 'bg-white dark:bg-slate-900 text-red-700 dark:text-rose-300 border-red-300 dark:border-rose-700 hover:bg-red-50'}`}
                 >
                   Dismiss
                 </button>
@@ -304,24 +295,24 @@ const EmployeeDashboard: React.FC = () => {
 
       {pendingTransfers.length > 0 && (
         <div className="mb-8">
-          <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900 flex items-center gap-2">Pending Transfers <span className="bg-indigo-600 text-white text-xs px-2 py-0.5 rounded-full">{pendingTransfers.length}</span></h2>
+          <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">Pending Transfers <span className="bg-indigo-600 text-white text-xs px-2 py-0.5 rounded-full">{pendingTransfers.length}</span></h2>
           <div className="flex flex-col gap-3">
             {pendingTransfers.map((task) => (
               <div
                 key={task.id}
-                className="cursor-pointer rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:bg-slate-50 shadow-sm"
+                className="cursor-pointer rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-sm"
                 onClick={() => navigate(`/task/${task.id}`)}
               >
                 <div className="flex items-start justify-between gap-4 mb-2">
-                  <span className="text-sm font-semibold text-slate-900 flex-1">{task.title}</span>
+                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex-1">{task.title}</span>
                 </div>
-                <p className="text-sm text-slate-700"><span className="font-bold">{users.find(u => u.id === task.pendingTransferFrom)?.name}</span> has requested to transfer this task to you.</p>
-                {task.pendingTransferComment && <p className="mt-2 text-xs italic text-slate-600 bg-slate-50 p-2 rounded">"{task.pendingTransferComment}"</p>}
+                <p className="text-sm text-slate-700 dark:text-slate-300"><span className="font-bold text-slate-900 dark:text-slate-100">{users.find(u => u.id === task.pendingTransferFrom)?.name}</span> has requested to transfer this task to you.</p>
+                {task.pendingTransferComment && <p className="mt-2 text-xs italic text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-2 rounded border border-slate-200 dark:border-slate-700">"{task.pendingTransferComment}"</p>}
                 
                 <div className="flex gap-3 mt-4 items-center justify-between">
-                  <span className="text-xs text-slate-500 italic">Click card to view details</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 italic">Click card to view details</span>
                   <div className="flex gap-2">
-                    <button onClick={(e) => handleTransferDecline(e, task)} className="px-4 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap shadow-sm">Decline</button>
+                    <button onClick={(e) => handleTransferDecline(e, task)} className="px-4 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap shadow-sm">Decline</button>
                     <button onClick={(e) => handleTransferAccept(e, task)} className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap shadow-sm">Accept Task</button>
                   </div>
                 </div>
@@ -333,20 +324,20 @@ const EmployeeDashboard: React.FC = () => {
 
       {outgoingTransfers.length > 0 && (
         <div className="mb-8">
-          <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900 flex items-center gap-2">Outgoing Requests</h2>
+          <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">Outgoing Requests</h2>
           <div className="flex flex-col gap-3">
             {outgoingTransfers.map((task) => (
               <div
                 key={`outgoing-${task.id}`}
-                className="cursor-pointer flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-3 shadow-sm transition-colors hover:bg-amber-100/60"
+                className="cursor-pointer flex items-center justify-between rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 p-3 shadow-sm transition-colors hover:bg-amber-100/60"
                 onClick={() => navigate(`/task/${task.id}`)}
               >
                 <div>
-                  <span className="text-sm font-semibold text-slate-800 block mb-0.5">{task.title}</span>
-                  <p className="text-xs text-slate-700">Requested transfer to <span className="font-bold">{users.find(u => u.id === task.pendingTransferTo)?.name}</span> <span className="italic text-slate-500 ml-1">(Waiting...)</span></p>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 block mb-0.5">{task.title}</span>
+                  <p className="text-xs text-slate-700 dark:text-slate-300">Requested transfer to <span className="font-bold">{users.find(u => u.id === task.pendingTransferTo)?.name}</span> <span className="italic text-slate-500 dark:text-slate-400 ml-1">(Waiting...)</span></p>
                 </div>
                 
-                <button onClick={(e) => handleTransferCancel(e, task)} className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap shadow-sm">Cancel</button>
+                <button onClick={(e) => handleTransferCancel(e, task)} className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-lg cursor-pointer transition-colors whitespace-nowrap shadow-sm">Cancel</button>
               </div>
             ))}
           </div>
@@ -355,23 +346,23 @@ const EmployeeDashboard: React.FC = () => {
 
       {issueTasks.length > 0 && (
         <div className="mb-8">
-          <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900">{t('app.blockedTasks')}</h2>
+          <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('app.blockedTasks')}</h2>
           <div className="flex flex-col gap-3">
             {issueTasks.map((task) => (
               <div
                 key={task.id}
-                className="cursor-pointer rounded-xl border border-red-200 bg-red-50 p-4 transition-colors hover:bg-red-100/60"
+                className="cursor-pointer rounded-xl border border-red-300 dark:border-rose-700/80 bg-red-50 dark:bg-rose-950/60 p-4 transition-all hover:bg-red-100/80 dark:hover:bg-rose-900/60 shadow-sm"
                 onClick={() => navigate(`/task/${task.id}`)}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <span className="text-sm font-semibold text-red-950">{task.title}</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-rose-100">{task.title}</span>
                   <StatusBadge status={task.status} />
                 </div>
-                <p className="mt-2 text-sm leading-6 text-red-800">{taskPreview(task)}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-rose-200 font-medium">{taskPreview(task)}</p>
                 {task.blockReason && (
-                  <p className="mt-3 inline-block rounded border border-red-100 bg-white/60 px-2 py-1 text-xs font-medium text-red-800">
-                    {t('common.reason')}: {task.blockReason}
-                  </p>
+                  <div className="mt-3 rounded-lg border border-red-200 dark:border-rose-800/80 bg-white/90 dark:bg-slate-900/90 px-3 py-2 text-xs font-medium text-slate-800 dark:text-slate-200 shadow-xs">
+                    <span className="font-bold text-red-600 dark:text-rose-400">{t('common.reason')}:</span> {task.blockReason}
+                  </div>
                 )}
               </div>
             ))}
@@ -380,7 +371,7 @@ const EmployeeDashboard: React.FC = () => {
       )}
 
       <div className="mb-8">
-        <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900">{t('app.currentAssignments')}</h2>
+        <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('app.currentAssignments')}</h2>
         {isLoading ? (
           <TaskListSkeleton count={4} />
         ) : sortedActiveTasks.length > 0 ? (
@@ -389,15 +380,15 @@ const EmployeeDashboard: React.FC = () => {
               <div
                 key={task.id}
                 onClick={() => navigate(`/task/${task.id}`)}
-                className="cursor-pointer rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:shadow"
+                className="cursor-pointer rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700 hover:shadow"
               >
                 <div className="flex items-start justify-between gap-3 relative">
                   <div className="min-w-0 flex-1">
-                    <h3 className="mb-2 text-lg font-semibold text-slate-900 flex items-center gap-2">
-                      {task.pinned && <Pin size={14} className="text-blue-600 shrink-0" fill="currentColor" />}
+                    <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      {task.pinned && <Pin size={14} className="text-blue-600 dark:text-blue-400 shrink-0" fill="currentColor" />}
                       {task.title}
                     </h3>
-                    <p className="line-clamp-2 text-sm leading-6 text-slate-500">{taskPreview(task)}</p>
+                    <p className="line-clamp-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{taskPreview(task)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusBadge status={task.status} />
@@ -584,9 +575,9 @@ const EmployeeDashboard: React.FC = () => {
                     </span>
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500">
                       {task.completedAt && <span>{formatTime(task.completedAt)}</span>}
-                      {task.startedAt && task.completedAt && (
+                      {task.actualDuration && (
                         <span className="employee-completed-badge rounded px-2 py-0.5 font-semibold">
-                          {t('common.timeTaken')}: {formatTimeTaken(task.startedAt, task.completedAt)}
+                          {t('common.timeTaken')}: {task.actualDuration}
                         </span>
                       )}
                     </div>
@@ -602,6 +593,19 @@ const EmployeeDashboard: React.FC = () => {
           </p>
         </div>
       )}
+
+      {/* Floating White New Task Button */}
+      <button
+        type="button"
+        onClick={() => navigate('/create')}
+        className="fixed right-4 z-[60] inline-flex items-center gap-2.5 rounded-full bg-white text-slate-900 border border-slate-200/90 dark:bg-slate-100 dark:text-slate-950 dark:border-white px-5 py-3 text-sm font-bold shadow-xl transition-all duration-200 hover:bg-slate-50 hover:scale-105 hover:shadow-2xl cursor-pointer md:right-8"
+        style={{
+          bottom: 'calc(max(16px, env(safe-area-inset-bottom, 16px)) + 4.75rem)'
+        }}
+      >
+        <PlusCircle size={22} className="text-slate-900 dark:text-slate-950" />
+        {t('manageTasks.newTask') || 'New Task'}
+      </button>
     </div>
   );
 };

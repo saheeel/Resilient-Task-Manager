@@ -16,6 +16,7 @@ const EditTask: React.FC = () => {
   const navigate = useNavigate();
   const { tasks, users, editTask, currentUser, uploadFile } = useTasks();
   const { t, priorityLabel, taskTypeLabel, shortWeekdayLabel, weekdayLabel, monthDayOrdinalLabel, formatDate } = useLanguage();
+  const isEmployee = currentUser?.role === 'employee';
 
   const isValidId = Boolean(id && id !== 'undefined' && id !== 'null' && id.trim() !== '');
   const localTask = isValidId ? tasks.find(t => t.id === id) : undefined;
@@ -218,6 +219,8 @@ const EditTask: React.FC = () => {
       ? [...existingAttachments, uploadedAttachment]
       : existingAttachments;
 
+    const finalAssignedTo = isEmployee && currentUser ? [currentUser.id] : assignedTo;
+
     editTask(task.id, {
       title,
       description: description || undefined,
@@ -227,7 +230,8 @@ const EditTask: React.FC = () => {
       priority,
       inCharge: inCharge || undefined,
       materialStatus: materialStatus || undefined,
-      assignedTo,
+      assignedTo: finalAssignedTo,
+      isSelfAssigned: isEmployee || (currentUser ? finalAssignedTo.includes(currentUser.id) : false),
       attachments: newAttachments.length > 0 ? newAttachments : undefined,
       recurringDay:
         type === 'weekly'
@@ -695,32 +699,48 @@ const EditTask: React.FC = () => {
 
             {/* Assignment */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-3">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-3">
                 {t('createTask.assignTo')} *
               </label>
-              <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
-                {assignableUsers.length > 0 ? (
-                  assignableUsers.map(emp => (
-                    <label
-                      key={emp.id}
-                      className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer select-none transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-500 w-4 h-4"
-                        checked={assignedTo.includes(emp.id)}
-                        onChange={() => toggleAssignee(emp.id)}
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-slate-700">{emp.name}</span>
-                        {emp.employeeRole && <span className="text-xs text-slate-400">{emp.employeeRole}</span>}
-                      </div>
-                    </label>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-500 p-2">{t('common.noTeamMembers')}</p>
-                )}
-              </div>
+              {isEmployee ? (
+                <div className="p-4 bg-cyan-50/80 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800/80 rounded-xl flex items-center gap-3 shadow-xs">
+                  <div className="w-9 h-9 rounded-full bg-cyan-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    ✓
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-cyan-950 dark:text-cyan-200">
+                      Self-Assigned Task ({currentUser?.name})
+                    </p>
+                    <p className="text-[11px] text-cyan-800 dark:text-cyan-300 mt-0.5">
+                      As an employee, tasks are strictly self-assigned to your workspace.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                  {assignableUsers.length > 0 ? (
+                    assignableUsers.map(emp => (
+                      <label
+                        key={emp.id}
+                        className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer select-none transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-slate-900 focus:ring-slate-500 w-4 h-4"
+                          checked={assignedTo.includes(emp.id)}
+                          onChange={() => toggleAssignee(emp.id)}
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{emp.name}</span>
+                          {emp.employeeRole && <span className="text-xs text-slate-400">{emp.employeeRole}</span>}
+                        </div>
+                      </label>
+                    ))
+                  ) : (
+                    <p className="text-xs text-slate-500 p-2">{t('common.noTeamMembers')}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

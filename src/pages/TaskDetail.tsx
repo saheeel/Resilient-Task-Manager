@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTasks, isAdminRole, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
-import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, Image, PackageCheck, UserRoundCog, ImageOff, ArrowRightLeft, Upload, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, PackageCheck, UserRoundCog, ImageOff, ArrowRightLeft, Upload, Loader2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -24,6 +24,7 @@ const TaskDetail: React.FC = () => {
   const task = localTask || fetchedTask;
   
   const [comment, setComment] = useState('');
+  const [actualDurationInput, setActualDurationInput] = useState('');
   const [showBlockReason, setShowBlockReason] = useState(false);
   const [completionPhotos, setCompletionPhotos] = useState<{ storageId: string; previewUrl: string }[]>([]);
   const [activeZoomUrl, setActiveZoomUrl] = useState<string | null>(null);
@@ -89,8 +90,14 @@ const TaskDetail: React.FC = () => {
     setUpdatePhotoPreviewUrl(null);
   };
 
+  const isPdfFile = (url: string) => {
+    if (!url) return false;
+    return url.toLowerCase().includes('.pdf') || url.includes('application/pdf');
+  };
+
   const isImageFile = (url: string) => {
     if (!url) return false;
+    if (isPdfFile(url)) return false;
     if (url.startsWith('blob:') || url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) return true;
     return /\.(jpg|jpeg|png|webp|gif|svg|avif|bmp)$/i.test(url);
   };
@@ -199,16 +206,6 @@ const TaskDetail: React.FC = () => {
     );
   }
 
-  const formatTimeTaken = (start: string, end: string) => {
-    const diffMs = new Date(end).getTime() - new Date(start).getTime();
-    if (diffMs < 0) return '0 minutes';
-    const mins = Math.floor(diffMs / 60000);
-    const hrs = Math.floor(mins / 60);
-    if (hrs > 0) {
-      return `${hrs} hr ${mins % 60} min`;
-    }
-    return `${mins} min`;
-  };
 
   const notifyAssigneesAndAssigner = async (title: string, body: string) => {
     if (!task) return;
@@ -239,10 +236,16 @@ const TaskDetail: React.FC = () => {
     updateTaskStatus(task.id, 'completed', { 
       completedAt: new Date().toISOString(),
       completionComment: comment,
+      actualDuration: actualDurationInput.trim() || undefined,
       proofPhotoUrls: completionPhotos.length > 0 ? completionPhotos.map(p => p.storageId) : undefined
     });
-    addTaskUpdate(task.id, `${currentUser.name} completed the task.`);
+    addTaskUpdate(task.id, `${currentUser.name} completed the task.${actualDurationInput.trim() ? ` (Time taken: ${actualDurationInput.trim()})` : ''}`);
     navigate(-1);
+  };
+
+  const handleCreateFollowUp = () => {
+    if (!task) return;
+    navigate(`/create?followUpFrom=${task.id}`);
   };
 
   const handleBlock = () => {
@@ -368,6 +371,16 @@ const TaskDetail: React.FC = () => {
           {t('common.back')}
         </button>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          {(task.status === 'completed' || task.status === 'could_not_complete' || task.status === 'blocked') && (
+            <button
+              onClick={handleCreateFollowUp}
+              disabled={isUploading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-300 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg shadow-xs transition-all cursor-pointer flex-1 sm:flex-initial justify-center"
+            >
+              ➕ Create Follow-up Task
+            </button>
+          )}
+
           {isAdminRole(currentUser.role) && (
             <>
               {(task.status === 'could_not_complete' || task.status === 'blocked') && (
@@ -508,6 +521,20 @@ const TaskDetail: React.FC = () => {
           )}
         </div>
         
+        {task.followUpFromId && (
+          <div className="mb-4 flex items-center justify-between gap-3 p-3 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs font-semibold text-indigo-900 dark:text-indigo-200">
+            <span className="flex items-center gap-2">
+              <span>🔗 Follow-up to previous task</span>
+            </span>
+            <button
+              onClick={() => navigate(`/task/${task.followUpFromId}`)}
+              className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors cursor-pointer"
+            >
+              View Previous Task →
+            </button>
+          </div>
+        )}
+
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-4">{task.title}</h1>
         
         <div className="flex flex-wrap gap-4 mb-6">
@@ -550,6 +577,18 @@ const TaskDetail: React.FC = () => {
         {/* Timeline & Assignments */}
         <div className="border-t border-slate-100 pt-4 mt-2 mb-6 space-y-3">
           <div className="flex items-start gap-2 text-sm text-slate-600">
+            <span className="font-semibold text-slate-900 shrink-0 min-w-[100px]">Created By:</span>
+            <span className="font-medium text-slate-800 flex items-center gap-2">
+              {task.createdByName || task.assignedByName || 'System'}
+              {task.isSelfAssigned && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-cyan-100 text-cyan-800 border border-cyan-300">
+                  Self-Assigned
+                </span>
+              )}
+            </span>
+          </div>
+
+          <div className="flex items-start gap-2 text-sm text-slate-600">
             <span className="font-semibold text-slate-900 shrink-0 min-w-[100px]">{t('taskDetail.assignedTo')}:</span>
             <span className="font-medium text-slate-800">
               {task.assignedTo.length > 0 
@@ -566,6 +605,15 @@ const TaskDetail: React.FC = () => {
                 : t('common.notRecorded')}
             </span>
           </div>
+
+          {task.actualDuration && (
+            <div className="flex items-start gap-2 text-sm text-slate-600">
+              <span className="font-semibold text-slate-900 shrink-0 min-w-[100px]">Actual Duration:</span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 text-xs">
+                <Clock size={14} /> {task.actualDuration}
+              </span>
+            </div>
+          )}
 
           {task.assignedByName && (
             <div className="flex items-start gap-2 text-sm text-slate-600">
@@ -630,9 +678,9 @@ const TaskDetail: React.FC = () => {
                     ? formatDateTime(task.completedAt, { dateStyle: 'short', timeStyle: 'short' })
                     : t('common.notRecorded')}
                 </span>
-                {task.startedAt && task.completedAt && (
+                {task.actualDuration && (
                   <span className="text-xs text-emerald-900 dark:text-emerald-200 font-medium mt-0.5">
-                    {t('common.timeTaken')}: {formatTimeTaken(task.startedAt, task.completedAt)}
+                    {t('common.timeTaken')}: {task.actualDuration}
                   </span>
                 )}
                 {task.completionComment && (
@@ -794,7 +842,18 @@ const TaskDetail: React.FC = () => {
                   <p className="text-xs text-slate-700 mt-1 leading-relaxed whitespace-pre-wrap">{up.text}</p>
                   
                   {up.photoUrl && (
-                    isRenderableSavedImage(up.photoUrl) ? (
+                    isPdfFile(up.photoUrl) ? (
+                      <a
+                        href={up.photoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors self-start"
+                      >
+                        <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[10px] font-bold">PDF</span>
+                        <span className="truncate max-w-[180px]">View PDF Document</span>
+                        <Paperclip size={14} className="text-rose-500" />
+                      </a>
+                    ) : isRenderableSavedImage(up.photoUrl) ? (
                       <div className="relative inline-block mt-2 group cursor-zoom-in self-start" onClick={() => setActiveZoomUrl(up.photoUrl)}>
                         <img 
                           src={up.photoUrl} 
@@ -855,7 +914,7 @@ const TaskDetail: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.pdf,.doc,.docx"
                     className="hidden"
                     ref={updatePhotoInputRef}
                     onChange={handleUpdatePhotoChange}
@@ -869,25 +928,29 @@ const TaskDetail: React.FC = () => {
                       disabled={isPostingUpdate || isUploading}
                       className="task-action-secondary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      <Image size={13} className="text-slate-400" />
-                      {t('taskDetail.updatePhoto')}
+                      <Paperclip size={13} className="text-slate-400" />
+                      <span>Attach Photo or PDF</span>
                     </button>
                   ) : (
-                    <div className="relative inline-block">
-                      <img
-                        src={updatePhotoPreviewUrl || updatePhotoStorageId || ''}
-                        alt="Update attachment preview"
-                        className="w-10 h-10 object-cover rounded border border-slate-200 shadow-sm cursor-zoom-in"
-                        onClick={() => setActiveZoomUrl(updatePhotoPreviewUrl || updatePhotoStorageId)}
-                      />
+                    <div className="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs">
+                      {isPdfFile(updatePhotoPreviewUrl || updatePhotoStorageId || '') ? (
+                        <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold text-[10px]">PDF Document</span>
+                      ) : (
+                        <img
+                          src={updatePhotoPreviewUrl || updatePhotoStorageId || ''}
+                          alt="Update attachment preview"
+                          className="w-8 h-8 object-cover rounded border border-slate-200 shadow-sm cursor-zoom-in"
+                          onClick={() => setActiveZoomUrl(updatePhotoPreviewUrl || updatePhotoStorageId)}
+                        />
+                      )}
                       <button
                         type="button"
                         onClick={handleRemoveUpdatePhoto}
                         disabled={isPostingUpdate || isUploading}
-                        className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-0.5 shadow border-none cursor-pointer disabled:opacity-50"
+                        className="text-slate-400 hover:text-red-600 transition-colors border-none bg-transparent p-0 cursor-pointer disabled:opacity-50"
                         title={t('taskDetail.removePhoto')}
                       >
-                        <X size={10} />
+                        <X size={14} />
                       </button>
                     </div>
                   )}
@@ -916,17 +979,32 @@ const TaskDetail: React.FC = () => {
         <div className="bg-white p-6 border border-slate-200 rounded-xl shadow-sm">
           <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider mb-4">{t('taskDetail.completionActions')}</h3>
           
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              {t('taskDetail.addCommentOptional')}
-            </label>
-            <textarea 
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-              rows={3}
-              placeholder={t('taskDetail.commentPlaceholder')}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-            />
+          <div className="mb-4 space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                Actual Time Taken <span className="font-normal text-slate-400">(Optional e.g. "45 mins", "2 hours")</span>
+              </label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+                placeholder='e.g. "45 mins" or "1.5 hours"'
+                value={actualDurationInput}
+                onChange={(e) => setActualDurationInput(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                {t('taskDetail.addCommentOptional')}
+              </label>
+              <textarea 
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+                rows={3}
+                placeholder={t('taskDetail.commentPlaceholder')}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="mb-4">

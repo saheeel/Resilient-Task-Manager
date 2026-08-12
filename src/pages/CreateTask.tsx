@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import type { TaskType, Priority } from '../contexts/TaskContext';
-import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw, Upload, Loader2 } from 'lucide-react';
+import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw, Upload, Loader2, Link as LinkIcon } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MATERIAL_STATUS_OPTIONS } from '../lib/taskOptions';
 
@@ -11,7 +11,20 @@ const IN_CHARGE_OPTIONS = ['Nicolas', 'Ivo', 'Carlo', 'Sun', 'Juliane', 'Diana']
 
 const CreateTask: React.FC = () => {
   const navigate = useNavigate();
-  const { users, addTask, uploadFile } = useTasks();
+  const [searchParams] = useSearchParams();
+  const { tasks, users, addTask, uploadFile, currentUser } = useTasks();
+
+  const followUpFromId = searchParams.get('followUpFrom');
+  const parentTask = followUpFromId ? tasks.find(t => t.id === followUpFromId) : undefined;
+
+  const handleSelfAssign = () => {
+    if (!currentUser) return;
+    if (assignedTo.includes(currentUser.id)) {
+      setAssignedTo(prev => prev.filter(id => id !== currentUser.id));
+    } else {
+      setAssignedTo(prev => [...prev, currentUser.id]);
+    }
+  };
   const { t, priorityLabel, taskTypeLabel, shortWeekdayLabel, weekdayLabel, monthDayOrdinalLabel, formatDate } = useLanguage();
   
   const [title, setTitle] = useState('');
@@ -21,9 +34,31 @@ const CreateTask: React.FC = () => {
   const [dueTime, setDueTime] = useState('');
   const [type, setType] = useState<TaskType>('one-time');
   const [priority, setPriority] = useState<Priority>('medium');
+
+  // Pre-fill fields if creating a follow-up task
+  useEffect(() => {
+    if (parentTask) {
+      setTitle(parentTask.title.toLowerCase().startsWith('follow-up') ? parentTask.title : `Follow-up: ${parentTask.title}`);
+      if (parentTask.description) setDescription(parentTask.description);
+      if (parentTask.remarks) setRemarks(parentTask.remarks);
+      if (parentTask.priority) setPriority(parentTask.priority);
+      if (parentTask.type) setType(parentTask.type as TaskType);
+      if (parentTask.inCharge) setInCharge(parentTask.inCharge);
+      if (parentTask.materialStatus) setMaterialStatus(parentTask.materialStatus as any);
+    }
+  }, [parentTask]);
+  const isEmployee = currentUser?.role === 'employee';
   const [inCharge, setInCharge] = useState('');
   const [materialStatus, setMaterialStatus] = useState<(typeof MATERIAL_STATUS_OPTIONS)[number] | ''>('');
-  const [assignedTo, setAssignedTo] = useState<string[]>([]);
+  const [assignedTo, setAssignedTo] = useState<string[]>(() => {
+    return isEmployee && currentUser ? [currentUser.id] : [];
+  });
+
+  useEffect(() => {
+    if (isEmployee && currentUser) {
+      setAssignedTo([currentUser.id]);
+    }
+  }, [isEmployee, currentUser]);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentStorageId, setAttachmentStorageId] = useState<string | null>(null);
   const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState<string | null>(null);
@@ -150,6 +185,8 @@ const CreateTask: React.FC = () => {
       }
     }
 
+    const finalAssignedTo = isEmployee && currentUser ? [currentUser.id] : assignedTo;
+
     addTask({
       title,
       description,
@@ -159,7 +196,11 @@ const CreateTask: React.FC = () => {
       priority,
       inCharge: inCharge || undefined,
       materialStatus: materialStatus || undefined,
-      assignedTo,
+      assignedTo: finalAssignedTo,
+      isSelfAssigned: isEmployee || (currentUser ? finalAssignedTo.includes(currentUser.id) : false),
+      createdById: currentUser?.id,
+      createdByName: currentUser?.name,
+      followUpFromId: parentTask ? parentTask.id : undefined,
       status: 'open',
       attachments: attachmentUrls,
       // Weekly stores comma-separated days; monthly stores single day number
@@ -242,7 +283,18 @@ const CreateTask: React.FC = () => {
       </button>
 
       <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-xl shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900 mb-8 tracking-tight">{t('createTask.title')}</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-6 tracking-tight">
+          {parentTask ? 'Create Follow-up Task' : t('createTask.title')}
+        </h1>
+
+        {parentTask && (
+          <div className="mb-6 flex items-center gap-2.5 p-3.5 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs font-semibold text-indigo-900 dark:text-indigo-200">
+            <LinkIcon size={16} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+            <span>
+              Linking follow-up task to previous task: <strong className="underline">{parentTask.title}</strong>
+            </span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Core Info */}
@@ -610,32 +662,64 @@ const CreateTask: React.FC = () => {
 
             {/* Assignment */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-3">
-                {t('createTask.assignTo')} *
-              </label>
-              <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
-                {assignableUsers.length > 0 ? (
-                  assignableUsers.map(emp => (
-                    <label
-                      key={emp.id}
-                      className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer select-none transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-500 w-4 h-4"
-                        checked={assignedTo.includes(emp.id)}
-                        onChange={() => toggleAssignee(emp.id)}
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-slate-700">{emp.name}</span>
-                        {emp.employeeRole && <span className="text-xs text-slate-400">{emp.employeeRole}</span>}
-                      </div>
-                    </label>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-500 p-2">{t('common.noTeamMembers')}</p>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+                  {t('createTask.assignTo')} *
+                </label>
+                {!isEmployee && currentUser && (
+                  <button
+                    type="button"
+                    onClick={handleSelfAssign}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-all cursor-pointer font-semibold ${
+                      assignedTo.includes(currentUser.id)
+                        ? 'bg-cyan-600 text-white border-cyan-600 shadow-xs'
+                        : 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800 hover:bg-cyan-100'
+                    }`}
+                  >
+                    {assignedTo.includes(currentUser.id) ? '✓ Self-Assigned' : '➕ Assign to Myself'}
+                  </button>
                 )}
               </div>
+
+              {isEmployee ? (
+                <div className="p-4 bg-cyan-50/80 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800/80 rounded-xl flex items-center gap-3 shadow-xs">
+                  <div className="w-9 h-9 rounded-full bg-cyan-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    ✓
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-cyan-950 dark:text-cyan-200">
+                      Self-Assigned Task ({currentUser?.name})
+                    </p>
+                    <p className="text-[11px] text-cyan-800 dark:text-cyan-300 mt-0.5">
+                      Tasks created by employees are automatically assigned to yourself. (Assigning tasks to other employees is reserved for supervisors).
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                  {assignableUsers.length > 0 ? (
+                    assignableUsers.map(emp => (
+                      <label
+                        key={emp.id}
+                        className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer select-none transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-slate-900 focus:ring-slate-500 w-4 h-4"
+                          checked={assignedTo.includes(emp.id)}
+                          onChange={() => toggleAssignee(emp.id)}
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{emp.name}</span>
+                          {emp.employeeRole && <span className="text-xs text-slate-400">{emp.employeeRole}</span>}
+                        </div>
+                      </label>
+                    ))
+                  ) : (
+                    <p className="text-xs text-slate-500 p-2">{t('common.noTeamMembers')}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

@@ -228,6 +228,8 @@ export const update = mutation({
     employeeRole: v.optional(v.string()),
     authUserId: v.optional(v.string()),
     authType: v.optional(v.string()),
+    notificationsEnabled: v.optional(v.boolean()),
+    isPrimarySupervisor: v.optional(v.boolean()),
   },
   handler: async (ctx: any, args: any) => {
     const { id, ...fields } = args;
