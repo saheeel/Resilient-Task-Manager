@@ -100,7 +100,7 @@ const Settings: React.FC = () => {
                 {isEmployee && (
                   <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-50 dark:bg-cyan-950/50 border border-cyan-200 dark:border-cyan-800 text-[11px] font-semibold text-cyan-800 dark:text-cyan-200">
                     <UserCheck size={13} className="text-cyan-600 dark:text-cyan-400" />
-                    <span>Self-Assignment Enabled (You can assign tasks to yourself)</span>
+                    <span>{t('settings.selfAssignmentEnabled')}</span>
                   </div>
                 )}
               </div>
@@ -126,10 +126,10 @@ const Settings: React.FC = () => {
             </div>
             <div>
               <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">
-                Device Push Notifications {currentUser?.name?.toLowerCase().includes('diana') ? "(Diana's Device Mute)" : ''}
+                {t('settings.devicePushTitle')} {currentUser?.name?.toLowerCase().includes('diana') ? t('settings.devicePushDiana') : ''}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Turn ON or mute task alerts on <strong>this specific device</strong> without affecting other team members.
+                {t('settings.devicePushSubtitlePlain')}
               </p>
             </div>
           </div>

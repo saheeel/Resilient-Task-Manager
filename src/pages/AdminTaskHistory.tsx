@@ -136,7 +136,11 @@ const AdminTaskHistory: React.FC = () => {
                             )}
                           </div>
                           {task.blockReason && (
-                            <p className="mt-3 rounded-lg border border-red-200/90 dark:border-red-800/80 bg-red-50/90 dark:bg-red-950/40 px-3 py-2 text-sm text-red-950 dark:text-red-100 font-medium">
+                            <p className={`mt-3 rounded-lg border px-3 py-2 text-sm font-medium ${
+                              task.status === 'completed' 
+                                ? 'border-slate-200 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300'
+                                : 'border-red-200/90 dark:border-red-800/80 bg-red-50/90 dark:bg-red-950/40 text-red-950 dark:text-red-100'
+                            }`}>
                               <span className="font-semibold">{t('common.reason')}:</span> {task.blockReason}
                             </p>
                           )}

@@ -38,7 +38,7 @@ const CreateTask: React.FC = () => {
   // Pre-fill fields if creating a follow-up task
   useEffect(() => {
     if (parentTask) {
-      setTitle(parentTask.title.toLowerCase().startsWith('follow-up') ? parentTask.title : `Follow-up: ${parentTask.title}`);
+      setTitle(parentTask.title.toLowerCase().startsWith(t('common.followUpPrefix').toLowerCase()) ? parentTask.title : `${t('common.followUpPrefix')}${parentTask.title}`);
       if (parentTask.description) setDescription(parentTask.description);
       if (parentTask.remarks) setRemarks(parentTask.remarks);
       if (parentTask.priority) setPriority(parentTask.priority);
@@ -284,14 +284,14 @@ const CreateTask: React.FC = () => {
 
       <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-xl shadow-sm">
         <h1 className="text-2xl font-bold text-slate-900 mb-6 tracking-tight">
-          {parentTask ? 'Create Follow-up Task' : t('createTask.title')}
+          {parentTask ? t('createTask.createFollowUp') : t('createTask.title')}
         </h1>
 
         {parentTask && (
           <div className="mb-6 flex items-center gap-2.5 p-3.5 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs font-semibold text-indigo-900 dark:text-indigo-200">
             <LinkIcon size={16} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
             <span>
-              Linking follow-up task to previous task: <strong className="underline">{parentTask.title}</strong>
+              {t('createTask.linkingFollowUp')} <strong className="underline">{parentTask.title}</strong>
             </span>
           </div>
         )}

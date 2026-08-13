@@ -6,6 +6,7 @@ import {
   Paperclip, FileText, CheckCircle, Clock, ShieldAlert, ArrowUpDown, Tag, ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ExcelTaskTableProps {
   tasks: Task[];
@@ -34,6 +35,7 @@ export const isTaskDeadlineApproaching = (dueDateStr?: string): { isApproaching:
 };
 
 const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
+  const { t, priorityLabel } = useLanguage();
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<SortField>('dueDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -41,7 +43,6 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
   // Header filter states
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [searchTitle, setSearchTitle] = useState<string>('');
 
   const getUserName = (id: string) => {
     const u = users.find(user => user.id === id);
@@ -62,13 +63,6 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
       .filter(t => {
         if (statusFilter !== 'all' && t.status !== statusFilter) return false;
         if (priorityFilter !== 'all' && t.priority !== priorityFilter) return false;
-        if (searchTitle.trim()) {
-          const q = searchTitle.toLowerCase();
-          const titleMatch = t.title.toLowerCase().includes(q);
-          const descMatch = t.description?.toLowerCase().includes(q);
-          const creatorMatch = t.createdByName?.toLowerCase().includes(q);
-          if (!titleMatch && !descMatch && !creatorMatch) return false;
-        }
         return true;
       })
       .sort((a, b) => {
@@ -97,7 +91,7 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
         if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
         return 0;
       });
-  }, [tasks, statusFilter, priorityFilter, searchTitle, sortField, sortOrder]);
+  }, [tasks, statusFilter, priorityFilter, sortField, sortOrder]);
 
   const toggleExpand = (id: string) => {
     setExpandedTaskId(expandedTaskId === id ? null : id);
@@ -106,47 +100,38 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
   return (
     <div className="bg-slate-900/90 rounded-2xl border border-slate-800/80 shadow-2xl overflow-hidden backdrop-blur-md">
       {/* Header Filter Controls Bar */}
-      <div className="p-4 bg-slate-950/60 border-b border-slate-800/60 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-          <input
-            type="text"
-            placeholder="Quick filter table..."
-            value={searchTitle}
-            onChange={(e) => setSearchTitle(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
-          />
-        </div>
+      <div className="p-4 bg-slate-950/60 border-b border-slate-800/60 flex flex-wrap items-center justify-end gap-3 text-xs">
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400 font-medium">Status:</span>
+            <span className="text-slate-400 font-medium">{t('common.status')}:</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               aria-label="Filter tasks by status"
-              className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="bg-slate-900 border border-slate-800 rounded-md px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 min-w-[70px]"
             >
-              <option value="all">All Statuses</option>
-              <option value="open">Open</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="could_not_complete">Could Not Complete</option>
-              <option value="blocked">Blocked</option>
+              <option value="all">{t('common.all') || 'All'}</option>
+              <option value="open">{t('status.open') || 'Open'}</option>
+              <option value="in_progress">{t('status.in_progress') || 'In Progress'}</option>
+              <option value="completed">{t('status.completed') || 'Completed'}</option>
+              <option value="could_not_complete">{t('status.could_not_complete') || 'Could Not Complete'}</option>
+              <option value="blocked">{t('status.blocked') || 'Blocked'}</option>
             </select>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400 font-medium">Priority:</span>
+            <span className="text-slate-400 font-medium">{t('common.priority')}:</span>
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
               aria-label="Filter tasks by priority"
-              className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="bg-slate-900 border border-slate-800 rounded-md px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 min-w-[70px]"
             >
-              <option value="all">All Priorities</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
+              <option value="all">{t('common.all') || 'All'}</option>
+              <option value="high">{t('priority.high') || 'High'}</option>
+              <option value="medium">{t('priority.medium') || 'Medium'}</option>
+              <option value="low">{t('priority.low') || 'Low'}</option>
             </select>
           </div>
         </div>
@@ -163,17 +148,17 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
                 onClick={() => handleSort('title')}
               >
                 <div className="flex items-center gap-1">
-                  Task Title
+                  {t('manageTasks.taskTitle') || 'Task Title'}
                   <ArrowUpDown className="w-3 h-3 text-slate-500" />
                 </div>
               </th>
-              <th className="p-3">Status</th>
+              <th className="p-3">{t('common.status')}</th>
               <th 
                 className="p-3 cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('priority')}
               >
                 <div className="flex items-center gap-1">
-                  Priority
+                  {t('common.priority')}
                   <ArrowUpDown className="w-3 h-3 text-slate-500" />
                 </div>
               </th>
@@ -182,29 +167,29 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
                 onClick={() => handleSort('creator')}
               >
                 <div className="flex items-center gap-1">
-                  Created By
+                  {t('common.assignedBy')}
                   <ArrowUpDown className="w-3 h-3 text-slate-500" />
                 </div>
               </th>
-              <th className="p-3">Assigned To</th>
+              <th className="p-3">{t('manageTasks.assignedTeamMembers')}</th>
               <th 
                 className="p-3 cursor-pointer hover:text-white transition-colors"
                 onClick={() => handleSort('dueDate')}
               >
                 <div className="flex items-center gap-1">
-                  Due Date
+                  {t('common.dueDate')}
                   <ArrowUpDown className="w-3 h-3 text-slate-500" />
                 </div>
               </th>
-              <th className="p-3 text-right">Actual Duration</th>
-              <th className="p-3 text-center">Actions</th>
+              <th className="p-3 text-right">{t('manageTasks.duration') || 'Actual Duration'}</th>
+              <th className="p-3 text-center">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
             {filteredAndSortedTasks.length === 0 ? (
               <tr>
                 <td colSpan={9} className="p-8 text-center text-slate-500 italic">
-                  No matching tasks found.
+                  {t('common.noData')}
                 </td>
               </tr>
             ) : (
@@ -264,7 +249,7 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
                           task.priority === 'medium' ? 'bg-amber-950/80 text-amber-400 border border-amber-800/40' :
                           'bg-slate-800 text-slate-400'
                         }`}>
-                          {task.priority}
+                          {priorityLabel(task.priority)}
                         </span>
                       </td>
 
@@ -354,8 +339,14 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
                               )}
 
                               {task.blockReason && (
-                                <div className="mt-2 text-xs bg-rose-950/30 p-2.5 rounded-lg border border-rose-800/40">
-                                  <span className="font-semibold text-rose-400 flex items-center gap-1">
+                                <div className={`mt-2 text-xs p-2.5 rounded-lg border ${
+                                  task.status === 'completed'
+                                    ? 'bg-slate-950/30 border-slate-800/40'
+                                    : 'bg-rose-950/30 border-rose-800/40'
+                                }`}>
+                                  <span className={`font-semibold flex items-center gap-1 ${
+                                    task.status === 'completed' ? 'text-slate-400' : 'text-rose-400'
+                                  }`}>
                                     <ShieldAlert className="w-3.5 h-3.5" /> Incomplete / Block Reason:
                                   </span>
                                   <p className="text-slate-200 mt-1">{task.blockReason}</p>

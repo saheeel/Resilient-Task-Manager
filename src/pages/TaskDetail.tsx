@@ -377,7 +377,7 @@ const TaskDetail: React.FC = () => {
               disabled={isUploading}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-300 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg shadow-xs transition-all cursor-pointer flex-1 sm:flex-initial justify-center"
             >
-              ➕ Create Follow-up Task
+              ➕ {t('taskDetail.createFollowUp')}
             </button>
           )}
 
@@ -524,7 +524,7 @@ const TaskDetail: React.FC = () => {
         {task.followUpFromId && (
           <div className="mb-4 flex items-center justify-between gap-3 p-3 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs font-semibold text-indigo-900 dark:text-indigo-200">
             <span className="flex items-center gap-2">
-              <span>🔗 Follow-up to previous task</span>
+              <span>🔗 {t('taskDetail.followUpToPrevious')}</span>
             </span>
             <button
               onClick={() => navigate(`/task/${task.followUpFromId}`)}
@@ -732,17 +732,20 @@ const TaskDetail: React.FC = () => {
                       </div>
                     );
                   }
-                  return (
-                    <div
-                      key={idx}
-                      className="flex h-24 w-24 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-center text-[11px] font-medium text-amber-800"
-                    >
-                      <div className="flex flex-col items-center gap-1">
-                        <ImageOff size={16} />
-                        <span>{t('taskDetail.legacyImageShort')}</span>
+                  if (isLegacyUnavailableImage(url)) {
+                    return (
+                      <div
+                        key={idx}
+                        className="flex h-24 w-24 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-center text-[11px] font-medium text-amber-800"
+                      >
+                        <div className="flex flex-col items-center gap-1">
+                          <ImageOff size={16} />
+                          <span>{t('taskDetail.legacyImageShort')}</span>
+                        </div>
                       </div>
-                    </div>
-                  );
+                    );
+                  }
+                  // Fall through to document link if it's a broken generic image (likely a PDF)
                 }
                 return (
                   <a 
@@ -779,11 +782,21 @@ const TaskDetail: React.FC = () => {
                         <Eye className="text-white" size={20} />
                       </div>
                     </div>
-                  ) : (
+                  ) : isLegacyUnavailableImage(url) ? (
                     <div className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
                       <ImageOff size={14} className="shrink-0" />
                       <span>{t('taskDetail.legacyImageUnavailable')}</span>
                     </div>
+                  ) : (
+                    <a 
+                      href={url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
+                    >
+                      <Paperclip size={16} />
+                      {t('taskDetail.referenceFile', { index: index + 1 })}
+                    </a>
                   )}
                 </React.Fragment>
               ))}
@@ -850,7 +863,7 @@ const TaskDetail: React.FC = () => {
                         className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors self-start"
                       >
                         <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[10px] font-bold">PDF</span>
-                        <span className="truncate max-w-[180px]">View PDF Document</span>
+                        <span className="truncate max-w-[180px]">{t('common.viewPdfDocument')}</span>
                         <Paperclip size={14} className="text-rose-500" />
                       </a>
                     ) : isRenderableSavedImage(up.photoUrl) ? (
@@ -934,7 +947,7 @@ const TaskDetail: React.FC = () => {
                   ) : (
                     <div className="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs">
                       {isPdfFile(updatePhotoPreviewUrl || updatePhotoStorageId || '') ? (
-                        <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold text-[10px]">PDF Document</span>
+                        <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold text-[10px]">{t('common.pdfDocument')}</span>
                       ) : (
                         <img
                           src={updatePhotoPreviewUrl || updatePhotoStorageId || ''}
@@ -982,7 +995,7 @@ const TaskDetail: React.FC = () => {
           <div className="mb-4 space-y-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                Actual Time Taken <span className="font-normal text-slate-400">(Optional e.g. "45 mins", "2 hours")</span>
+                {t('common.actualTimeTaken')} <span className="font-normal text-slate-400">{t('common.actualTimeTakenHint')}</span>
               </label>
               <input
                 type="text"
