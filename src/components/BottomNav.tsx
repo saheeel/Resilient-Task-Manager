@@ -11,11 +11,10 @@ const BottomNav: React.FC = () => {
   if (!currentUser) return null;
 
   return (
-    <nav 
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex items-center justify-around z-50 px-2 shadow-lg"
+    <nav
+      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-around z-50 px-2 pt-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]"
       style={{
-        paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
-        height: 'calc(max(16px, env(safe-area-inset-bottom, 16px)) + 4rem)'
+        paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))'
       }}
     >
       <NavLink 
