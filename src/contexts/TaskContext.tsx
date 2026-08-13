@@ -42,6 +42,8 @@ export interface Task {
   followUpFromId?: string;
   actualDuration?: string;
   dueDate?: string; // ISO date string
+  startDate?: string;
+  reminderSentAt?: string;
   remarks?: string;
   inCharge?: string;
   materialStatus?: MaterialStatus;
@@ -67,6 +69,8 @@ export interface Task {
   transferResultSeen?: boolean;
   activeFrom?: string;
   nextOccurrence?: string;
+  clearDueDate?: boolean;
+  clearStartDate?: boolean;
 }
 
 interface TaskContextType {
@@ -280,6 +284,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       followUpFromId: t.followUpFromId,
       actualDuration: t.actualDuration,
       dueDate: t.dueDate,
+      startDate: t.startDate,
+      reminderSentAt: t.reminderSentAt,
       remarks: t.remarks,
       inCharge: t.inCharge,
       materialStatus: t.materialStatus as MaterialStatus | undefined,
@@ -563,7 +569,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [currentUser, mappedDbUsers, mappedDbTasks]);
 
-  const editTask = (taskId: string, updatedFields: Partial<Task>) => {
+  const editTask = (taskId: string, updatedFields: Partial<Task> & { clearDueDate?: boolean }) => {
     const { id, ...fields } = updatedFields;
     const assignmentMetadata = currentUser && currentUser.role !== 'employee'
       ? {

@@ -30,6 +30,8 @@ const CreateTask: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [remarks, setRemarks] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [startTime, setStartTime] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [dueTime, setDueTime] = useState('');
   const [type, setType] = useState<TaskType>('one-time');
@@ -164,11 +166,21 @@ const CreateTask: React.FC = () => {
     }
 
     let isoDueDate;
-    if (type === 'one-time' && dueDate) {
-      try {
-        isoDueDate = new Date(`${dueDate}T${dueTime || '00:00'}`).toISOString();
-      } catch {
-        isoDueDate = new Date(dueDate).toISOString();
+    let isoStartDate;
+    if (type === 'one-time') {
+      if (dueDate) {
+        try {
+          isoDueDate = new Date(`${dueDate}T${dueTime || '00:00'}`).toISOString();
+        } catch {
+          isoDueDate = new Date(dueDate).toISOString();
+        }
+      }
+      if (startDate) {
+        try {
+          isoStartDate = new Date(`${startDate}T${startTime || '00:00'}`).toISOString();
+        } catch {
+          isoStartDate = new Date(startDate).toISOString();
+        }
       }
     }
 
@@ -192,6 +204,7 @@ const CreateTask: React.FC = () => {
       description,
       remarks,
       dueDate: isoDueDate,
+      startDate: isoStartDate,
       type,
       priority,
       inCharge: inCharge || undefined,
@@ -434,74 +447,152 @@ const CreateTask: React.FC = () => {
 
               {/* One-Time: Date + Time */}
               {type === 'one-time' && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2.5">
-                    {t('createTask.dueDateTime')}
-                  </label>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative inline-flex items-center">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          try {
-                            dateInputRef.current?.showPicker();
-                          } catch {
-                            dateInputRef.current?.click();
-                          }
-                        }}
-                        className={`inline-flex items-center gap-2 pl-4 py-2 border rounded-full text-xs font-semibold shadow-2xs transition-all cursor-pointer ${
-                          dueDate
-                            ? 'bg-blue-50 border-blue-200 text-blue-700 pr-8'
-                            : 'bg-slate-50 border-slate-200 text-slate-600 pr-4'
-                        }`}
-                      >
-                        <Calendar size={14} />
-                        <span>
-                          {dueDate
-                            ? formatDate(dueDate, { month: 'short', day: 'numeric', year: 'numeric' })
-                            : t('createTask.setDate')}
-                        </span>
-                      </button>
-                      <input
-                        ref={dateInputRef}
-                        type="date"
-                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
-                        value={dueDate}
-                        onChange={e => setDueDate(e.target.value)}
-                        onClick={(e) => {
-                          try {
-                            (e.target as HTMLInputElement).showPicker();
-                          } catch {}
-                        }}
-                      />
-                      {dueDate && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Start Date / Time */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2.5">
+                      {t('createTask.startDateTime')}
+                    </label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="relative inline-flex items-center">
                         <button
                           type="button"
-                          onClick={e => { e.preventDefault(); e.stopPropagation(); setDueDate(''); }}
-                          className="absolute right-2.5 z-20 font-bold text-blue-500 hover:text-blue-700 cursor-pointer flex items-center justify-center w-4 h-4 rounded-full bg-blue-100/50"
-                        >×</button>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock size={14} className="text-slate-400" />
-                      <input
-                        type="time"
-                        value={dueTime}
-                        onChange={e => setDueTime(e.target.value)}
-                        onClick={(e) => {
-                          try {
-                            (e.target as HTMLInputElement).showPicker();
-                          } catch {
-                            return;
-                          }
-                        }}
-                        className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 cursor-pointer"
-                      />
-                      {dueTime && (
-                        <button type="button" onClick={() => setDueTime('')} className="text-slate-400 hover:text-red-500 cursor-pointer bg-transparent border-none p-0">
-                          <X size={13} />
+                          onClick={() => {
+                            try {
+                              const el = document.getElementById('startDateInput') as HTMLInputElement;
+                              el?.showPicker();
+                            } catch {
+                              document.getElementById('startDateInput')?.click();
+                            }
+                          }}
+                          className={`inline-flex items-center gap-2 pl-4 py-2 border rounded-full text-xs font-semibold shadow-2xs transition-all cursor-pointer ${
+                            startDate
+                              ? 'bg-blue-50 border-blue-200 text-blue-700 pr-8'
+                              : 'bg-slate-50 border-slate-200 text-slate-600 pr-4'
+                          }`}
+                        >
+                          <Calendar size={14} />
+                          <span>
+                            {startDate
+                              ? formatDate(startDate, { month: 'short', day: 'numeric', year: 'numeric' })
+                              : t('createTask.setDate')}
+                          </span>
                         </button>
-                      )}
+                        <input
+                          id="startDateInput"
+                          type="date"
+                          className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+                          value={startDate}
+                          onChange={e => setStartDate(e.target.value)}
+                          onClick={(e) => {
+                            try {
+                              (e.target as HTMLInputElement).showPicker();
+                            } catch {}
+                          }}
+                        />
+                        {startDate && (
+                          <button
+                            type="button"
+                            onClick={e => { e.preventDefault(); e.stopPropagation(); setStartDate(''); }}
+                            className="absolute right-2.5 z-20 font-bold text-blue-500 hover:text-blue-700 cursor-pointer flex items-center justify-center w-4 h-4 rounded-full bg-blue-100/50"
+                          >×</button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} className="text-slate-400" />
+                        <input
+                          type="time"
+                          value={startTime}
+                          onChange={e => setStartTime(e.target.value)}
+                          onClick={(e) => {
+                            try {
+                              (e.target as HTMLInputElement).showPicker();
+                            } catch {}
+                          }}
+                          className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 cursor-pointer"
+                        />
+                        {startTime && (
+                          <button
+                            type="button"
+                            onClick={() => setStartTime('')}
+                            className="font-bold text-blue-500 hover:text-blue-700 cursor-pointer flex items-center justify-center w-4 h-4 rounded-full bg-blue-100/50"
+                          >×</button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Due Date / Time */}
+                  {/* Due Date / Time */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2.5">
+                      {t('createTask.dueDateTime')}
+                    </label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="relative inline-flex items-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              dateInputRef.current?.showPicker();
+                            } catch {
+                              dateInputRef.current?.click();
+                            }
+                          }}
+                          className={`inline-flex items-center gap-2 pl-4 py-2 border rounded-full text-xs font-semibold shadow-2xs transition-all cursor-pointer ${
+                            dueDate
+                              ? 'bg-blue-50 border-blue-200 text-blue-700 pr-8'
+                              : 'bg-slate-50 border-slate-200 text-slate-600 pr-4'
+                          }`}
+                        >
+                          <Calendar size={14} />
+                          <span>
+                            {dueDate
+                              ? formatDate(dueDate, { month: 'short', day: 'numeric', year: 'numeric' })
+                              : t('createTask.setDate')}
+                          </span>
+                        </button>
+                        <input
+                          ref={dateInputRef}
+                          type="date"
+                          className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+                          value={dueDate}
+                          onChange={e => setDueDate(e.target.value)}
+                          onClick={(e) => {
+                            try {
+                              (e.target as HTMLInputElement).showPicker();
+                            } catch {}
+                          }}
+                        />
+                        {dueDate && (
+                          <button
+                            type="button"
+                            onClick={e => { e.preventDefault(); e.stopPropagation(); setDueDate(''); }}
+                            className="absolute right-2.5 z-20 font-bold text-blue-500 hover:text-blue-700 cursor-pointer flex items-center justify-center w-4 h-4 rounded-full bg-blue-100/50"
+                          >×</button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} className="text-slate-400" />
+                        <input
+                          type="time"
+                          value={dueTime}
+                          onChange={e => setDueTime(e.target.value)}
+                          onClick={(e) => {
+                            try {
+                              (e.target as HTMLInputElement).showPicker();
+                            } catch {
+                              return;
+                            }
+                          }}
+                          className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 cursor-pointer"
+                        />
+                        {dueTime && (
+                          <button type="button" onClick={() => setDueTime('')} className="text-slate-400 hover:text-red-500 cursor-pointer bg-transparent border-none p-0">
+                            <X size={13} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

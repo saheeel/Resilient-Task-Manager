@@ -31,6 +31,8 @@ export default defineSchema({
     followUpFromId: v.optional(v.string()),
     actualDuration: v.optional(v.string()),
     dueDate: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    reminderSentAt: v.optional(v.string()),
     remarks: v.optional(v.string()),
     inCharge: v.optional(v.string()),
     materialStatus: v.optional(v.string()),

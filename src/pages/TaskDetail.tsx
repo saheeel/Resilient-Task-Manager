@@ -543,14 +543,21 @@ const TaskDetail: React.FC = () => {
             <span>{t('taskDetail.taskTypePriority', { priority: priorityLabel(task.priority) })}</span>
           </div>
           
-          {task.dueDate && (
+          {task.startDate ? (
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200">
+              <Calendar size={14} className="text-slate-400" />
+              {t('common.due')}: {formatDateTime(task.startDate, { dateStyle: 'short', timeStyle: 'short' })}
+              {' → '}
+              {task.dueDate ? formatDateTime(task.dueDate, { dateStyle: 'short', timeStyle: 'short' }) : '?'}
+            </div>
+          ) : task.dueDate ? (
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200">
               <Calendar size={14} className="text-slate-400" />
               {t('common.due')}: {formatDate(task.dueDate)}
               <Clock size={14} className="text-slate-400 ml-1" />
               {formatTime(task.dueDate)}
             </div>
-          )}
+          ) : null}
 
           {task.createdAt && (
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200" title={t('taskDetail.assignedAt')}>

@@ -5,6 +5,7 @@ import type { Task } from '../contexts/TaskContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import StatusBadge from '../components/StatusBadge';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
+import { usePersistentState } from '../hooks/usePersistentState';
 
 import { Pin, MoreVertical, ArrowDownUp, PlusCircle } from 'lucide-react';
 
@@ -13,14 +14,14 @@ const EmployeeDashboard: React.FC = () => {
   const { tasks, currentUser, editTask, users, addTaskUpdate, sendPushNotification, isLoading } = useTasks();
   const {
     t,
-    formatDate,
+    formatDateTime,
     formatTime,
     priorityLabel,
     taskTypeLabel,
     relativeDayLabel,
   } = useLanguage();
-  const [sortBy, setSortBy] = useState<'default' | 'priority' | 'dueDate'>('default');
-  const [showTodayCompleted, setShowTodayCompleted] = useState(true);
+  const [sortBy, setSortBy] = usePersistentState<'default' | 'priority' | 'dueDate'>('employeeDashboard_sortBy', 'default');
+  const [showTodayCompleted, setShowTodayCompleted] = usePersistentState('employeeDashboard_showToday', true);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [processingTasks, setProcessingTasks] = useState<Set<string>>(new Set());
 
@@ -218,15 +219,26 @@ const EmployeeDashboard: React.FC = () => {
 
   const upcomingDueLabel = (task: Task) => {
     if (!task.dueDate) return '';
-    const dueDate = new Date(task.dueDate);
-    const relativeLabel = relativeDayLabel(dueDate, today);
-    if (relativeLabel) {
-      return `${relativeLabel} - ${formatDate(dueDate)}`;
+    
+    if (task.startDate) {
+      return `${formatDateTime(task.startDate, { dateStyle: 'short', timeStyle: 'short' })} → ${formatDateTime(task.dueDate, { dateStyle: 'short', timeStyle: 'short' })}`;
     }
 
+    const dueDate = new Date(task.dueDate);
+    const relativeLabel = relativeDayLabel(dueDate, today);
     const diffMs = dueDate.getTime() - today.getTime();
     const diffDays = Math.round(diffMs / 86400000);
-    return `${diffDays}d - ${formatDate(dueDate)}`;
+
+    if (diffDays === 0) return `${relativeLabel} - ${formatTime(dueDate)}`;
+    if (diffDays === 1 || diffDays === -1) {
+      return `${relativeLabel} - ${formatDateTime(dueDate, { dateStyle: 'short', timeStyle: 'short' })}`;
+    }
+
+    if (diffDays >= -6 && diffDays <= 6) {
+      return `${relativeLabel} - ${formatDateTime(dueDate, { dateStyle: 'short', timeStyle: 'short' })}`;
+    }
+
+    return `${diffDays}d - ${formatDateTime(dueDate, { dateStyle: 'short', timeStyle: 'short' })}`;
   };
 
   const handlePinClick = (e: React.MouseEvent, task: Task) => {
@@ -433,7 +445,7 @@ const EmployeeDashboard: React.FC = () => {
                   {task.dueDate ? (
                     <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
                       {t('employeeDashboard.dueOn', {
-                        date: formatDate(task.dueDate, { month: 'short', day: 'numeric' }),
+                        date: formatDateTime(task.dueDate, { dateStyle: 'short', timeStyle: 'short' }),
                       })}
                     </span>
                   ) : (

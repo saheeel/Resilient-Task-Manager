@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
@@ -7,22 +7,24 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { materialStatusToneMap } from '../lib/taskOptions';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
 import ExcelTaskTable from '../components/ExcelTaskTable';
+import { usePersistentState } from '../hooks/usePersistentState';
 
 const ManageTasks: React.FC = () => {
   const navigate = useNavigate();
-  const [sortBy, setSortBy] = useState<'default' | 'employee'>('employee');
-  const [viewMode, setViewMode] = useState<'grid' | 'excel'>('excel');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = usePersistentState<'default' | 'employee'>('manageTasks_sortBy', 'employee');
+  const [viewMode, setViewMode] = usePersistentState<'grid' | 'excel'>('manageTasks_viewMode', 'excel');
+  const [searchQuery, setSearchQuery] = usePersistentState<string>('manageTasks_searchQuery', '');
+  const [collapsedSectionsArray, setCollapsedSectionsArray] = usePersistentState<string[]>('manageTasks_collapsed', []);
+  const collapsedSections = new Set(collapsedSectionsArray);
   const { tasks, users, currentUser, deleteTask, isLoading } = useTasks();
   const { t, formatDateTime, formatTime, taskTypeLabel, weekdayLabel, monthDayOrdinalLabel } = useLanguage();
 
   const toggleSection = (sectionId: string) => {
-    setCollapsedSections(prev => {
+    setCollapsedSectionsArray(prev => {
       const next = new Set(prev);
       if (next.has(sectionId)) next.delete(sectionId);
       else next.add(sectionId);
-      return next;
+      return Array.from(next);
     });
   };
 

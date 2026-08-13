@@ -119,6 +119,8 @@ export const create = mutation({
     followUpFromId: v.optional(v.string()),
     actualDuration: v.optional(v.string()),
     dueDate: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    reminderSentAt: v.optional(v.string()),
     remarks: v.optional(v.string()),
     inCharge: v.optional(v.string()),
     materialStatus: v.optional(v.string()),
@@ -151,6 +153,8 @@ export const create = mutation({
       followUpFromId: args.followUpFromId,
       actualDuration: args.actualDuration,
       dueDate: args.dueDate,
+      startDate: args.startDate,
+      reminderSentAt: args.reminderSentAt,
       remarks: args.remarks,
       inCharge: args.inCharge,
       materialStatus: args.materialStatus,
@@ -190,6 +194,8 @@ export const update = mutation({
     followUpFromId: v.optional(v.string()),
     actualDuration: v.optional(v.string()),
     dueDate: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    reminderSentAt: v.optional(v.string()),
     remarks: v.optional(v.string()),
     inCharge: v.optional(v.string()),
     materialStatus: v.optional(v.string()),
@@ -213,12 +219,24 @@ export const update = mutation({
     transferResultSeen: v.optional(v.boolean()),
     activeFrom: v.optional(v.string()),
     nextOccurrence: v.optional(v.string()),
+    clearDueDate: v.optional(v.boolean()),
+    clearStartDate: v.optional(v.boolean()),
   },
   handler: async (ctx: any, args: any) => {
     const { id, ...fields } = args;
     if (fields.status !== undefined) {
       fields.isArchived = ["completed", "could_not_complete", "blocked"].includes(fields.status);
     }
+    if (fields.clearDueDate) {
+      fields.dueDate = undefined;
+    }
+    delete fields.clearDueDate;
+
+    if (fields.clearStartDate) {
+      fields.startDate = undefined;
+    }
+    delete fields.clearStartDate;
+
     await ctx.db.patch(id, fields);
   },
 });
@@ -263,7 +281,7 @@ export const rolloverRecurringTask = mutation({
     });
     
     // Create new recurring task
-    const { _id, _creationTime, ...taskData } = task;
+    const { _id, _creationTime, reminderSentAt, ...taskData } = task;
     await ctx.db.insert("tasks", {
       ...taskData,
       status: "open",

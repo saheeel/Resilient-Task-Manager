@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
+import { usePersistentState } from '../hooks/usePersistentState';
 
 interface ExcelTaskTableProps {
   tasks: Task[];
@@ -37,12 +38,12 @@ export const isTaskDeadlineApproaching = (dueDateStr?: string): { isApproaching:
 const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
   const { t, priorityLabel } = useLanguage();
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
-  const [sortField, setSortField] = useState<SortField>('dueDate');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [sortField, setSortField] = usePersistentState<SortField>('excelTable_sortField', 'dueDate');
+  const [sortOrder, setSortOrder] = usePersistentState<SortOrder>('excelTable_sortOrder', 'asc');
   
-  // Header filter states
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  // Filters
+  const [statusFilter, setStatusFilter] = usePersistentState<string>('excelTable_statusFilter', 'all');
+  const [priorityFilter, setPriorityFilter] = usePersistentState<string>('excelTable_priorityFilter', 'all');
 
   const getUserName = (id: string) => {
     const u = users.find(user => user.id === id);
@@ -220,7 +221,7 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
                         <div className="flex items-center gap-2">
                           <Link 
                             to={`/task/${task.id}`} 
-                            className="hover:text-indigo-400 transition-colors line-clamp-1"
+                            className="hover:text-indigo-400 transition-colors"
                           >
                             {task.title}
                           </Link>
@@ -272,7 +273,17 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
 
                       {/* Due Date */}
                       <td className="p-3 whitespace-nowrap text-slate-300">
-                        {task.dueDate ? (
+                        {task.startDate ? (
+                          <div className={`flex items-center gap-1.5 ${
+                            isOverdue && !isCompleted ? 'text-rose-400 font-semibold' :
+                            isApproaching && !isCompleted ? 'text-amber-400 font-semibold' : 'text-slate-300'
+                          }`}>
+                            <Calendar className="w-3 h-3 opacity-70" />
+                            {new Date(task.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            {' → '}
+                            {task.dueDate ? new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '?'}
+                          </div>
+                        ) : task.dueDate ? (
                           <div className={`flex items-center gap-1.5 ${
                             isOverdue && !isCompleted ? 'text-rose-400 font-semibold' :
                             isApproaching && !isCompleted ? 'text-amber-400 font-semibold' : 'text-slate-300'

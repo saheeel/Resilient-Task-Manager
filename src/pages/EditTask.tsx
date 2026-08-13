@@ -27,6 +27,8 @@ const EditTask: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [remarks, setRemarks] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [startTime, setStartTime] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [dueTime, setDueTime] = useState('');
   const [type, setType] = useState<TaskType>('one-time');
@@ -89,6 +91,17 @@ const EditTask: React.FC = () => {
       } else {
         setRecurringDay('');
         setRecurringDays([]);
+      }
+
+      if (task.startDate) {
+        const dateObj = new Date(task.startDate);
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        setStartDate(`${year}-${month}-${day}`);
+        const hours = String(dateObj.getHours()).padStart(2, '0');
+        const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+        setStartTime(`${hours}:${minutes}`);
       }
 
       if (task.dueDate) {
@@ -193,14 +206,22 @@ const EditTask: React.FC = () => {
     }
 
     let isoDueDate;
-    if (type === 'one-time' && dueDate) {
-      try {
-        isoDueDate = new Date(`${dueDate}T${dueTime || '00:00'}`).toISOString();
-      } catch {
-        isoDueDate = new Date(dueDate).toISOString();
+    let isoStartDate;
+    if (type === 'one-time') {
+      if (dueDate) {
+        try {
+          isoDueDate = new Date(`${dueDate}T${dueTime || '00:00'}`).toISOString();
+        } catch {
+          isoDueDate = new Date(dueDate).toISOString();
+        }
       }
-    } else {
-      isoDueDate = undefined;
+      if (startDate) {
+        try {
+          isoStartDate = new Date(`${startDate}T${startTime || '00:00'}`).toISOString();
+        } catch {
+          isoStartDate = new Date(startDate).toISOString();
+        }
+      }
     }
 
     let uploadedAttachment: string | undefined;
@@ -226,6 +247,7 @@ const EditTask: React.FC = () => {
       description: description || undefined,
       remarks: remarks || undefined,
       dueDate: isoDueDate,
+      startDate: isoStartDate,
       type,
       priority,
       inCharge: inCharge || undefined,
@@ -243,6 +265,8 @@ const EditTask: React.FC = () => {
         type === 'daily' || type === 'weekly' || type === 'monthly'
           ? recurringTime
           : undefined,
+      clearDueDate: type !== 'one-time' || !dueDate,
+      clearStartDate: type !== 'one-time' || !startDate,
     });
 
     navigate(`/task/${task.id}`);
@@ -452,7 +476,83 @@ const EditTask: React.FC = () => {
 
               {/* One-Time: Date + Time */}
               {type === 'one-time' && (
-                <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Start Date / Time */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2.5">
+                      {t('createTask.startDateTime')}
+                    </label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="relative inline-flex items-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              const el = document.getElementById('startDateInput') as HTMLInputElement;
+                              el?.showPicker();
+                            } catch {
+                              document.getElementById('startDateInput')?.click();
+                            }
+                          }}
+                          className={`inline-flex items-center gap-2 pl-4 py-2 border rounded-full text-xs font-semibold shadow-2xs transition-all cursor-pointer ${
+                            startDate
+                              ? 'bg-blue-50 border-blue-200 text-blue-700 pr-8'
+                              : 'bg-slate-50 border-slate-200 text-slate-600 pr-4'
+                          }`}
+                        >
+                          <Calendar size={14} />
+                          <span>
+                            {startDate
+                              ? formatDate(startDate, { month: 'short', day: 'numeric', year: 'numeric' })
+                              : t('createTask.setDate')}
+                          </span>
+                        </button>
+                        <input
+                          id="startDateInput"
+                          type="date"
+                          className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+                          value={startDate}
+                          onChange={e => setStartDate(e.target.value)}
+                          onClick={(e) => {
+                            try {
+                              (e.target as HTMLInputElement).showPicker();
+                            } catch {}
+                          }}
+                        />
+                        {startDate && (
+                          <button
+                            type="button"
+                            onClick={e => { e.preventDefault(); e.stopPropagation(); setStartDate(''); }}
+                            className="absolute right-2.5 z-20 font-bold text-blue-500 hover:text-blue-700 cursor-pointer flex items-center justify-center w-4 h-4 rounded-full bg-blue-100/50"
+                          >×</button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} className="text-slate-400" />
+                        <input
+                          type="time"
+                          value={startTime}
+                          onChange={e => setStartTime(e.target.value)}
+                          onClick={(e) => {
+                            try {
+                              (e.target as HTMLInputElement).showPicker();
+                            } catch {}
+                          }}
+                          className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 cursor-pointer"
+                        />
+                        {startTime && (
+                          <button
+                            type="button"
+                            onClick={() => setStartTime('')}
+                            className="font-bold text-blue-500 hover:text-blue-700 cursor-pointer flex items-center justify-center w-4 h-4 rounded-full bg-blue-100/50"
+                          >×</button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Due Date / Time */}
+                  <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2.5">
                     {t('createTask.dueDateTime')}
                   </label>
@@ -520,6 +620,7 @@ const EditTask: React.FC = () => {
                           <X size={13} />
                         </button>
                       )}
+                    </div>
                     </div>
                   </div>
                 </div>

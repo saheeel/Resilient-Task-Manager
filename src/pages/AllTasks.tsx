@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import type { Task } from '../contexts/TaskContext';
@@ -8,27 +8,29 @@ import { PackageCheck, UserRoundCog, ArrowDownUp, ChevronRight, User, Search, La
 import { materialStatusToneMap } from '../lib/taskOptions';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
 import ExcelTaskTable from '../components/ExcelTaskTable';
+import { usePersistentState } from '../hooks/usePersistentState';
 
 const AllTasks: React.FC = () => {
   const navigate = useNavigate();
   const { tasks, currentUser, users, isLoading } = useTasks();
   const {
     t,
-    formatDate,
+    formatDateTime,
     priorityLabel,
     taskTypeLabel,
   } = useLanguage();
-  const [sortBy, setSortBy] = useState<'default' | 'priority' | 'dueDate' | 'employee'>('employee');
-  const [viewMode, setViewMode] = useState<'grid' | 'excel'>('excel');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = usePersistentState<'default' | 'priority' | 'dueDate' | 'employee'>('allTasks_sortBy', 'employee');
+  const [viewMode, setViewMode] = usePersistentState<'grid' | 'excel'>('allTasks_viewMode', 'excel');
+  const [searchQuery, setSearchQuery] = usePersistentState<string>('allTasks_searchQuery', '');
+  const [collapsedSectionsArray, setCollapsedSectionsArray] = usePersistentState<string[]>('allTasks_collapsed', []);
+  const collapsedSections = new Set(collapsedSectionsArray);
 
   const toggleSection = (sectionId: string) => {
-    setCollapsedSections(prev => {
+    setCollapsedSectionsArray(prev => {
       const next = new Set(prev);
       if (next.has(sectionId)) next.delete(sectionId);
       else next.add(sectionId);
-      return next;
+      return Array.from(next);
     });
   };
 
@@ -142,13 +144,17 @@ const AllTasks: React.FC = () => {
           </span>
         )}
 
-        {task.dueDate && (
+        {task.startDate ? (
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+            {formatDateTime(task.startDate, { dateStyle: 'short', timeStyle: 'short' })} → {task.dueDate ? formatDateTime(task.dueDate, { dateStyle: 'short', timeStyle: 'short' }) : '?'}
+          </span>
+        ) : task.dueDate ? (
           <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
             {t('employeeDashboard.dueOn', {
-              date: formatDate(task.dueDate),
+              date: formatDateTime(task.dueDate, { dateStyle: 'short', timeStyle: 'short' }),
             })}
           </span>
-        )}
+        ) : null}
         {task.type !== 'one-time' ? (
           <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700">
             {taskTypeLabel(task.type)}
