@@ -3,7 +3,7 @@ import type { Task, User } from '../contexts/TaskContext';
 import StatusBadge from './StatusBadge';
 import { 
   ChevronDown, ChevronRight, Calendar, User as UserIcon, 
-  Paperclip, FileText, CheckCircle, Clock, ShieldAlert, ArrowUpDown, Tag, ExternalLink
+  Paperclip, FileText, CheckCircle, Clock, ShieldAlert, ArrowUpDown, ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -225,11 +225,6 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
                           >
                             {task.title}
                           </Link>
-                          {task.isSelfAssigned && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-950/80 text-cyan-400 border border-cyan-800/60">
-                              <Tag className="w-2.5 h-2.5" /> Self-Assigned
-                            </span>
-                          )}
                           {task.attachments && task.attachments.length > 0 && (
                             <span className="inline-flex items-center text-slate-400" title={`${task.attachments.length} attachment(s)`}>
                               <Paperclip className="w-3 h-3" />

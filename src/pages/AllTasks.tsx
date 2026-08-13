@@ -211,7 +211,7 @@ const AllTasks: React.FC = () => {
   });
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pt-8 pb-32">
+    <div className="mx-auto max-w-7xl px-4 pt-8 pb-32">
       <header className="mb-6 border-b border-slate-150 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('nav.allTasks')}</h1>

@@ -249,7 +249,7 @@ const EmployeeDashboard: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pt-8 pb-32">
+    <div className="mx-auto max-w-7xl px-4 pt-8 pb-32">
       <header className="mb-8 border-b border-slate-150 dark:border-slate-800 pb-6">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('app.myWorkspace')}</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">

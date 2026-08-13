@@ -885,11 +885,21 @@ const TaskDetail: React.FC = () => {
                           <Eye className="text-white" size={16} />
                         </div>
                       </div>
-                    ) : (
+                    ) : isLegacyUnavailableImage(up.photoUrl) ? (
                       <div className="mt-2 inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-800">
                         <ImageOff size={14} className="shrink-0" />
                         <span>{t('taskDetail.legacyImageUnavailable')}</span>
                       </div>
+                    ) : (
+                      <a 
+                        href={up.photoUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="mt-3 flex max-w-fit items-center gap-2 text-[13px] text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
+                      >
+                        <Paperclip size={15} />
+                        {t('taskDetail.attachedFile')}
+                      </a>
                     )
                   )}
                 </div>
