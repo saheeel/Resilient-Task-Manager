@@ -1138,7 +1138,7 @@ const TaskDetail: React.FC = () => {
       {/* High-Fidelity Zoom Modal */}
       {activeZoomUrl && (
         <div 
-          className="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs transition-opacity cursor-zoom-out"
+          className="fixed inset-0 bg-slate-950/80 z-[100] flex items-center justify-center p-4 backdrop-blur-xs transition-opacity cursor-zoom-out"
           onClick={() => setActiveZoomUrl(null)}
         >
           <div 
@@ -1146,7 +1146,7 @@ const TaskDetail: React.FC = () => {
             style={{ backgroundColor: '#ffffff' }}
           >
             <button 
-              className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-900 shadow-xl transition-colors hover:bg-slate-100 cursor-pointer"
+              className="fixed top-6 right-6 z-[110] flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-900 shadow-xl transition-colors hover:bg-slate-100 cursor-pointer"
               style={{ backgroundColor: '#ffffff' }}
               onClick={(e) => {
                 e.stopPropagation();
