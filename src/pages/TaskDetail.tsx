@@ -829,7 +829,7 @@ const TaskDetail: React.FC = () => {
               {t('taskDetail.noUpdates')}
             </p>
           ) : (
-            updates.map((up: any) => {
+            [...updates].reverse().map((up: any) => {
               const isSelf = up.userId === currentUser.id;
               const sender = users.find(u => u.id === up.userId);
               const senderRoleLabel = sender ? roleLabel(sender.role) : '';
@@ -997,7 +997,7 @@ const TaskDetail: React.FC = () => {
             </div>
           </form>
         ) : (
-          <div className="flex items-center gap-2 border border-slate-200 bg-white rounded-lg p-3 text-slate-500 text-xs font-medium shadow-sm">
+          <div className="flex items-center gap-2 border border-slate-200 bg-white rounded-lg p-3 text-slate-500 text-xs font-medium shadow-sm mt-4">
             <AlertCircle size={15} className="text-slate-400 shrink-0" />
             <span>{t('taskDetail.onlyInProgress')}</span>
           </div>
@@ -1154,7 +1154,7 @@ const TaskDetail: React.FC = () => {
             <img 
               src={activeZoomUrl} 
               alt="Zoomed Reference" 
-              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl border border-white/10"
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl border border-white/10 bg-white"
               onClick={(e) => e.stopPropagation()}
             />
           </div>

@@ -890,7 +890,7 @@ const CreateTask: React.FC = () => {
             <img 
               src={activeZoomUrl} 
               alt="Zoomed Reference" 
-              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl border border-white/10"
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl border border-white/10 bg-white"
               onClick={(e) => e.stopPropagation()}
             />
           </div>
