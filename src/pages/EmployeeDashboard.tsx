@@ -432,13 +432,9 @@ const EmployeeDashboard: React.FC = () => {
                 <div className="mt-4 flex flex-wrap items-center gap-2.5">
                   {renderPriorityBadge(task.priority)}
                   
-                  {task.assignedTo && task.assignedTo.length > 0 ? (
+                  {task.createdByName && (
                     <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
-                      {t('taskDetail.assignedTo')}: {task.assignedTo.map(id => users.find(u => u.id === id)?.name).join(', ')}
-                    </span>
-                  ) : (
-                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-400">
-                      {t('common.unassigned')}
+                      {t('common.assignedBy')}: {task.createdByName}
                     </span>
                   )}
                   
