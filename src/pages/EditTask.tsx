@@ -908,9 +908,13 @@ const EditTask: React.FC = () => {
           className="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs transition-opacity cursor-zoom-out"
           onClick={() => setActiveZoomUrl(null)}
         >
-          <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-lg flex items-center justify-center p-2 shadow-2xl">
+          <div 
+            className="relative max-w-4xl max-h-[90vh] rounded-lg flex items-center justify-center p-2 shadow-2xl"
+            style={{ backgroundColor: '#ffffff' }}
+          >
             <button 
-              className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-900 shadow-xl transition-colors hover:bg-slate-100 cursor-pointer"
+              className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-900 shadow-xl transition-colors hover:bg-slate-100 cursor-pointer"
+              style={{ backgroundColor: '#ffffff' }}
               onClick={(e) => {
                 e.stopPropagation();
                 setActiveZoomUrl(null);
@@ -922,6 +926,7 @@ const EditTask: React.FC = () => {
               src={activeZoomUrl} 
               alt="Zoomed Reference" 
               className="max-w-full max-h-[85vh] object-contain rounded-md"
+              style={{ backgroundColor: '#ffffff' }}
               onClick={(e) => e.stopPropagation()}
             />
           </div>
