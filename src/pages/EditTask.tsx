@@ -913,8 +913,8 @@ const EditTask: React.FC = () => {
             style={{ backgroundColor: '#ffffff' }}
           >
             <button 
-              className="fixed top-6 right-6 z-[110] flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-900 shadow-xl transition-colors hover:bg-slate-100 cursor-pointer"
-              style={{ backgroundColor: '#ffffff' }}
+              className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 shadow-xl transition-colors hover:bg-slate-100 cursor-pointer"
+              style={{ backgroundColor: '#ffffff', color: '#000000' }}
               onClick={(e) => {
                 e.stopPropagation();
                 setActiveZoomUrl(null);
