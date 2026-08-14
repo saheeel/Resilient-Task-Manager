@@ -7,6 +7,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { MATERIAL_STATUS_OPTIONS } from '../lib/taskOptions';
+import { isPdfFile, formatStorageUrlForFile } from '../lib/fileUtils';
+import { PdfViewerModal } from '../components/PdfViewerModal';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const IN_CHARGE_OPTIONS = ['Nicolas', 'Ivo', 'Carlo', 'Sun', 'Juliane', 'Diana'];
@@ -42,6 +44,7 @@ const EditTask: React.FC = () => {
   const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState<string | null>(null);
   const [attachmentFileName, setAttachmentFileName] = useState<string | null>(null);
   const [activeZoomUrl, setActiveZoomUrl] = useState<string | null>(null);
+  const [pdfViewerUrl, setPdfViewerUrl] = useState<string | null>(null);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -165,7 +168,8 @@ const EditTask: React.FC = () => {
           setUploadProgress(percent);
           setUploadStage(stage as any);
         });
-        setAttachmentStorageId(storageId);
+        const formattedId = formatStorageUrlForFile(storageId, file);
+        setAttachmentStorageId(formattedId);
       } catch (error) {
         console.error('Failed to prepare task attachment:', error);
         alert(error instanceof Error ? error.message : 'Unable to prepare this file. Please choose a smaller file.');
@@ -902,8 +906,8 @@ const EditTask: React.FC = () => {
         </div>
       )}
 
-      {/* High-Fidelity Zoom Modal */}
-      {activeZoomUrl && (
+      {/* High-Fidelity Zoom Modal for Images */}
+      {activeZoomUrl && !isPdfFile(activeZoomUrl) && (
         <div 
           className="fixed inset-0 bg-slate-950/80 z-[100] flex items-center justify-center p-4 backdrop-blur-xs transition-opacity cursor-zoom-out"
           onClick={() => setActiveZoomUrl(null)}
@@ -932,6 +936,17 @@ const EditTask: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Multi-Page PDF Viewer Modal */}
+      <PdfViewerModal
+        url={pdfViewerUrl || (activeZoomUrl && isPdfFile(activeZoomUrl) ? activeZoomUrl : null)}
+        onClose={() => {
+          setPdfViewerUrl(null);
+          if (activeZoomUrl && isPdfFile(activeZoomUrl)) {
+            setActiveZoomUrl(null);
+          }
+        }}
+      />
     </div>
   );
 };

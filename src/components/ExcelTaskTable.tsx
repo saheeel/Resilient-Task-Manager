@@ -8,6 +8,8 @@ import {
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePersistentState } from '../hooks/usePersistentState';
+import { isPdfFile } from '../lib/fileUtils';
+import { PdfViewerModal } from './PdfViewerModal';
 
 interface ExcelTaskTableProps {
   tasks: Task[];
@@ -40,6 +42,7 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [sortField, setSortField] = usePersistentState<SortField>('excelTable_sortField', 'dueDate');
   const [sortOrder, setSortOrder] = usePersistentState<SortOrder>('excelTable_sortOrder', 'asc');
+  const [pdfViewerUrl, setPdfViewerUrl] = useState<string | null>(null);
   
   // Filters
   const [statusFilter, setStatusFilter] = usePersistentState<string>('excelTable_statusFilter', 'all');
@@ -319,19 +322,19 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
                         <td colSpan={9} className="p-4 pl-12 text-slate-300">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-900/90 p-4 rounded-xl border border-slate-800/60">
                             
-                            {/* Column 1: Description & Remarks */}
+                            {/* Column 1: Remarks & Comments */}
                             <div className="space-y-2 md:col-span-2">
                               <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
-                                <FileText className="w-3.5 h-3.5" /> Description & Details
+                                <FileText className="w-3.5 h-3.5" /> Remarks & Details
                               </h4>
                               <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line bg-slate-950/50 p-3 rounded-lg border border-slate-800/40">
-                                {task.description || "No description provided."}
+                                {task.remarks || "No remarks provided."}
                               </p>
                               
-                              {task.remarks && (
+                              {task.description && (
                                 <div className="mt-2 text-xs">
-                                  <span className="font-semibold text-slate-400">Remarks:</span>
-                                  <span className="text-slate-300 ml-1.5">{task.remarks}</span>
+                                  <span className="font-semibold text-slate-400">Comments:</span>
+                                  <span className="text-slate-300 ml-1.5">{task.description}</span>
                                 </div>
                               )}
 
@@ -369,14 +372,19 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
                               {task.attachments && task.attachments.length > 0 ? (
                                 <div className="space-y-1.5">
                                   {task.attachments.map((url, idx) => {
-                                    const isPdf = url.toLowerCase().includes('.pdf') || url.includes('application/pdf');
+                                    const isPdf = isPdfFile(url);
                                     return (
-                                      <a
+                                      <button
                                         key={idx}
-                                        href={url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 p-2 rounded-lg bg-slate-950/60 border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-800/40 transition-colors text-xs text-indigo-300"
+                                        type="button"
+                                        onClick={() => {
+                                          if (isPdf) {
+                                            setPdfViewerUrl(url);
+                                          } else {
+                                            window.open(url, '_blank', 'noopener,noreferrer');
+                                          }
+                                        }}
+                                        className="flex items-center gap-2 w-full p-2 rounded-lg bg-slate-950/60 border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-800/40 transition-colors text-xs text-indigo-300 text-left cursor-pointer"
                                       >
                                         {isPdf ? (
                                           <span className="px-1.5 py-0.5 rounded bg-rose-950 text-rose-400 font-bold text-[10px]">PDF</span>
@@ -385,7 +393,7 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
                                         )}
                                         <span className="truncate flex-1">Attachment #{idx + 1}</span>
                                         <ExternalLink className="w-3 h-3 text-slate-500" />
-                                      </a>
+                                      </button>
                                     );
                                   })}
                                 </div>
@@ -399,13 +407,24 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
                                   <span className="text-[11px] font-semibold text-slate-400 block mb-1">Proof Photos:</span>
                                   <div className="flex flex-wrap gap-2">
                                     {[...(task.proofPhotoUrls || []), ...(task.proofPhotoUrl ? [task.proofPhotoUrl] : [])].map((imgUrl, i) => (
-                                      <a key={i} href={imgUrl} target="_blank" rel="noopener noreferrer">
-                                        <img 
-                                          src={imgUrl} 
-                                          alt={`Proof ${i}`} 
-                                          className="w-12 h-12 object-cover rounded-lg border border-slate-700 hover:opacity-80 transition-opacity" 
-                                        />
-                                      </a>
+                                      isPdfFile(imgUrl) ? (
+                                        <button
+                                          key={i}
+                                          type="button"
+                                          onClick={() => setPdfViewerUrl(imgUrl)}
+                                          className="p-1.5 rounded-lg bg-rose-950 border border-rose-800 text-rose-300 font-bold text-[10px] cursor-pointer"
+                                        >
+                                          PDF Proof
+                                        </button>
+                                      ) : (
+                                        <a key={i} href={imgUrl} target="_blank" rel="noopener noreferrer">
+                                          <img 
+                                            src={imgUrl} 
+                                            alt={`Proof ${i}`} 
+                                            className="w-12 h-12 object-cover rounded-lg border border-slate-700 hover:opacity-80 transition-opacity" 
+                                          />
+                                        </a>
+                                      )
                                     ))}
                                   </div>
                                 </div>
@@ -423,6 +442,11 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
           </tbody>
         </table>
       </div>
+
+      <PdfViewerModal
+        url={pdfViewerUrl}
+        onClose={() => setPdfViewerUrl(null)}
+      />
     </div>
   );
 };
