@@ -44,6 +44,7 @@ export default defineSchema({
     proofPhotoUrls: v.optional(v.array(v.string())),
     createdAt: v.optional(v.string()),
     markedIssueAt: v.optional(v.string()),
+    markedIssueBy: v.optional(v.string()),
     startedAt: v.optional(v.string()),
     recurringDay: v.optional(v.string()),
     recurringTime: v.optional(v.string()),

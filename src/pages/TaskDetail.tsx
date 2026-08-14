@@ -255,7 +255,8 @@ const TaskDetail: React.FC = () => {
     }
     updateTaskStatus(task.id, 'could_not_complete', {
       blockReason: comment,
-      markedIssueAt: new Date().toISOString()
+      markedIssueAt: new Date().toISOString(),
+      markedIssueBy: currentUser?.name
     });
     addTaskUpdate(task.id, `${currentUser.name} marked the task as an issue.`);
     navigate(-1);
@@ -265,6 +266,7 @@ const TaskDetail: React.FC = () => {
     updateTaskStatus(task.id, 'open', {
       blockReason: undefined,
       markedIssueAt: undefined,
+      markedIssueBy: undefined,
       completionComment: undefined,
       completedAt: undefined,
       proofPhotoUrl: undefined,
@@ -657,6 +659,7 @@ const TaskDetail: React.FC = () => {
                   {task.markedIssueAt 
                     ? formatDateTime(task.markedIssueAt, { dateStyle: 'short', timeStyle: 'short' })
                     : t('common.notRecorded')}
+                  {(task.markedIssueBy && task.assignedTo && task.assignedTo.length > 1) ? ` - ${task.markedIssueBy}` : ''}
                 </span>
                 {task.blockReason && (
                   <span className="text-xs text-red-900 dark:text-red-200 italic mt-0.5">
@@ -879,6 +882,7 @@ const TaskDetail: React.FC = () => {
                           src={up.photoUrl} 
                           alt="Progress Proof" 
                           className="max-h-36 max-w-full object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
+                          style={{ backgroundColor: '#ffffff' }}
                           onError={() => markImageBroken(up.photoUrl)}
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">

@@ -206,6 +206,7 @@ export const update = mutation({
     proofPhotoUrl: v.optional(v.string()),
     proofPhotoUrls: v.optional(v.array(v.string())),
     markedIssueAt: v.optional(v.string()),
+    markedIssueBy: v.optional(v.string()),
     startedAt: v.optional(v.string()),
     recurringDay: v.optional(v.string()),
     recurringTime: v.optional(v.string()),
