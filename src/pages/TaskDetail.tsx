@@ -90,8 +90,37 @@ const TaskDetail: React.FC = () => {
     setUpdatePhotoPreviewUrl(null);
   };
 
+  const [resolvedPdfUrls, setResolvedPdfUrls] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const urlsToCheck = new Set<string>();
+    
+    if (task?.attachments) {
+      task.attachments.forEach(url => urlsToCheck.add(url));
+    }
+    updates?.forEach(up => {
+      if (up.photoUrl) urlsToCheck.add(up.photoUrl);
+    });
+
+    urlsToCheck.forEach(url => {
+      if (url && url.startsWith('http') && resolvedPdfUrls[url] === undefined) {
+        // Fast HEAD request to check content type
+        fetch(url, { method: 'HEAD' })
+          .then(res => {
+            if (res.headers.get('content-type')?.includes('application/pdf')) {
+              setResolvedPdfUrls(prev => ({ ...prev, [url]: true }));
+            } else {
+              setResolvedPdfUrls(prev => ({ ...prev, [url]: false }));
+            }
+          })
+          .catch(() => setResolvedPdfUrls(prev => ({ ...prev, [url]: false })));
+      }
+    });
+  }, [task?.attachments, updates, resolvedPdfUrls]);
+
   const isPdfFile = (url: string) => {
     if (!url) return false;
+    if (resolvedPdfUrls[url]) return true;
     return url.toLowerCase().includes('.pdf') || url.includes('application/pdf');
   };
 
