@@ -5,8 +5,6 @@ import type { TaskType, Priority } from '../contexts/TaskContext';
 import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw, Upload, Loader2, Link as LinkIcon } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MATERIAL_STATUS_OPTIONS } from '../lib/taskOptions';
-import { isPdfFile, formatStorageUrlForFile } from '../lib/fileUtils';
-import { PdfViewerModal } from '../components/PdfViewerModal';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const IN_CHARGE_OPTIONS = ['Nicolas', 'Ivo', 'Carlo', 'Sun', 'Juliane', 'Diana'];
@@ -68,7 +66,6 @@ const CreateTask: React.FC = () => {
   const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState<string | null>(null);
   const [attachmentFileName, setAttachmentFileName] = useState<string | null>(null);
   const [activeZoomUrl, setActiveZoomUrl] = useState<string | null>(null);
-  const [pdfViewerUrl, setPdfViewerUrl] = useState<string | null>(null);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -128,8 +125,7 @@ const CreateTask: React.FC = () => {
           setUploadProgress(percent);
           setUploadStage(stage as any);
         });
-        const formattedId = formatStorageUrlForFile(storageId, file);
-        setAttachmentStorageId(formattedId);
+        setAttachmentStorageId(storageId);
       } catch (error) {
         console.error('Failed to prepare task attachment:', error);
         alert(error instanceof Error ? error.message : 'Unable to prepare this file. Please choose a smaller file.');
@@ -818,20 +814,13 @@ const CreateTask: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-8 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
-            >
-              {t('common.cancel')}
-            </button>
+          <div className="pt-6 border-t border-slate-100">
             <button
               type="submit"
               disabled={isUploading}
-              className="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-lg py-3 font-semibold text-sm shadow-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {t('createTask.createButton')}
+              {t('createTask.addTask')}
             </button>
           </div>
         </form>
@@ -883,7 +872,7 @@ const CreateTask: React.FC = () => {
       )}
 
       {/* High-Fidelity Zoom Modal */}
-      {activeZoomUrl && !isPdfFile(activeZoomUrl) && (
+      {activeZoomUrl && (
         <div 
           className="fixed inset-0 bg-slate-950/80 z-[100] flex items-center justify-center p-4 backdrop-blur-xs transition-opacity cursor-zoom-out"
           onClick={() => setActiveZoomUrl(null)}
@@ -912,17 +901,6 @@ const CreateTask: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Multi-Page PDF Viewer Modal */}
-      <PdfViewerModal
-        url={pdfViewerUrl || (activeZoomUrl && isPdfFile(activeZoomUrl) ? activeZoomUrl : null)}
-        onClose={() => {
-          setPdfViewerUrl(null);
-          if (activeZoomUrl && isPdfFile(activeZoomUrl)) {
-            setActiveZoomUrl(null);
-          }
-        }}
-      />
     </div>
   );
 };

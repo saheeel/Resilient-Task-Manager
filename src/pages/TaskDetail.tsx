@@ -8,8 +8,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { materialStatusToneMap } from '../lib/taskOptions';
-import { isPdfFile, isImageFile, formatStorageUrlForFile } from '../lib/fileUtils';
-import { PdfViewerModal } from '../components/PdfViewerModal';
 
 const TaskDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,16 +28,8 @@ const TaskDetail: React.FC = () => {
   const [showBlockReason, setShowBlockReason] = useState(false);
   const [completionPhotos, setCompletionPhotos] = useState<{ storageId: string; previewUrl: string }[]>([]);
   const [activeZoomUrl, setActiveZoomUrl] = useState<string | null>(null);
-  const [pdfViewerUrl, setPdfViewerUrl] = useState<string | null>(null);
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
   const photoInputRef = React.useRef<HTMLInputElement>(null);
-
-  const [, setFileTypeTick] = useState(0);
-  useEffect(() => {
-    const handleFileTypeUpdated = () => setFileTypeTick((t) => t + 1);
-    window.addEventListener('file-type-updated', handleFileTypeUpdated);
-    return () => window.removeEventListener('file-type-updated', handleFileTypeUpdated);
-  }, []);
 
   const [showTransfer, setShowTransfer] = useState(false);
   const [transferToId, setTransferToId] = useState('');
@@ -81,8 +71,7 @@ const TaskDetail: React.FC = () => {
           setUploadProgress(percent);
           setUploadStage(stage as any);
         });
-        const formattedId = formatStorageUrlForFile(storageId, file);
-        setUpdatePhotoStorageId(formattedId);
+        setUpdatePhotoStorageId(storageId);
       } catch (error) {
         console.error('Failed to prepare update photo:', error);
         alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
@@ -101,6 +90,18 @@ const TaskDetail: React.FC = () => {
     setUpdatePhotoPreviewUrl(null);
   };
 
+  const isPdfFile = (url: string) => {
+    if (!url) return false;
+    return url.toLowerCase().includes('.pdf') || url.includes('application/pdf');
+  };
+
+  const isImageFile = (url: string) => {
+    if (!url) return false;
+    if (isPdfFile(url)) return false;
+    if (url.startsWith('blob:') || url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) return true;
+    return /\.(jpg|jpeg|png|webp|gif|svg|avif|bmp)$/i.test(url);
+  };
+
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
@@ -117,8 +118,7 @@ const TaskDetail: React.FC = () => {
             setUploadProgress(percent);
             setUploadStage(stage as any);
           });
-          const formattedId = formatStorageUrlForFile(storageId, file);
-          newItems.push({ storageId: formattedId, previewUrl: localPreview });
+          newItems.push({ storageId, previewUrl: localPreview });
         }
         if (newItems.length > 0) {
           setCompletionPhotos(prev => [...prev, ...newItems]);
@@ -723,19 +723,6 @@ const TaskDetail: React.FC = () => {
             <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-2">{t('taskDetail.attachmentsReference')}</h3>
             <div className="flex flex-wrap gap-3">
               {task.attachments.map((url, idx) => {
-                if (isPdfFile(url)) {
-                  return (
-                    <button 
-                      key={idx} 
-                      type="button"
-                      onClick={() => setPdfViewerUrl(url)}
-                      className="flex items-center gap-2 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 px-3 py-2 rounded-lg transition-colors cursor-pointer"
-                    >
-                      <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[10px] font-bold">PDF</span>
-                      {t('taskDetail.referenceFile', { index: idx + 1 })}
-                    </button>
-                  );
-                }
                 if (isImageFile(url)) {
                   if (isRenderableSavedImage(url)) {
                     return (
@@ -765,17 +752,19 @@ const TaskDetail: React.FC = () => {
                       </div>
                     );
                   }
+                  // Fall through to document link if it's a broken generic image (likely a PDF)
                 }
                 return (
-                  <button 
+                  <a 
                     key={idx} 
-                    type="button"
-                    onClick={() => setPdfViewerUrl(url)}
-                    className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors cursor-pointer"
+                    href={url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
                   >
                     <Paperclip size={16} />
                     {t('taskDetail.referenceFile', { index: idx + 1 })}
-                  </button>
+                  </a>
                 );
               })}
             </div>
@@ -788,16 +777,7 @@ const TaskDetail: React.FC = () => {
             <div className="flex flex-wrap gap-3">
               {(task.proofPhotoUrls && task.proofPhotoUrls.length > 0 ? task.proofPhotoUrls : (task.proofPhotoUrl ? [task.proofPhotoUrl] : [])).map((url, index) => (
                 <React.Fragment key={index}>
-                  {isPdfFile(url) ? (
-                    <button
-                      type="button"
-                      onClick={() => setPdfViewerUrl(url)}
-                      className="flex items-center gap-2 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 px-3 py-2 rounded-lg transition-colors cursor-pointer"
-                    >
-                      <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[10px] font-bold">PDF</span>
-                      {t('common.viewPdfDocument')}
-                    </button>
-                  ) : isRenderableSavedImage(url!) ? (
+                  {isRenderableSavedImage(url) ? (
                     <div className="relative inline-block group cursor-zoom-in" onClick={() => setActiveZoomUrl(url || null)}>
                       <img 
                         src={url} 
@@ -809,20 +789,21 @@ const TaskDetail: React.FC = () => {
                         <Eye className="text-white" size={20} />
                       </div>
                     </div>
-                  ) : isLegacyUnavailableImage(url!) ? (
+                  ) : isLegacyUnavailableImage(url) ? (
                     <div className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
                       <ImageOff size={14} className="shrink-0" />
                       <span>{t('taskDetail.legacyImageUnavailable')}</span>
                     </div>
                   ) : (
-                    <button 
-                      type="button"
-                      onClick={() => setPdfViewerUrl(url!)}
-                      className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors cursor-pointer"
+                    <a 
+                      href={url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
                     >
                       <Paperclip size={16} />
                       {t('taskDetail.referenceFile', { index: index + 1 })}
-                    </button>
+                    </a>
                   )}
                 </React.Fragment>
               ))}
@@ -882,15 +863,16 @@ const TaskDetail: React.FC = () => {
                   
                   {up.photoUrl && (
                     isPdfFile(up.photoUrl) ? (
-                      <button
-                        type="button"
-                        onClick={() => setPdfViewerUrl(up.photoUrl)}
-                        className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors self-start cursor-pointer"
+                      <a
+                        href={up.photoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors self-start"
                       >
                         <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[10px] font-bold">PDF</span>
                         <span className="truncate max-w-[180px]">{t('common.viewPdfDocument')}</span>
                         <Paperclip size={14} className="text-rose-500" />
-                      </button>
+                      </a>
                     ) : isRenderableSavedImage(up.photoUrl) ? (
                       <div className="relative inline-block mt-2 group cursor-zoom-in self-start" onClick={() => setActiveZoomUrl(up.photoUrl)}>
                         <img 
@@ -909,14 +891,15 @@ const TaskDetail: React.FC = () => {
                         <span>{t('taskDetail.legacyImageUnavailable')}</span>
                       </div>
                     ) : (
-                      <button 
-                        type="button"
-                        onClick={() => setPdfViewerUrl(up.photoUrl)}
-                        className="mt-3 flex max-w-fit items-center gap-2 text-[13px] text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors cursor-pointer"
+                      <a 
+                        href={up.photoUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="mt-3 flex max-w-fit items-center gap-2 text-[13px] text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
                       >
                         <Paperclip size={15} />
                         {t('taskDetail.attachedFile')}
-                      </button>
+                      </a>
                     )
                   )}
                 </div>
@@ -1152,8 +1135,8 @@ const TaskDetail: React.FC = () => {
           )}
         </div>
       )}
-      {/* High-Fidelity Zoom Modal for Images */}
-      {activeZoomUrl && !isPdfFile(activeZoomUrl) && (
+      {/* High-Fidelity Zoom Modal */}
+      {activeZoomUrl && (
         <div 
           className="fixed inset-0 bg-slate-950/80 z-[100] flex items-center justify-center p-4 backdrop-blur-xs transition-opacity cursor-zoom-out"
           onClick={() => setActiveZoomUrl(null)}
@@ -1182,17 +1165,6 @@ const TaskDetail: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Multi-Page PDF Viewer Modal */}
-      <PdfViewerModal
-        url={pdfViewerUrl || (activeZoomUrl && isPdfFile(activeZoomUrl) ? activeZoomUrl : null)}
-        onClose={() => {
-          setPdfViewerUrl(null);
-          if (activeZoomUrl && isPdfFile(activeZoomUrl)) {
-            setActiveZoomUrl(null);
-          }
-        }}
-      />
       {/* Upload Progress Modal Overlay */}
       {isUploading && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
