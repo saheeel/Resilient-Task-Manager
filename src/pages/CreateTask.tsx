@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import type { TaskType, Priority } from '../contexts/TaskContext';
-import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw, Upload, Loader2, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw, Upload, Loader2, Link as LinkIcon, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MATERIAL_STATUS_OPTIONS } from '../lib/taskOptions';
 
@@ -523,7 +523,6 @@ const CreateTask: React.FC = () => {
                   </div>
 
                   {/* Due Date / Time */}
-                  {/* Due Date / Time */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2.5">
                       {t('createTask.dueDateTime')}
@@ -898,6 +897,16 @@ const CreateTask: React.FC = () => {
               style={{ backgroundColor: '#ffffff' }}
               onClick={(e) => e.stopPropagation()}
             />
+            <a 
+              href={activeZoomUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/80 hover:bg-slate-900 text-white px-5 py-2.5 rounded-full backdrop-blur-md transition-all flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 font-medium text-sm"
+            >
+              <ExternalLink size={16} />
+              Open Original
+            </a>
           </div>
         </div>
       )}

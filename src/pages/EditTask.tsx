@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTasks } from '../contexts/TaskContext';
 import type { TaskType, Priority, Task } from '../contexts/TaskContext';
-import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw, Upload, Loader2 } from 'lucide-react';
+import { ArrowLeft, Paperclip, X, Calendar, Clock, RefreshCw, Upload, Loader2, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -929,6 +929,16 @@ const EditTask: React.FC = () => {
               style={{ backgroundColor: '#ffffff' }}
               onClick={(e) => e.stopPropagation()}
             />
+            <a 
+              href={activeZoomUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/80 hover:bg-slate-900 text-white px-5 py-2.5 rounded-full backdrop-blur-md transition-all flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 font-medium text-sm"
+            >
+              <ExternalLink size={16} />
+              Open Original
+            </a>
           </div>
         </div>
       )}
