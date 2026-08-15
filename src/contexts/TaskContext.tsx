@@ -157,6 +157,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const sendPushNotification = useAction(api.pushActions.sendNotification);
   const notifyAdmins = useAction(api.pushActions.notifyAdmins);
+
   const [cachedUsersRaw, setCachedUsersRaw] = useState<any[] | undefined>(() => readCachedCollection(USERS_CACHE_KEY));
   const [cachedTasksRaw, setCachedTasksRaw] = useState<any[] | undefined>(() => readCachedCollection(TASKS_CACHE_KEY));
   const isBackendConnected = dbUsersRaw !== undefined && dbTasksRaw !== undefined;
@@ -392,15 +393,30 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
 
     await dbAddTask(cleanPayload as any).then(() => {
+      const recipientIds = new Set<string>();
+
       // Loop through assignees and fire off background Web Push notifications (excluding creator)
       taskData.assignedTo.forEach((userId) => {
         if (currentUser && userId === currentUser.id) return;
+        recipientIds.add(userId);
         sendPushNotification({
           userId,
           title: "New Task Assigned! 🚀",
           body: `${taskData.title}\nPriority: ${taskData.priority.toUpperCase()}${assignmentMetadata.assignedByName ? `\nAssigned by: ${assignmentMetadata.assignedByName}` : ''}`,
           url: "/"
         }).catch((err) => console.error("Push notification action trigger error:", err));
+      });
+
+      // Always notify Diana (Handler)
+      mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
+        if (currentUser && diana.id === currentUser.id) return;
+        if (recipientIds.has(diana.id)) return; // Don't notify twice if she's tagged
+        sendPushNotification({
+          userId: diana.id,
+          title: "New Task Created 📋",
+          body: `${currentUser?.name || 'Someone'} created task: ${taskData.title}`,
+          url: "/"
+        }).catch(err => console.error('Diana notification error:', err));
       });
     });
   };
@@ -584,10 +600,34 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       ...assignmentMetadata,
       ...fields,
     });
+
+    // Notify Diana of edit
+    const taskToEdit = mappedDbTasks.find(t => t.id === taskId);
+    mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
+      if (currentUser && diana.id === currentUser.id) return;
+      sendPushNotification({
+        userId: diana.id,
+        title: "Task Edited ✏️",
+        body: `${currentUser?.name || 'Someone'} modified task: ${taskToEdit?.title || 'Unknown Task'}`,
+        url: `/task/${taskId}`
+      }).catch(err => console.error('Diana notification error:', err));
+    });
   };
 
   const deleteTask = (taskId: string) => {
+    const taskToDelete = mappedDbTasks.find(t => t.id === taskId);
     dbRemoveTask({ id: taskId as any });
+
+    // Notify Diana of deletion
+    mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
+      if (currentUser && diana.id === currentUser.id) return;
+      sendPushNotification({
+        userId: diana.id,
+        title: "Task Deleted 🗑️",
+        body: `${currentUser?.name || 'Someone'} deleted task: ${taskToDelete?.title || 'Unknown Task'}`,
+        url: "/"
+      }).catch(err => console.error('Diana notification error:', err));
+    });
   };
 
   const updateUser = (userId: string, updatedFields: Partial<User>) => {
