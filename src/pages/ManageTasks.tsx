@@ -662,72 +662,7 @@ const ManageTasks: React.FC = () => {
         </div>
       )}
 
-      {/* Recently Completed Tasks */}
-      <div className="mt-8">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="font-bold text-slate-900 text-lg tracking-tight">{t('manageTasks.recentlyCompleted')}</h2>
-          <button
-            type="button"
-            onClick={() => navigate('/admin-history')}
-            className="text-sm font-semibold text-slate-600 hover:text-slate-900 cursor-pointer bg-transparent border-none p-0"
-          >
-            {t('nav.history')}
-          </button>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          {completedTasks.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[650px] border-collapse text-left text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-                  <tr>
-                    <th className="px-5 py-3">{t('manageTasks.taskTitle')}</th>
-                    <th className="px-5 py-3">{t('manageTasks.completedBy')}</th>
-                    <th className="px-5 py-3">{t('manageTasks.completedAt')}</th>
-                    <th className="px-5 py-3">{t('manageTasks.duration')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {completedTasks.slice(0, 5).map(task => (
-                    <tr 
-                      key={task.id} 
-                      className="hover:bg-slate-50 cursor-pointer transition-colors" 
-                      onClick={() => navigate(`/task/${task.id}`)}
-                    >
-                      <td className="px-5 py-3.5 font-medium text-slate-500 line-through decoration-slate-300">{task.title}</td>
-                      <td className="px-5 py-3.5 text-slate-600">
-                        {task.assignedTo.length > 0 
-                          ? task.assignedTo.map(id => users.find(u => u.id === id)?.name?.split(' ')[0] || 'Unknown').join(', ')
-                          : t('common.unassigned')}
-                      </td>
-                      <td className="px-5 py-3.5 text-slate-500">
-                        {task.completedAt ? formatDateTime(task.completedAt, { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {task.actualDuration ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-green-50 text-green-700 border border-green-150">
-                            {task.actualDuration}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 text-xs font-medium">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="p-6 text-center text-sm text-slate-500">{t('manageTasks.noCompletedTasks')}</p>
-          )}
-          {completedTasks.length > 5 && (
-            <div className="bg-slate-50 border-t border-slate-100 p-3 text-center">
-              <p className="text-xs text-slate-500 font-medium">
-                {t('manageTasks.recentTasksNote')}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+
 
       <button
         type="button"
