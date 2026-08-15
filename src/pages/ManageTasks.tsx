@@ -71,7 +71,6 @@ const ManageTasks: React.FC = () => {
   };
 
   const sortedActiveTasks = sortTasks(activeTasks);
-  const completedTasks = tasks.filter(t => t.status === 'completed');
   const recurringTasks = tasks.filter((task) => task.type !== 'one-time');
 
   const groupedTasks: Record<string, Task[]> = {};
