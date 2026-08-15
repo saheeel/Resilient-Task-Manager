@@ -410,6 +410,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Always notify Diana (Handler)
       mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
         if (currentUser && diana.id === currentUser.id) return;
+        if (currentUser && (currentUser.name.toLowerCase().includes('saheel') || currentUser.name.toLowerCase().includes('admin'))) return;
         if (recipientIds.has(diana.id)) return; // Don't notify twice if she's tagged
         sendPushNotification({
           userId: diana.id,
@@ -605,6 +606,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const taskToEdit = mappedDbTasks.find(t => t.id === taskId);
     mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
       if (currentUser && diana.id === currentUser.id) return;
+      if (currentUser && (currentUser.name.toLowerCase().includes('saheel') || currentUser.name.toLowerCase().includes('admin'))) return;
       sendPushNotification({
         userId: diana.id,
         title: "Task Edited ✏️",
@@ -621,6 +623,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Notify Diana of deletion
     mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
       if (currentUser && diana.id === currentUser.id) return;
+      if (currentUser && (currentUser.name.toLowerCase().includes('saheel') || currentUser.name.toLowerCase().includes('admin'))) return;
       sendPushNotification({
         userId: diana.id,
         title: "Task Deleted 🗑️",
@@ -693,6 +696,19 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         excludeUserId: currentUser.id,
       }).catch((err) => console.error("Admin notification trigger error:", err));
     }
+
+    // Always notify Diana (Handler)
+    mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
+      if (currentUser && diana.id === currentUser.id) return;
+      if (currentUser && (currentUser.name.toLowerCase().includes('saheel') || currentUser.name.toLowerCase().includes('admin'))) return;
+      if (recipientIds.has(diana.id)) return; // Don't notify twice if she's already notified
+      sendPushNotification({
+        userId: diana.id,
+        title: "New Update / Comment 💬",
+        body: `${currentUser.name} updated: ${task.title}`,
+        url: `/task/${taskId}`
+      }).catch(err => console.error('Diana notification error:', err));
+    });
   };
 
 
