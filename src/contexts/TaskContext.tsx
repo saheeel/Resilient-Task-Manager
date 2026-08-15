@@ -56,6 +56,7 @@ export interface Task {
   proofPhotoUrls?: string[];
   createdAt?: string; // ISO date string when assigned
   markedIssueAt?: string; // ISO date string when reported as issue/incomplete
+  markedIssueBy?: string; // Name of person who marked it incomplete
   startedAt?: string; // ISO date string when employee clicks 'Start Task'
   recurringDay?: string; // Day name for weekly ("Monday"), day number for monthly ("15")
   recurringTime?: string; // Time string in HH:MM format ("09:00")
