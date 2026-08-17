@@ -74,7 +74,7 @@ const EditTask: React.FC = () => {
       setRemarks(task.remarks || '');
       setType(task.type);
       setPriority(task.priority);
-      setInCharge(task.inCharge || '');
+      setInCharge(typeof task.inCharge === 'string' ? task.inCharge : '');
       setMaterialStatus(task.materialStatus || '');
       setAssignedTo(task.assignedTo);
       setExistingAttachments(task.attachments || []);
