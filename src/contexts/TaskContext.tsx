@@ -526,6 +526,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             employeeName: currentUser.name,
             taskId,
             excludeUserId: currentUser.id,
+            title: "⚠️ Task Issue Reported",
+            body: `${currentUser.name} reported an issue: ${issueTask.title}`,
           }).catch((err: any) => console.error('Admin notification error:', err));
         }
 
@@ -566,6 +568,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             employeeName: currentUser.name,
             taskId,
             excludeUserId: currentUser.id,
+            title: "▶️ Task Started",
+            body: `${currentUser.name} started: ${startedTask.title}`,
           }).catch((err: any) => console.error('Admin notification error:', err));
         }
 
@@ -772,6 +776,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         employeeName: currentUser.name,
         taskId: task.id,
         excludeUserId: currentUser.id,
+        title: `💬 Update on: ${task.title}`,
+        body: `${currentUser.name}: "${text}"`,
       }).catch((err) => console.error("Admin notification trigger error:", err));
     }
 

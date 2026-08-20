@@ -67,13 +67,15 @@ export const notifyAdmins = action({
     employeeName: v.string(),
     taskId: v.string(),
     excludeUserId: v.optional(v.string()),
+    title: v.optional(v.string()),
+    body: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     const adminIds: string[] = await ctx.runQuery(api.pushMutations.getAdminIds);
 
     const payload = JSON.stringify({
-      title: "✅ Task Completed",
-      body: `${args.employeeName} completed: ${args.taskTitle}`,
+      title: args.title || "✅ Task Completed",
+      body: args.body || `${args.employeeName} completed: ${args.taskTitle}`,
       url: `/task/${args.taskId}`,
     });
 
