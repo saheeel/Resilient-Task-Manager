@@ -39,6 +39,14 @@ export const sendNotification = action({
       url: args.url || "/",
     });
 
+    // Save notification to history
+    await ctx.runMutation(api.notifications.insert, {
+      userId: args.userId,
+      title: args.title,
+      body: args.body,
+      url: args.url || "/",
+    });
+
     for (const sub of subscriptions) {
       try {
         const pushSubscription = {
@@ -81,6 +89,15 @@ export const notifyAdmins = action({
 
     for (const adminId of adminIds) {
       if (args.excludeUserId && adminId === args.excludeUserId) continue;
+
+      // Save notification to history
+      await ctx.runMutation(api.notifications.insert, {
+        userId: adminId,
+        title: args.title || "✅ Task Completed",
+        body: args.body || `${args.employeeName} completed: ${args.taskTitle}`,
+        url: `/task/${args.taskId}`,
+      });
+
       const subscriptions = await ctx.runQuery(api.pushMutations.getSubscriptions, { userId: adminId });
       for (const sub of subscriptions) {
         try {

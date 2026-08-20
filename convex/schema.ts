@@ -76,4 +76,13 @@ export default defineSchema({
     p256dh: v.string(),
     auth: v.string(),
   }).index("by_userId", ["userId"]).index("by_endpoint", ["endpoint"]),
+
+  notifications: defineTable({
+    userId: v.string(),
+    title: v.string(),
+    body: v.string(),
+    url: v.optional(v.string()),
+    isRead: v.boolean(),
+    createdAt: v.string(), // ISO date string
+  }).index("by_userId", ["userId"]),
 });

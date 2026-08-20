@@ -14,6 +14,7 @@ import type * as crons from "../crons.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
+import type * as notifications from "../notifications.js";
 import type * as push from "../push.js";
 import type * as pushActions from "../pushActions.js";
 import type * as pushMutations from "../pushMutations.js";
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   files: typeof files;
   http: typeof http;
   migrations: typeof migrations;
+  notifications: typeof notifications;
   push: typeof push;
   pushActions: typeof pushActions;
   pushMutations: typeof pushMutations;

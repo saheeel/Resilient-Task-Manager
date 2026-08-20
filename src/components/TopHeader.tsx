@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTasks } from '../contexts/TaskContext';
 import { LogOut } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import NotificationCenter from './NotificationCenter';
 
 const TopHeader: React.FC = () => {
   const { currentUser, logout } = useTasks();
@@ -83,6 +84,8 @@ const TopHeader: React.FC = () => {
               {firstName}
             </span>
           </div>
+
+          <NotificationCenter userId={currentUser.id} />
 
           <button 
             onClick={() => setShowLogoutConfirm(true)}
