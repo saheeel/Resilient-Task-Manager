@@ -29,10 +29,6 @@ const TopHeader: React.FC = () => {
 
   const nameToUse = currentUser.name || 'User';
   const firstName = nameToUse.split(' ')[0];
-  const initials = nameToUse
-    .split(' ')
-    .map((name) => name[0] || '')
-    .join('');
 
   return (
     <>
