@@ -540,7 +540,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     // Fire push notification when a task is started (in-progress)
-    if (status === 'in-progress' && currentUser) {
+    if (status === 'in_progress' && currentUser) {
       const startedTask = mappedDbTasks.find(t => t.id === taskId);
       if (startedTask) {
         const recipientIds = new Set<string>();
