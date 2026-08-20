@@ -43,10 +43,15 @@ const TopHeader: React.FC = () => {
           height: 'calc(env(safe-area-inset-top, 0px) + 4rem)'
         }}
       >
-        <div className="flex items-center gap-2">
-          <img src="/resilientlogo.svg" alt="Resilient Logo" className="w-6 h-6 object-contain" />
-          <span className="hidden text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:inline">
-            Resilient Operations
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:pr-3 sm:border-r border-slate-200 dark:border-slate-700">
+            <img src="/resilientlogo.svg" alt="Resilient Logo" className="w-6 h-6 object-contain" />
+            <span className="hidden text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:inline">
+              Resilient Operations
+            </span>
+          </div>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {firstName}
           </span>
         </div>
 
@@ -76,14 +81,7 @@ const TopHeader: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-xs font-bold text-blue-800 dark:text-blue-200">
-              {initials}
-            </div>
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-              {firstName}
-            </span>
-          </div>
+
 
           <NotificationCenter userId={currentUser.id} />
 
