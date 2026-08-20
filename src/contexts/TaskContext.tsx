@@ -469,6 +469,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         recipientIds.delete(currentUser.id);
 
+        let adminsNotified = false;
         if (recipientIds.size > 0) {
           recipientIds.forEach((userId) => {
             sendPushNotification({
@@ -479,6 +480,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }).catch(err => console.error(err));
           });
         } else {
+          adminsNotified = true;
           notifyAdmins({
             taskTitle: completedTask.title,
             employeeName: currentUser.name,
@@ -491,6 +493,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
           if (currentUser && diana.id === currentUser.id) return;
           if (currentUser && (currentUser.name.toLowerCase().includes('saheel') || currentUser.name.toLowerCase().includes('admin'))) return;
+          if (adminsNotified) return; // Don't notify twice if notifyAdmins already fired
           if (recipientIds.has(diana.id)) return; // Don't notify twice if she's already notified
           sendPushNotification({
             userId: diana.id,
@@ -507,6 +510,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const issueTask = mappedDbTasks.find(t => t.id === taskId);
       if (issueTask) {
         const recipientIds = new Set<string>();
+        let adminsNotified = false;
         if (issueTask.assignedById && issueTask.assignedById !== currentUser.id) {
           recipientIds.add(issueTask.assignedById);
           sendPushNotification({
@@ -516,6 +520,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             url: `/task/${taskId}`,
           }).catch(err => console.error(err));
         } else if (!issueTask.assignedById) {
+          adminsNotified = true;
           notifyAdmins({
             taskTitle: issueTask.title,
             employeeName: currentUser.name,
@@ -528,6 +533,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
           if (currentUser && diana.id === currentUser.id) return;
           if (currentUser && (currentUser.name.toLowerCase().includes('saheel') || currentUser.name.toLowerCase().includes('admin'))) return;
+          if (adminsNotified) return; // Don't notify twice if notifyAdmins already fired
           if (recipientIds.has(diana.id)) return; // Don't notify twice if she's already notified
           sendPushNotification({
             userId: diana.id,
@@ -544,6 +550,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const startedTask = mappedDbTasks.find(t => t.id === taskId);
       if (startedTask) {
         const recipientIds = new Set<string>();
+        let adminsNotified = false;
         if (startedTask.assignedById && startedTask.assignedById !== currentUser.id) {
           recipientIds.add(startedTask.assignedById);
           sendPushNotification({
@@ -553,6 +560,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             url: `/task/${taskId}`,
           }).catch(err => console.error(err));
         } else if (!startedTask.assignedById) {
+          adminsNotified = true;
           notifyAdmins({
             taskTitle: startedTask.title,
             employeeName: currentUser.name,
@@ -565,6 +573,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
           if (currentUser && diana.id === currentUser.id) return;
           if (currentUser && (currentUser.name.toLowerCase().includes('saheel') || currentUser.name.toLowerCase().includes('admin'))) return;
+          if (adminsNotified) return; // Don't notify twice if notifyAdmins already fired
           if (recipientIds.has(diana.id)) return; // Don't notify twice if she's already notified
           sendPushNotification({
             userId: diana.id,
@@ -746,6 +755,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     recipientIds.delete(currentUser.id);
 
+    let adminsNotified = false;
     if (recipientIds.size > 0) {
       recipientIds.forEach((userId) => {
         sendPushNotification({
@@ -756,6 +766,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }).catch((err) => console.error("Push notification error:", err));
       });
     } else {
+      adminsNotified = true;
       notifyAdmins({
         taskTitle: task.title,
         employeeName: currentUser.name,
@@ -768,6 +779,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
       if (currentUser && diana.id === currentUser.id) return;
       if (currentUser && (currentUser.name.toLowerCase().includes('saheel') || currentUser.name.toLowerCase().includes('admin'))) return;
+      if (adminsNotified) return; // Don't notify twice if notifyAdmins already fired
       if (recipientIds.has(diana.id)) return; // Don't notify twice if she's already notified
       sendPushNotification({
         userId: diana.id,
