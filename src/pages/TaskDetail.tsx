@@ -258,7 +258,7 @@ const TaskDetail: React.FC = () => {
     updateTaskStatus(task.id, 'in_progress', {
       startedAt: new Date().toISOString()
     });
-    addTaskUpdate(task.id, `${currentUser.name} started the task.`);
+    addTaskUpdate(task.id, `${currentUser.name} started the task.`, undefined, true);
   };
 
   const handleComplete = () => {
@@ -268,7 +268,7 @@ const TaskDetail: React.FC = () => {
       actualDuration: actualDurationInput.trim() || undefined,
       proofPhotoUrls: completionPhotos.length > 0 ? completionPhotos.map(p => p.storageId) : undefined
     });
-    addTaskUpdate(task.id, `${currentUser.name} completed the task.${actualDurationInput.trim() ? ` (Time taken: ${actualDurationInput.trim()})` : ''}`);
+    addTaskUpdate(task.id, `${currentUser.name} completed the task.${actualDurationInput.trim() ? ` (Time taken: ${actualDurationInput.trim()})` : ''}`, undefined, true);
     navigate(-1);
   };
 
@@ -287,7 +287,7 @@ const TaskDetail: React.FC = () => {
       markedIssueAt: new Date().toISOString(),
       markedIssueBy: currentUser?.name
     });
-    addTaskUpdate(task.id, `${currentUser.name} marked the task as an issue.`);
+    addTaskUpdate(task.id, `${currentUser.name} marked the task as an issue.`, undefined, true);
     navigate(-1);
   };
 

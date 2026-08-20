@@ -90,7 +90,7 @@ interface TaskContextType {
   deleteTask: (taskId: string) => void;
   updateUser: (userId: string, updatedFields: Partial<User>) => void;
   logout: () => void;
-  addTaskUpdate: (taskId: string, text: string, photoUrl?: string) => Promise<void>;
+  addTaskUpdate: (taskId: string, text: string, photoUrl?: string, silent?: boolean) => Promise<void>;
   isBackendConnected: boolean;
   sendPushNotification: (args: { userId: string; title: string; body: string; url?: string }) => Promise<null>;
   uploadFile: (file: File, onProgress?: (progress: number, stage: string) => void) => Promise<string>;
@@ -721,7 +721,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     handleSetCurrentUser(null);
   };
 
-  const addTaskUpdate = async (taskId: string, text: string, photoUrl?: string) => {
+  const addTaskUpdate = async (taskId: string, text: string, photoUrl?: string, silent: boolean = false) => {
     if (!currentUser) return;
     
     await dbAddTaskUpdate({
@@ -732,6 +732,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       photoUrl,
       createdAt: new Date().toISOString(),
     });
+
+    if (silent) return; // Do not send push notifications for automated system updates
 
     const task = mappedDbTasks.find(t => t.id === taskId);
     if (!task) return;
