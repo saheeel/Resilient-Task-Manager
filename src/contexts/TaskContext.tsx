@@ -538,6 +538,43 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
       }
     }
+
+    // Fire push notification when a task is started (in-progress)
+    if (status === 'in-progress' && currentUser) {
+      const startedTask = mappedDbTasks.find(t => t.id === taskId);
+      if (startedTask) {
+        const recipientIds = new Set<string>();
+        if (startedTask.assignedById && startedTask.assignedById !== currentUser.id) {
+          recipientIds.add(startedTask.assignedById);
+          sendPushNotification({
+            userId: startedTask.assignedById,
+            title: "▶️ Task Started",
+            body: `${currentUser.name} started: ${startedTask.title}`,
+            url: `/task/${taskId}`,
+          }).catch(err => console.error(err));
+        } else if (!startedTask.assignedById) {
+          notifyAdmins({
+            taskTitle: startedTask.title,
+            employeeName: currentUser.name,
+            taskId,
+            excludeUserId: currentUser.id,
+          }).catch((err: any) => console.error('Admin notification error:', err));
+        }
+
+        // Always notify Diana (Handler)
+        mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
+          if (currentUser && diana.id === currentUser.id) return;
+          if (currentUser && (currentUser.name.toLowerCase().includes('saheel') || currentUser.name.toLowerCase().includes('admin'))) return;
+          if (recipientIds.has(diana.id)) return; // Don't notify twice if she's already notified
+          sendPushNotification({
+            userId: diana.id,
+            title: "▶️ Task Started",
+            body: `${currentUser.name} started: ${startedTask.title}`,
+            url: `/task/${taskId}`
+          }).catch(err => console.error('Diana notification error:', err));
+        });
+      }
+    }
   };
 
 
