@@ -35,6 +35,20 @@ export const markAllAsRead = mutation({
   },
 });
 
+export const clearAll = mutation({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const notifications = await ctx.db
+      .query("notifications")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+      
+    for (const notification of notifications) {
+      await ctx.db.delete(notification._id);
+    }
+  },
+});
+
 export const insert = mutation({
   args: {
     userId: v.string(),

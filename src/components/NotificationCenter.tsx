@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
-import { Bell, Check } from 'lucide-react';
+import { Bell, Check, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface NotificationCenterProps {
@@ -16,6 +16,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
   const notifications = useQuery(api.notifications.get, { userId }) || [];
   const markAsRead = useMutation(api.notifications.markAsRead);
   const markAllAsRead = useMutation(api.notifications.markAllAsRead);
+  const clearAll = useMutation(api.notifications.clearAll);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -45,6 +46,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     await markAllAsRead({ userId });
   };
 
+  const handleClearAll = async () => {
+    await clearAll({ userId });
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -62,15 +67,26 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
         <div className="absolute right-0 mt-3 w-80 max-h-[85vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
           <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md">
             <h3 className="font-bold text-slate-800 dark:text-slate-100">Notifications</h3>
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllRead}
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <Check size={14} />
-                Mark all read
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllRead}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center gap-1 cursor-pointer border-none bg-transparent p-0"
+                >
+                  <Check size={14} />
+                  Mark all read
+                </button>
+              )}
+              {notifications.length > 0 && (
+                <button
+                  onClick={handleClearAll}
+                  className="text-xs font-semibold text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer border-none bg-transparent p-0"
+                >
+                  <Trash2 size={14} />
+                  Clear all
+                </button>
+              )}
+            </div>
           </div>
           
           <div className="overflow-y-auto flex-1 p-2 space-y-1 custom-scrollbar">
