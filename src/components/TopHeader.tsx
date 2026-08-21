@@ -84,18 +84,18 @@ const TopHeader: React.FC = () => {
           <button 
             onClick={() => setShowLogoutConfirm(true)}
             title={t('common.signOut')}
-            className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-rose-950/40 hover:border-red-100 transition-all cursor-pointer animate-none"
+            className="hidden sm:flex items-center justify-center p-2 text-slate-500 hover:text-red-600 transition-colors cursor-pointer"
           >
-            <LogOut size={16} />
+            <LogOut size={22} />
           </button>
 
           {/* Mobile Menu Toggle */}
           <div className="relative sm:hidden">
             <button 
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="flex items-center justify-center w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              className="flex items-center justify-center p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
             >
-              <MoreVertical size={16} />
+              <MoreVertical size={22} />
             </button>
             
             {showMobileMenu && (

@@ -49,12 +49,12 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative flex items-center justify-center w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 dark:hover:text-blue-400 transition-all cursor-pointer"
+        className="relative flex items-center justify-center p-2 text-slate-500 hover:text-blue-600 transition-colors cursor-pointer"
         title="Notifications"
       >
-        <Bell size={16} />
+        <Bell size={22} />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-900 shadow-sm" />
+          <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full shadow-sm" />
         )}
       </button>
 
