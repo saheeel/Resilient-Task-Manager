@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTasks } from '../contexts/TaskContext';
-import { LogOut } from 'lucide-react';
+import { LogOut, MoreVertical } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import NotificationCenter from './NotificationCenter';
 
@@ -8,6 +8,7 @@ const TopHeader: React.FC = () => {
   const { currentUser, logout } = useTasks();
   const { language, setLanguage, t } = useLanguage();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -22,7 +23,7 @@ const TopHeader: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'unset';
-    };
+    }
   }, [showLogoutConfirm]);
 
   if (!currentUser) return null;
@@ -52,9 +53,9 @@ const TopHeader: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Language Selector */}
+          {/* Desktop Language Selector */}
           <div
-            className="flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-1 shadow-xs"
+            className="hidden sm:flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-1 shadow-xs"
             aria-label={t('common.selectLanguage')}
           >
             <button
@@ -77,17 +78,65 @@ const TopHeader: React.FC = () => {
             </button>
           </div>
 
-
-
           <NotificationCenter userId={currentUser.id} />
 
+          {/* Desktop Logout */}
           <button 
             onClick={() => setShowLogoutConfirm(true)}
             title={t('common.signOut')}
-            className="flex items-center justify-center w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-rose-950/40 hover:border-red-100 transition-all cursor-pointer animate-none"
+            className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-rose-950/40 hover:border-red-100 transition-all cursor-pointer animate-none"
           >
             <LogOut size={16} />
           </button>
+
+          {/* Mobile Menu Toggle */}
+          <div className="relative sm:hidden">
+            <button 
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="flex items-center justify-center w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            >
+              <MoreVertical size={16} />
+            </button>
+            
+            {showMobileMenu && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowMobileMenu(false)}
+                />
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-50 animate-scale-up origin-top-right">
+                  <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">{t('app.language')}</p>
+                    <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-900/50 p-1 rounded-lg">
+                      <button
+                        onClick={() => { setLanguage('en'); setShowMobileMenu(false); }}
+                        className={`flex-1 rounded-md py-1 text-xs font-semibold transition-colors ${
+                          language === 'en' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500'
+                        }`}
+                      >
+                        EN
+                      </button>
+                      <button
+                        onClick={() => { setLanguage('de'); setShowMobileMenu(false); }}
+                        className={`flex-1 rounded-md py-1 text-xs font-semibold transition-colors ${
+                          language === 'de' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500'
+                        }`}
+                      >
+                        DE
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setShowMobileMenu(false); setShowLogoutConfirm(true); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-left transition-colors"
+                  >
+                    <LogOut size={16} />
+                    <span className="font-semibold">{t('common.signOut')}</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 

@@ -866,7 +866,7 @@ const formatDDMMYYYY = (value: string | number | Date): string => {
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>(() => {
     const stored = localStorage.getItem('rtm_language');
-    return stored === 'de' ? 'de' : 'en';
+    return stored === 'en' ? 'en' : 'de';
   });
 
   const locale = localeMap[language];
