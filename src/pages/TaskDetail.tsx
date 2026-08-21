@@ -236,24 +236,6 @@ const TaskDetail: React.FC = () => {
   }
 
 
-  const notifyAssigneesAndAssigner = async (title: string, body: string) => {
-    if (!task) return;
-    const userIdsToNotify = new Set(task.assignedTo);
-    if (task.assignedById) {
-      userIdsToNotify.add(task.assignedById);
-    }
-    
-    for (const userId of Array.from(userIdsToNotify)) {
-      if (currentUser && userId === currentUser.id) continue;
-      await sendPushNotification({
-        userId,
-        title,
-        body,
-        url: `/task/${task.id}`
-      }).catch(err => console.error("Failed to send push notification:", err));
-    }
-  };
-
   const handleStart = () => {
     updateTaskStatus(task.id, 'in_progress', {
       startedAt: new Date().toISOString()
