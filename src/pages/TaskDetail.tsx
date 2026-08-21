@@ -950,7 +950,6 @@ const TaskDetail: React.FC = () => {
               setIsPostingUpdate(true);
               try {
                 await addTaskUpdate(task.id, updateText, updatePhotoStorageId || undefined);
-                notifyAssigneesAndAssigner('New Task Update', `${currentUser.name} posted an update on: ${task.title}`);
                 setUpdateText('');
                 setUpdatePhotoStorageId(null);
                 setUpdatePhotoPreviewUrl(null);
