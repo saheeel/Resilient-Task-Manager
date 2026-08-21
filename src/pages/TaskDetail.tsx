@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTasks, isAdminRole, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
-import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, PackageCheck, UserRoundCog, ImageOff, ArrowRightLeft, Upload, Loader2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, PackageCheck, UserRoundCog, ImageOff, ArrowRightLeft, Upload, Loader2, ExternalLink, MoreVertical } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -24,6 +24,7 @@ const TaskDetail: React.FC = () => {
   const task = localTask || fetchedTask;
   
   const [comment, setComment] = useState('');
+  const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [actualDurationInput, setActualDurationInput] = useState('');
   const [showBlockReason, setShowBlockReason] = useState(false);
   const [completionPhotos, setCompletionPhotos] = useState<{ storageId: string; previewUrl: string }[]>([]);
@@ -372,23 +373,23 @@ const TaskDetail: React.FC = () => {
   const otherUsers = users.filter(u => u.id !== currentUser.id && !task.assignedTo.includes(u.id) && u.name.toLowerCase() !== 'saheel');
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-8">
+    <div className="max-w-xl mx-auto px-4 pb-8 pt-2">
       {/* Header action bar */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+      <div className="sticky top-[calc(env(safe-area-inset-top,0px)+4rem)] z-40 bg-slate-50 dark:bg-slate-950 backdrop-blur-md py-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex flex-row justify-between items-center gap-3 mb-6 border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm">
         <button 
           onClick={() => !isUploading && navigate(-1)} 
           disabled={isUploading}
-          className={`inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0 self-start ${isUploading ? 'opacity-40 cursor-not-allowed' : ''}`}
+          className={`inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0 ${isUploading ? 'opacity-40 cursor-not-allowed' : ''}`}
         >
           <ArrowLeft size={16} />
           {t('common.back')}
         </button>
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 relative">
           {(task.status === 'completed' || task.status === 'could_not_complete' || task.status === 'blocked') && (
             <button
               onClick={handleCreateFollowUp}
               disabled={isUploading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-300 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg shadow-xs transition-all cursor-pointer flex-1 sm:flex-initial justify-center"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-300 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg shadow-xs transition-all cursor-pointer justify-center"
             >
               ➕ {t('taskDetail.createFollowUp')}
             </button>
@@ -400,58 +401,74 @@ const TaskDetail: React.FC = () => {
                 <button
                   onClick={handleReopen}
                   disabled={isUploading}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg shadow-sm transition-colors cursor-pointer justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CheckCircle size={14} />
                   {t('taskDetail.reopenTask')}
                 </button>
               )}
-              <button 
-                onClick={() => !isUploading && navigate(`/task/${task.id}/edit`)}
-                disabled={isUploading}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              
+              <button
+                onClick={() => setShowAdminMenu(!showAdminMenu)}
+                className="p-1.5 text-slate-500 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
               >
-                <Edit size={14} />
-                {t('taskDetail.editTask')}
+                <MoreVertical size={20} />
               </button>
-              {task.type !== 'one-time' && (
+              
+              {showAdminMenu && (
                 <>
-                  <button
-                    onClick={toggleRecurringPause}
-                    disabled={isUploading}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
-                      task.isPaused
-                        ? 'border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
-                        : 'border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100'
-                    }`}
-                  >
-                    {task.isPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
-                    {task.isPaused ? t('manageTasks.resumeRecurring') : t('manageTasks.pauseRecurring')}
-                  </button>
-                  <button
-                    onClick={handleStopRecurring}
-                    disabled={isUploading}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Square size={14} />
-                    {t('manageTasks.stopRecurring')}
-                  </button>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowAdminMenu(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1 overflow-hidden animate-scale-up origin-top-right">
+                    <button 
+                      onClick={() => { setShowAdminMenu(false); if (!isUploading) navigate(`/task/${task.id}/edit`); }}
+                      disabled={isUploading}
+                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none bg-transparent"
+                    >
+                      <Edit size={14} />
+                      {t('taskDetail.editTask')}
+                    </button>
+                    
+                    {task.type !== 'one-time' && (
+                      <>
+                        <button
+                          onClick={() => { setShowAdminMenu(false); toggleRecurringPause(); }}
+                          disabled={isUploading}
+                          className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none bg-transparent"
+                        >
+                          {task.isPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
+                          {task.isPaused ? t('manageTasks.resumeRecurring') : t('manageTasks.pauseRecurring')}
+                        </button>
+                        <button
+                          onClick={() => { setShowAdminMenu(false); handleStopRecurring(); }}
+                          disabled={isUploading}
+                          className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none bg-transparent"
+                        >
+                          <Square size={14} />
+                          {t('manageTasks.stopRecurring')}
+                        </button>
+                      </>
+                    )}
+                    
+                    <div className="h-px bg-slate-100 my-1" />
+                    
+                    <button 
+                      onClick={() => {
+                        setShowAdminMenu(false);
+                        if (isUploading) return;
+                        if (confirm(t('common.confirmDeleteTask'))) {
+                          deleteTask(task.id);
+                          navigate('/');
+                        }
+                      }}
+                      disabled={isUploading}
+                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none bg-transparent"
+                    >
+                      <Trash2 size={14} />
+                      {t('taskDetail.deleteTask')}
+                    </button>
+                  </div>
                 </>
               )}
-              <button 
-                onClick={() => {
-                  if (isUploading) return;
-                  if (confirm(t('common.confirmDeleteTask'))) {
-                    deleteTask(task.id);
-                    navigate('/');
-                  }
-                }}
-                disabled={isUploading}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-200 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Trash2 size={14} />
-                {t('taskDetail.deleteTask')}
-              </button>
             </>
           )}
 
