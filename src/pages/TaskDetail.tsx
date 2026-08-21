@@ -752,6 +752,7 @@ const TaskDetail: React.FC = () => {
                         <img 
                           src={url} 
                           alt={`Attachment ${idx + 1}`} 
+                          loading="lazy"
                           className="w-24 h-24 object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
                           onError={() => markImageBroken(url)}
                         />
@@ -804,6 +805,7 @@ const TaskDetail: React.FC = () => {
                       <img 
                         src={url} 
                         alt={`Completion Proof ${index + 1}`} 
+                        loading="lazy"
                         className="w-32 h-32 object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
                         onError={() => markImageBroken(url!)}
                       />
@@ -900,6 +902,7 @@ const TaskDetail: React.FC = () => {
                         <img 
                           src={up.photoUrl} 
                           alt="Progress Proof" 
+                          loading="lazy"
                           className="max-h-36 max-w-full object-cover rounded-lg border border-slate-200 shadow-sm hover:brightness-95 transition-all"
                           style={{ backgroundColor: '#ffffff' }}
                           onError={() => markImageBroken(up.photoUrl)}
@@ -991,6 +994,7 @@ const TaskDetail: React.FC = () => {
                         <img
                           src={updatePhotoPreviewUrl || updatePhotoStorageId || ''}
                           alt="Update attachment preview"
+                          loading="lazy"
                           className="w-8 h-8 object-cover rounded border border-slate-200 shadow-sm cursor-zoom-in"
                           onClick={() => setActiveZoomUrl(updatePhotoPreviewUrl || updatePhotoStorageId)}
                         />
@@ -1087,6 +1091,7 @@ const TaskDetail: React.FC = () => {
                     <img 
                       src={item.previewUrl} 
                       alt={`Proof Preview ${index + 1}`} 
+                      loading="lazy"
                       className="w-24 h-24 object-cover rounded-lg border border-slate-200 shadow-sm cursor-zoom-in"
                       onClick={() => setActiveZoomUrl(item.previewUrl)}
                     />
@@ -1180,6 +1185,7 @@ const TaskDetail: React.FC = () => {
             <img 
               src={activeZoomUrl} 
               alt="Zoomed Reference" 
+              loading="lazy"
               className="max-w-full max-h-[85vh] object-contain rounded-md"
               style={{ backgroundColor: '#ffffff' }}
               onClick={(e) => e.stopPropagation()}

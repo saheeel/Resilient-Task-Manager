@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { PlusCircle, Edit, Trash2, PackageCheck, UserRoundCog, ArrowDownUp, ChevronRight, User, Search, LayoutGrid, Table } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, PackageCheck, UserRoundCog, ArrowDownUp, ChevronRight, User, Search, LayoutGrid, Table, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { materialStatusToneMap } from '../lib/taskOptions';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
@@ -270,6 +270,18 @@ const ManageTasks: React.FC = () => {
         {isLoading ? (
           <div className="mt-8">
             <TaskListSkeleton count={5} />
+          </div>
+        ) : activeTasks.length === 0 && issues.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-12 mt-8 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mb-4 shadow-sm">
+              <CheckCircle2 size={32} />
+            </div>
+            <h3 className="mb-2 font-bold text-slate-800 dark:text-slate-200 text-lg">
+              {searchQuery ? t('employeeDashboard.noTasksFound') || 'No tasks found' : t('employeeDashboard.allCaughtUp') || 'All caught up!'}
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+              {searchQuery ? 'Try adjusting your search filters.' : 'The team has no active tasks at the moment.'}
+            </p>
           </div>
         ) : viewMode === 'excel' ? (
           <div className="mt-4">

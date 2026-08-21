@@ -4,7 +4,7 @@ import { useTasks } from '../contexts/TaskContext';
 import type { Task } from '../contexts/TaskContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import StatusBadge from '../components/StatusBadge';
-import { PackageCheck, UserRoundCog, ArrowDownUp, ChevronRight, User, Search, LayoutGrid, Table, PlusCircle } from 'lucide-react';
+import { PackageCheck, UserRoundCog, ArrowDownUp, ChevronRight, User, Search, LayoutGrid, Table, PlusCircle, CheckCircle2 } from 'lucide-react';
 import { materialStatusToneMap } from '../lib/taskOptions';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
 import ExcelTaskTable from '../components/ExcelTaskTable';
@@ -284,9 +284,12 @@ const AllTasks: React.FC = () => {
         ) : viewMode === 'excel' ? (
           <ExcelTaskTable tasks={filteredActiveTasks} users={users} currentUser={currentUser} />
         ) : filteredActiveTasks.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center">
-            <h3 className="mb-1 font-semibold text-slate-700">{t('employeeDashboard.allCaughtUp')}</h3>
-            <p className="text-sm text-slate-500">{t('employeeDashboard.noActiveTasks')}</p>
+          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-12 mt-4 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-full flex items-center justify-center mb-4 shadow-sm">
+              <CheckCircle2 size={32} />
+            </div>
+            <h3 className="mb-2 font-bold text-slate-800 dark:text-slate-200 text-lg">{searchQuery ? "No matching tasks" : t('employeeDashboard.allCaughtUp') || 'No tasks found'}</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">{searchQuery ? "Try adjusting your search filters." : t('employeeDashboard.noActiveTasks') || 'There are no tasks available right now.'}</p>
           </div>
         ) : sortBy === 'employee' ? (
           <div className="space-y-2.5">

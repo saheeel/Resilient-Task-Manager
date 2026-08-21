@@ -7,7 +7,7 @@ import StatusBadge from '../components/StatusBadge';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
 import { usePersistentState } from '../hooks/usePersistentState';
 
-import { Pin, MoreVertical, ArrowDownUp, PlusCircle } from 'lucide-react';
+import { Pin, MoreVertical, ArrowDownUp, PlusCircle, CheckCircle2, CalendarClock } from 'lucide-react';
 
 const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -463,9 +463,12 @@ const EmployeeDashboard: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center">
-            <h3 className="mb-1 font-semibold text-slate-700">{t('employeeDashboard.allCaughtUp')}</h3>
-            <p className="text-sm text-slate-500">{t('employeeDashboard.noActiveTasks')}</p>
+          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-10 flex flex-col items-center justify-center text-center">
+            <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mb-4 shadow-sm">
+              <CheckCircle2 size={28} />
+            </div>
+            <h3 className="mb-2 font-bold text-slate-800 dark:text-slate-200 text-base">{t('employeeDashboard.allCaughtUp')}</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">{t('employeeDashboard.noActiveTasks')}</p>
           </div>
         )}
       </div>
@@ -546,8 +549,11 @@ const EmployeeDashboard: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
-            <p className="text-xs font-medium text-slate-400">{t('employeeDashboard.noUpcomingTasks')}</p>
+          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-8 flex flex-col items-center justify-center text-center">
+            <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 rounded-full flex items-center justify-center mb-3">
+              <CalendarClock size={24} />
+            </div>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('employeeDashboard.noUpcomingTasks')}</p>
           </div>
         )}
       </div>

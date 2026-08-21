@@ -758,6 +758,7 @@ const EditTask: React.FC = () => {
                         <img
                           src={attachmentPreviewUrl}
                           alt="Attachment preview"
+                          loading="lazy"
                           className="w-12 h-12 object-cover rounded-lg border border-slate-200 shadow-sm cursor-zoom-in"
                           onClick={() => setActiveZoomUrl(attachmentPreviewUrl)}
                         />
@@ -925,6 +926,7 @@ const EditTask: React.FC = () => {
             <img 
               src={activeZoomUrl} 
               alt="Zoomed Reference" 
+              loading="lazy"
               className="max-w-full max-h-[85vh] object-contain rounded-md"
               style={{ backgroundColor: '#ffffff' }}
               onClick={(e) => e.stopPropagation()}

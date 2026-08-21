@@ -59,7 +59,10 @@ export default defineSchema({
     activeFrom: v.optional(v.string()),
     nextOccurrence: v.optional(v.string()),
     isArchived: v.optional(v.boolean()),
-  }).index("by_isArchived", ["isArchived"]),
+  }).index("by_isArchived", ["isArchived"])
+    .index("by_status", ["status"])
+    .index("by_priority", ["priority"])
+    .index("by_dueDate", ["dueDate"]),
 
   taskUpdates: defineTable({
     taskId: v.string(),
