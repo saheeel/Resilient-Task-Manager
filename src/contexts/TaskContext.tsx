@@ -392,7 +392,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       Object.entries(rawPayload).filter(([_, v]) => v !== undefined)
     );
 
-    await dbAddTask(cleanPayload as any).then(() => {
+    await dbAddTask(cleanPayload as any).then((taskId) => {
       const recipientIds = new Set<string>();
 
       // Loop through assignees and fire off background Web Push notifications (excluding creator)
@@ -403,7 +403,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           userId,
           title: "New Task Assigned! 🚀",
           body: `${taskData.title}\nPriority: ${taskData.priority.toUpperCase()}${assignmentMetadata.assignedByName ? `\nAssigned by: ${assignmentMetadata.assignedByName}` : ''}`,
-          url: "/"
+          url: `/task/${taskId}`
         }).catch((err) => console.error("Push notification action trigger error:", err));
       });
 
@@ -416,7 +416,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           userId: diana.id,
           title: "New Task Created 📋",
           body: `${currentUser?.name || 'Someone'} created task: ${taskData.title}`,
-          url: "/"
+          url: `/task/${taskId}`
         }).catch(err => console.error('Diana notification error:', err));
       });
     });
