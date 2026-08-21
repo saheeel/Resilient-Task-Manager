@@ -286,16 +286,20 @@ const CreateTask: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <button
-        onClick={() => navigate(-1)}
-        className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 mb-6 font-medium transition-colors cursor-pointer bg-transparent border-none p-0"
-      >
-        <ArrowLeft size={16} />
-        {t('createTask.backToDashboard')}
-      </button>
-
-      <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-xl shadow-sm">
+    <div className="max-w-3xl mx-auto px-4 pb-8 pt-2">
+      <div className="
+        flex flex-row justify-between items-center mb-6 gap-3
+        max-sm:fixed max-sm:top-0 max-sm:left-0 max-sm:right-0 max-sm:z-[60] max-sm:bg-white max-sm:dark:bg-slate-900 max-sm:px-4 max-sm:border-b max-sm:border-slate-200 max-sm:dark:border-slate-800 max-sm:shadow-sm
+        max-sm:h-[calc(env(safe-area-inset-top,0px)+4rem)] max-sm:pt-[env(safe-area-inset-top,0px)] max-sm:mb-0
+      ">
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0"
+        >
+          <ArrowLeft size={16} />
+          {t('createTask.backToDashboard')}
+        </button>
+      </div>      <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-xl shadow-sm">
         <h1 className="text-2xl font-bold text-slate-900 mb-6 tracking-tight">
           {parentTask ? t('createTask.createFollowUp') : t('createTask.title')}
         </h1>
