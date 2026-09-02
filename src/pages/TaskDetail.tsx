@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTasks, isAdminRole, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
-import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, StopCircle, MessageSquare, PackageCheck, UserRoundCog, ImageOff, ArrowRightLeft, Upload, Loader2, ExternalLink, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, MessageSquare, PackageCheck, UserRoundCog, ImageOff, ArrowRightLeft, Upload, Loader2, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -32,8 +32,6 @@ const TaskDetail: React.FC = () => {
   const photoInputRef = React.useRef<HTMLInputElement>(null);
 
   const [showTransfer, setShowTransfer] = useState(false);
-  const [showActionMenu, setShowActionMenu] = useState(false);
-  const actionMenuRef = React.useRef<HTMLDivElement>(null);
   const [transferToId, setTransferToId] = useState('');
   const [transferComment, setTransferComment] = useState('');
 
@@ -46,20 +44,6 @@ const TaskDetail: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStage, setUploadStage] = useState<string>('uploading');
   const [uploadFileName, setUploadFileName] = useState('');
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
-        setShowActionMenu(false);
-      }
-    };
-    if (showActionMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showActionMenu]);
 
   useEffect(() => {
     if (!isUploading) return;
@@ -337,19 +321,10 @@ const TaskDetail: React.FC = () => {
   };
 
   const toggleRecurringPause = () => {
+    if (!task || task.type === 'one-time') return;
     editTask(task.id, {
       isPaused: !task.isPaused,
       pausedAt: task.isPaused ? undefined : new Date().toISOString(),
-    });
-  };
-
-  const handleStopRecurring = () => {
-    editTask(task.id, {
-      type: 'one-time',
-      recurringDay: undefined,
-      recurringTime: undefined,
-      isPaused: false,
-      pausedAt: undefined,
     });
   };
 
@@ -417,7 +392,30 @@ const TaskDetail: React.FC = () => {
           {t('common.back')}
         </button>
 
-        <div className="flex items-center gap-1.5 relative" ref={actionMenuRef}>
+        <div className="flex items-center gap-1.5">
+          {/* Create Follow-up (if completed/blocked) */}
+          {(task.status === 'completed' || task.status === 'could_not_complete' || task.status === 'blocked') && (
+            <button
+              onClick={handleCreateFollowUp}
+              disabled={isUploading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-xl shadow-2xs transition-colors cursor-pointer justify-center"
+            >
+              <span>➕ {t('taskDetail.createFollowUp')}</span>
+            </button>
+          )}
+
+          {/* Reopen Task (if admin & marked incomplete/blocked) */}
+          {isAdminRole(currentUser.role) && (task.status === 'could_not_complete' || task.status === 'blocked') && (
+            <button
+              onClick={handleReopen}
+              disabled={isUploading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 rounded-xl shadow-2xs transition-colors cursor-pointer justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <CheckCircle size={14} />
+              <span>{t('taskDetail.reopenTask')}</span>
+            </button>
+          )}
+
           {/* Edit button */}
           {isAdminRole(currentUser.role) && (
             <button 
@@ -483,70 +481,6 @@ const TaskDetail: React.FC = () => {
             >
               <Trash2 size={15} />
             </button>
-          )}
-
-          {/* More Options Dropdown Menu (for Stop Recurring, Follow-up, Reopen) */}
-          {(isAdminRole(currentUser.role) && (task.type !== 'one-time' || task.status === 'could_not_complete' || task.status === 'blocked') || (task.status === 'completed' || task.status === 'could_not_complete' || task.status === 'blocked')) && (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowActionMenu(!showActionMenu)}
-                disabled={isUploading}
-                aria-label="More task options"
-                className="p-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <MoreHorizontal size={15} />
-              </button>
-
-              {showActionMenu && (
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
-                  {/* Stop Recurring */}
-                  {isAdminRole(currentUser.role) && task.type !== 'one-time' && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleStopRecurring();
-                        setShowActionMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer"
-                    >
-                      <StopCircle size={14} className="text-slate-400" />
-                      <span>{t('manageTasks.stopRecurring')}</span>
-                    </button>
-                  )}
-
-                  {/* Create Follow-up */}
-                  {(task.status === 'completed' || task.status === 'could_not_complete' || task.status === 'blocked') && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleCreateFollowUp();
-                        setShowActionMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer font-medium"
-                    >
-                      <span className="text-sm">➕</span>
-                      <span>{t('taskDetail.createFollowUp')}</span>
-                    </button>
-                  )}
-
-                  {/* Reopen Task */}
-                  {isAdminRole(currentUser.role) && (task.status === 'could_not_complete' || task.status === 'blocked') && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleReopen();
-                        setShowActionMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-emerald-600 dark:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer font-medium"
-                    >
-                      <CheckCircle size={14} />
-                      <span>{t('taskDetail.reopenTask')}</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
           )}
         </div>
       </div>
