@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { PlusCircle, Edit, Trash2, PackageCheck, UserRoundCog, ArrowDownUp, ChevronRight, User, Search, LayoutGrid, Table, CheckCircle2, Repeat } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, PackageCheck, UserRoundCog, ArrowDownUp, ChevronRight, ChevronDown, ChevronUp, AlertTriangle, User, Search, LayoutGrid, Table, CheckCircle2, Repeat } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { materialStatusToneMap } from '../lib/taskOptions';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
@@ -17,6 +17,7 @@ const ManageTasks: React.FC = () => {
   const [viewMode, setViewMode] = usePersistentState<'grid' | 'excel'>('manageTasks_viewMode', 'excel');
   const [searchQuery, setSearchQuery] = usePersistentState<string>('manageTasks_searchQuery', '');
   const [collapsedSectionsArray, setCollapsedSectionsArray] = usePersistentState<string[]>('manageTasks_collapsed', []);
+  const [isIssuesCollapsed, setIsIssuesCollapsed] = usePersistentState<boolean>('manageTasks_issues_collapsed', false);
   const [processingTasks, setProcessingTasks] = useState<Set<string>>(new Set());
   const collapsedSections = new Set(collapsedSectionsArray);
   const { tasks, users, currentUser, deleteTask, updateTaskStatus, isLoading } = useTasks();
@@ -184,81 +185,95 @@ const ManageTasks: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Attention Required Section */}
+      {/* Attention Required Collapsible Accordion Section */}
       {issues.length > 0 && (
-        <div className="mb-8">
-          <h2 className="font-bold text-slate-900 dark:text-slate-100 text-lg mb-3 tracking-tight">{t('manageTasks.attentionRequired')}</h2>
-          <div className="flex flex-col gap-3">
-            {issues.map(task => (
-              <div 
-                key={task.id} 
-                className="bg-red-50 dark:bg-rose-950/60 hover:bg-red-100/80 dark:hover:bg-rose-900/60 border-2 border-red-300 dark:border-rose-700/80 rounded-xl p-4 cursor-pointer transition-colors shadow-xs"
-                onClick={() => navigate(`/task/${task.id}`)}
-              >
-                <div className="flex justify-between items-start gap-4">
-                  <span className="font-bold text-slate-900 dark:text-rose-100 text-sm sm:text-base leading-snug">{task.title}</span>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <StatusBadge status={task.status} />
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/task/${task.id}/edit`);
-                      }}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors border-none bg-transparent cursor-pointer"
-                      title={t('manageTasks.editTask')}
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm(t('common.confirmDeleteTask'))) {
-                          deleteTask(task.id);
-                        }
-                      }}
-                      className="p-1.5 text-slate-400 hover:text-red-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors border-none bg-transparent cursor-pointer"
-                      title={t('manageTasks.deleteTask')}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="mt-2.5 p-2.5 rounded-lg bg-white/90 dark:bg-slate-900/90 border border-red-200 dark:border-rose-800/80 text-xs sm:text-sm text-slate-800 dark:text-slate-200 font-medium shadow-xs">
-                  <span className="font-bold text-red-600 dark:text-rose-400">{t('common.reason')}:</span> {task.blockReason || t('manageTasks.noReasonProvided')}
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-xs text-slate-600 dark:text-slate-300 font-normal">
-                  {task.assignedByName && (
-                    <div className="flex items-center gap-1">
-                      <span className="font-semibold text-slate-700 dark:text-slate-200">{t('common.assignedBy')}:</span>
-                      <span>{task.assignedByName}</span>
+        <div className="mb-6 rounded-2xl border border-rose-300 dark:border-rose-900/80 bg-rose-50/50 dark:bg-rose-950/30 overflow-hidden shadow-xs transition-all">
+          <button
+            type="button"
+            onClick={() => setIsIssuesCollapsed(!isIssuesCollapsed)}
+            className="w-full flex items-center justify-between p-3.5 sm:px-4 text-left cursor-pointer border-none bg-transparent hover:bg-rose-100/50 dark:hover:bg-rose-900/30 transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <AlertTriangle size={15} />
+              </div>
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base tracking-tight">
+                {t('manageTasks.attentionRequired')}
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-200 font-bold">
+                {issues.length}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-semibold">
+              <span>{isIssuesCollapsed ? (t('common.show') || 'Show') : (t('common.hide') || 'Hide')}</span>
+              {isIssuesCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+            </div>
+          </button>
+
+          {!isIssuesCollapsed && (
+            <div className="p-3.5 sm:p-4 pt-0 flex flex-col gap-2.5 border-t border-rose-200/60 dark:border-rose-900/40 mt-1">
+              {issues.map(task => (
+                <div 
+                  key={task.id} 
+                  className="bg-white dark:bg-slate-900 hover:bg-rose-50/60 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl p-3 sm:p-3.5 cursor-pointer transition-colors shadow-2xs"
+                  onClick={() => navigate(`/task/${task.id}`)}
+                >
+                  <div className="flex justify-between items-start gap-3">
+                    <span className="font-bold text-slate-900 dark:text-rose-100 text-sm leading-snug">{task.title}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <StatusBadge status={task.status} />
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/task/${task.id}/edit`);
+                        }}
+                        className="p-1 text-slate-400 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors border-none bg-transparent cursor-pointer"
+                        title={t('manageTasks.editTask')}
+                      >
+                        <Edit size={14} />
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(t('common.confirmDeleteTask'))) {
+                            deleteTask(task.id);
+                          }
+                        }}
+                        className="p-1 text-slate-400 hover:text-red-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors border-none bg-transparent cursor-pointer"
+                        title={t('manageTasks.deleteTask')}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <span className="font-semibold text-slate-700 dark:text-slate-200">{t('taskDetail.assignedTo')}:</span>
-                    <span>
+                  </div>
+                  
+                  <div className="mt-2 p-2 rounded-lg bg-rose-50/70 dark:bg-slate-950/80 border border-rose-200/70 dark:border-rose-900/60 text-xs text-slate-800 dark:text-slate-200 font-medium">
+                    <span className="font-bold text-red-600 dark:text-rose-400">{t('common.reason')}:</span> {task.blockReason || t('manageTasks.noReasonProvided')}
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                    {task.assignedByName && (
+                      <div>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">{t('common.assignedBy')}:</span> {task.assignedByName}
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">{t('taskDetail.assignedTo')}:</span>{' '}
                       {task.assignedTo.length > 0 
                         ? task.assignedTo.map(id => users.find(u => u.id === id)?.name).join(', ')
                         : t('common.unassigned')}
-                    </span>
+                    </div>
+                    {task.markedIssueAt && (
+                      <div className="text-red-700 dark:text-rose-300 font-medium">
+                        • {formatDateTime(task.markedIssueAt, { dateStyle: 'short', timeStyle: 'short' })}
+                      </div>
+                    )}
                   </div>
-                  {task.createdAt && (
-                    <div className="flex items-center gap-1">
-                      <span className="font-semibold text-slate-700 dark:text-slate-200">• {t('manageTasks.assignedAt')}:</span>
-                      <span>{formatDateTime(task.createdAt, { dateStyle: 'short', timeStyle: 'short' })}</span>
-                    </div>
-                  )}
-                  {task.markedIssueAt && (
-                    <div className="flex items-center gap-1 text-red-800 dark:text-rose-200 font-semibold bg-red-100 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-red-200 dark:border-rose-800/60">
-                      <span>• {t('manageTasks.markedIncompleteAt')}:</span>
-                      <span>{formatDateTime(task.markedIssueAt, { dateStyle: 'short', timeStyle: 'short' })}</span>
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

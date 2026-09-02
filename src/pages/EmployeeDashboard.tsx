@@ -7,7 +7,7 @@ import StatusBadge from '../components/StatusBadge';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
 import { usePersistentState } from '../hooks/usePersistentState';
 
-import { Pin, MoreVertical, ArrowDownUp, CheckCircle2, Repeat, CalendarClock, PlusCircle, Check } from 'lucide-react';
+import { Pin, MoreVertical, ArrowDownUp, CheckCircle2, Repeat, CalendarClock, PlusCircle, Check, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 
 const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -23,6 +23,7 @@ const EmployeeDashboard: React.FC = () => {
   const [sortBy, setSortBy] = usePersistentState<'default' | 'priority' | 'dueDate' | 'frequency'>('employeeDashboard_sortBy', 'default');
   const [taskTypeFilter, setTaskTypeFilter] = usePersistentState<'all' | 'recurring' | 'one-time'>('employeeDashboard_typeFilter', 'all');
   const [showTodayCompleted, setShowTodayCompleted] = usePersistentState('employeeDashboard_showToday', true);
+  const [isIssuesCollapsed, setIsIssuesCollapsed] = usePersistentState<boolean>('employeeDashboard_issues_collapsed', false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [processingTasks, setProcessingTasks] = useState<Set<string>>(new Set());
 
@@ -442,29 +443,54 @@ const EmployeeDashboard: React.FC = () => {
         </div>
       )}
 
+      {/* Blocked / Issue Tasks Collapsible Accordion */}
       {issueTasks.length > 0 && (
-        <div className="mb-8">
-          <h2 className="mb-3 text-base font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('app.blockedTasks')}</h2>
-          <div className="flex flex-col gap-3">
-            {issueTasks.map((task) => (
-              <div
-                key={task.id}
-                className="cursor-pointer rounded-xl border border-red-300 dark:border-rose-700/80 bg-red-50 dark:bg-rose-950/60 p-4 transition-all hover:bg-red-100/80 dark:hover:bg-rose-900/60 shadow-sm"
-                onClick={() => navigate(`/task/${task.id}`)}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <span className="text-sm font-bold text-slate-900 dark:text-rose-100">{task.title}</span>
-                  <StatusBadge status={task.status} />
-                </div>
-                <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-rose-200 font-medium">{taskPreview(task)}</p>
-                {task.blockReason && (
-                  <div className="mt-3 rounded-lg border border-red-200 dark:border-rose-800/80 bg-white/90 dark:bg-slate-900/90 px-3 py-2 text-xs font-medium text-slate-800 dark:text-slate-200 shadow-xs">
-                    <span className="font-bold text-red-600 dark:text-rose-400">{t('common.reason')}:</span> {task.blockReason}
-                  </div>
-                )}
+        <div className="mb-6 rounded-2xl border border-rose-300 dark:border-rose-900/80 bg-rose-50/50 dark:bg-rose-950/30 overflow-hidden shadow-xs transition-all">
+          <button
+            type="button"
+            onClick={() => setIsIssuesCollapsed(!isIssuesCollapsed)}
+            className="w-full flex items-center justify-between p-3.5 sm:px-4 text-left cursor-pointer border-none bg-transparent hover:bg-rose-100/50 dark:hover:bg-rose-900/30 transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <AlertTriangle size={15} />
               </div>
-            ))}
-          </div>
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base tracking-tight">
+                {t('app.blockedTasks')}
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-200 font-bold">
+                {issueTasks.length}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-semibold">
+              <span>{isIssuesCollapsed ? (t('common.show') || 'Show') : (t('common.hide') || 'Hide')}</span>
+              {isIssuesCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+            </div>
+          </button>
+
+          {!isIssuesCollapsed && (
+            <div className="p-3.5 sm:p-4 pt-0 flex flex-col gap-2.5 border-t border-rose-200/60 dark:border-rose-900/40 mt-1">
+              {issueTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="cursor-pointer rounded-xl border border-rose-200 dark:border-rose-800/60 bg-white dark:bg-slate-900 p-3 sm:p-3.5 transition-all hover:bg-rose-50/60 dark:hover:bg-rose-950/40 shadow-2xs"
+                  onClick={() => navigate(`/task/${task.id}`)}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-sm font-bold text-slate-900 dark:text-rose-100">{task.title}</span>
+                    <StatusBadge status={task.status} />
+                  </div>
+                  <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-rose-200">{taskPreview(task)}</p>
+                  {task.blockReason && (
+                    <div className="mt-2 rounded-lg border border-rose-200/70 dark:border-rose-900/60 bg-rose-50/70 dark:bg-slate-950/80 px-2.5 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200">
+                      <span className="font-bold text-red-600 dark:text-rose-400">{t('common.reason')}:</span> {task.blockReason}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
