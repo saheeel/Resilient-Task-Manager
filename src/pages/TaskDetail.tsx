@@ -417,12 +417,14 @@ const TaskDetail: React.FC = () => {
           {t('common.back')}
         </button>
 
-        <div className="flex items-center gap-2 relative" ref={actionMenuRef}>
-          {/* Edit button for admins */}
+        <div className="flex items-center gap-1.5 relative" ref={actionMenuRef}>
+          {/* Edit button */}
           {isAdminRole(currentUser.role) && (
             <button 
+              type="button"
               onClick={() => !isUploading && navigate(`/task/${task.id}/edit`)}
               disabled={isUploading}
+              title={t('taskDetail.editTask')}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Edit size={13} />
@@ -430,51 +432,73 @@ const TaskDetail: React.FC = () => {
             </button>
           )}
 
-          {/* More Actions Dropdown Menu */}
-          {(isAdminRole(currentUser.role) || (task.assignedTo.includes(currentUser.id) && !task.pendingTransferTo && task.status !== 'completed')) && (
+          {/* Pause / Resume Icon button for recurring tasks */}
+          {isAdminRole(currentUser.role) && task.type !== 'one-time' && (
+            <button
+              type="button"
+              onClick={toggleRecurringPause}
+              disabled={isUploading}
+              title={task.isPaused ? t('manageTasks.resumeRecurring') : t('manageTasks.pauseRecurring')}
+              className={`p-2 border rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50 ${
+                task.isPaused
+                  ? 'border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
+                  : 'border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60'
+              }`}
+            >
+              {task.isPaused ? <PlayCircle size={15} /> : <PauseCircle size={15} />}
+            </button>
+          )}
+
+          {/* Transfer Task Icon button for assigned users */}
+          {task.assignedTo.includes(currentUser.id) && !task.pendingTransferTo && task.status !== 'completed' && (
+            <button 
+              type="button"
+              onClick={() => setShowTransfer(!showTransfer)}
+              title={t('taskDetail.transferTask')}
+              className={`p-2 border rounded-xl shadow-2xs transition-colors cursor-pointer ${
+                showTransfer 
+                  ? 'border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50' 
+                  : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750'
+              }`}
+            >
+              <ArrowRightLeft size={15} />
+            </button>
+          )}
+
+          {/* Delete Icon button */}
+          {isAdminRole(currentUser.role) && (
+            <button 
+              type="button"
+              onClick={() => {
+                if (isUploading) return;
+                if (confirm(t('common.confirmDeleteTask'))) {
+                  deleteTask(task.id);
+                  navigate('/');
+                }
+              }}
+              disabled={isUploading}
+              title={t('taskDetail.deleteTask')}
+              className="p-2 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 bg-rose-50/70 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Trash2 size={15} />
+            </button>
+          )}
+
+          {/* More Options Dropdown Menu (for Stop Recurring, Follow-up, Reopen) */}
+          {(isAdminRole(currentUser.role) && (task.type !== 'one-time' || task.status === 'could_not_complete' || task.status === 'blocked') || (task.status === 'completed' || task.status === 'could_not_complete' || task.status === 'blocked')) && (
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowActionMenu(!showActionMenu)}
                 disabled={isUploading}
                 aria-label="More task options"
-                className="p-1.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+                className="p-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
               >
-                <MoreHorizontal size={16} />
+                <MoreHorizontal size={15} />
               </button>
 
               {showActionMenu && (
                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
-                  {/* Transfer task option */}
-                  {task.assignedTo.includes(currentUser.id) && !task.pendingTransferTo && task.status !== 'completed' && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowTransfer(true);
-                        setShowActionMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer"
-                    >
-                      <ArrowRightLeft size={14} className="text-slate-400" />
-                      <span>{t('taskDetail.transferTask')}</span>
-                    </button>
-                  )}
-
-                  {/* Pause / Resume for Recurring */}
-                  {isAdminRole(currentUser.role) && task.type !== 'one-time' && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        toggleRecurringPause();
-                        setShowActionMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer"
-                    >
-                      {task.isPaused ? <PlayCircle size={14} className="text-emerald-500" /> : <PauseCircle size={14} className="text-amber-500" />}
-                      <span>{task.isPaused ? t('manageTasks.resumeRecurring') : t('manageTasks.pauseRecurring')}</span>
-                    </button>
-                  )}
-
                   {/* Stop Recurring */}
                   {isAdminRole(currentUser.role) && task.type !== 'one-time' && (
                     <button
@@ -518,27 +542,6 @@ const TaskDetail: React.FC = () => {
                       <CheckCircle size={14} />
                       <span>{t('taskDetail.reopenTask')}</span>
                     </button>
-                  )}
-
-                  {/* Delete Task */}
-                  {isAdminRole(currentUser.role) && (
-                    <>
-                      <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowActionMenu(false);
-                          if (confirm(t('common.confirmDeleteTask'))) {
-                            deleteTask(task.id);
-                            navigate('/');
-                          }
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-red-600 dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/30 transition-colors border-none bg-transparent cursor-pointer font-medium"
-                      >
-                        <Trash2 size={14} />
-                        <span>{t('taskDetail.deleteTask')}</span>
-                      </button>
-                    </>
                   )}
                 </div>
               )}
