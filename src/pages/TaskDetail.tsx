@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTasks, isAdminRole, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
-import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, Square, MessageSquare, PackageCheck, UserRoundCog, ImageOff, ArrowRightLeft, Upload, Loader2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, Camera, Calendar, Clock, AlertCircle, Paperclip, Edit, Trash2, Play, Eye, X, PauseCircle, PlayCircle, StopCircle, MessageSquare, PackageCheck, UserRoundCog, ImageOff, ArrowRightLeft, Upload, Loader2, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -429,36 +429,36 @@ const TaskDetail: React.FC = () => {
               )}
               
               {/* Inline Actions */}
-              <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button 
                   onClick={() => !isUploading && navigate(`/task/${task.id}/edit`)}
                   disabled={isUploading}
-                  className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Edit size={14} />
-                  {t('taskDetail.editTask')}
+                  <Edit size={13} />
+                  <span>{t('taskDetail.editTask')}</span>
                 </button>
                 {task.type !== 'one-time' && (
                   <>
                     <button
                       onClick={toggleRecurringPause}
                       disabled={isUploading}
-                      className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 border text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                         task.isPaused
-                          ? 'border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
-                          : 'border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100'
+                          ? 'border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
+                          : 'border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60'
                       }`}
                     >
-                      {task.isPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
-                      <span className="hidden sm:inline">{task.isPaused ? t('manageTasks.resumeRecurring') : t('manageTasks.pauseRecurring')}</span>
+                      {task.isPaused ? <PlayCircle size={13} /> : <PauseCircle size={13} />}
+                      <span>{task.isPaused ? t('manageTasks.resumeRecurring') : t('manageTasks.pauseRecurring')}</span>
                     </button>
                     <button
                       onClick={handleStopRecurring}
                       disabled={isUploading}
-                      className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Square size={14} />
-                      <span className="hidden sm:inline">{t('manageTasks.stopRecurring')}</span>
+                      <StopCircle size={13} />
+                      <span>{t('manageTasks.stopRecurring')}</span>
                     </button>
                   </>
                 )}
@@ -471,10 +471,10 @@ const TaskDetail: React.FC = () => {
                     }
                   }}
                   disabled={isUploading}
-                  className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 border border-red-200 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg shadow-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-200 dark:border-rose-800 text-xs font-semibold text-red-600 dark:text-rose-300 bg-red-50 dark:bg-rose-950/40 hover:bg-red-100 dark:hover:bg-rose-900/60 rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Trash2 size={14} />
-                  {t('taskDetail.deleteTask')}
+                  <Trash2 size={13} />
+                  <span>{t('taskDetail.deleteTask')}</span>
                 </button>
               </div>
             </>
@@ -484,10 +484,14 @@ const TaskDetail: React.FC = () => {
           {task.assignedTo.includes(currentUser.id) && !task.pendingTransferTo && task.status !== 'completed' && (
             <button 
               onClick={() => setShowTransfer(!showTransfer)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer flex-1 sm:flex-initial justify-center ${showTransfer ? 'border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100' : 'border-slate-200 text-slate-700 bg-slate-50 hover:bg-slate-100'}`}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer justify-center ${
+                showTransfer 
+                  ? 'border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100' 
+                  : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750'
+              }`}
             >
-              <ArrowRightLeft size={14} />
-              Transfer Task
+              <ArrowRightLeft size={13} />
+              <span>{t('taskDetail.transferTask')}</span>
             </button>
           )}
         </div>
@@ -495,29 +499,29 @@ const TaskDetail: React.FC = () => {
 
       {/* Transfer UI block */}
       {showTransfer && (
-        <div className="bg-white p-5 border border-indigo-200 rounded-xl shadow-sm mb-6 bg-indigo-50/30">
-          <h3 className="font-bold text-slate-900 text-sm mb-3">Transfer Task to Employee</h3>
+        <div className="bg-white dark:bg-slate-900 p-5 border border-indigo-200 dark:border-indigo-800 rounded-2xl shadow-sm mb-6 bg-indigo-50/20 dark:bg-indigo-950/20">
+          <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm mb-3">{t('taskDetail.transferTaskToEmployee')}</h3>
           <div className="space-y-3">
             <select
               value={transferToId}
               onChange={(e) => setTransferToId(e.target.value)}
-              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              className="w-full text-sm px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             >
-              <option value="">{t('taskDetail.selectColleague')}</option>
+              <option value="" className="dark:bg-slate-800">{t('taskDetail.selectColleague')}</option>
               {otherUsers.map(emp => (
-                <option key={emp.id} value={emp.id}>{emp.name}</option>
+                <option key={emp.id} value={emp.id} className="dark:bg-slate-800">{emp.name}</option>
               ))}
             </select>
             <textarea
               value={transferComment}
               onChange={(e) => setTransferComment(e.target.value)}
-              placeholder="Optional comment to the recipient..."
+              placeholder={t('taskDetail.transferReasonOptional')}
               rows={2}
-              className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              className="w-full text-sm px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             />
             <div className="flex gap-2 justify-end pt-2">
-              <button onClick={() => setShowTransfer(false)} className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer">Cancel</button>
-              <button onClick={handleTransferRequest} disabled={!transferToId} className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:text-white/70 rounded-lg shadow-sm transition-colors cursor-pointer">Send Request</button>
+              <button onClick={() => setShowTransfer(false)} className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 rounded-xl transition-colors cursor-pointer">{t('common.cancel')}</button>
+              <button onClick={handleTransferRequest} disabled={!transferToId} className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:text-white/70 rounded-xl shadow-sm transition-colors cursor-pointer">{t('taskDetail.sendTransferRequest')}</button>
             </div>
           </div>
         </div>

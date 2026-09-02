@@ -440,6 +440,10 @@ const translations: Record<Language, TranslationTree> = {
       doNotCloseWindow: 'Please stay on this page until the upload completes.',
       createFollowUp: 'Create Follow-up Task',
       followUpToPrevious: 'Follow-up to previous task',
+      transferTask: 'Transfer Task',
+      transferTaskToEmployee: 'Transfer Task to Employee',
+      transferReasonOptional: 'Reason for transfer (optional)',
+      sendTransferRequest: 'Send Transfer Request',
     },
     materials: {
       available: 'Materials are available',
@@ -856,6 +860,10 @@ const translations: Record<Language, TranslationTree> = {
       doNotCloseWindow: 'Bitte bleibe auf dieser Seite, bis der Upload abgeschlossen ist.',
       createFollowUp: 'Folgeaufgabe erstellen',
       followUpToPrevious: 'Folgeaufgabe von vorheriger Aufgabe',
+      transferTask: 'Aufgabe übertragen',
+      transferTaskToEmployee: 'Aufgabe an Mitarbeiter übertragen',
+      transferReasonOptional: 'Grund für die Übertragung (optional)',
+      sendTransferRequest: 'Übertragungsanfrage senden',
     },
     materials: {
       available: 'Materialien sind vorhanden',
