@@ -430,23 +430,6 @@ const TaskDetail: React.FC = () => {
             </button>
           )}
 
-          {/* Pause / Resume Icon button for recurring tasks */}
-          {isAdminRole(currentUser.role) && task.type !== 'one-time' && (
-            <button
-              type="button"
-              onClick={toggleRecurringPause}
-              disabled={isUploading}
-              title={task.isPaused ? t('manageTasks.resumeRecurring') : t('manageTasks.pauseRecurring')}
-              className={`p-2 border rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50 ${
-                task.isPaused
-                  ? 'border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
-                  : 'border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60'
-              }`}
-            >
-              {task.isPaused ? <PlayCircle size={15} /> : <PauseCircle size={15} />}
-            </button>
-          )}
-
           {/* Transfer Task Button for assigned users */}
           {task.assignedTo.includes(currentUser.id) && !task.pendingTransferTo && task.status !== 'completed' && (
             <button 
@@ -461,6 +444,23 @@ const TaskDetail: React.FC = () => {
             >
               <ArrowRightLeft size={13} />
               <span>{t('taskDetail.transferTask')}</span>
+            </button>
+          )}
+
+          {/* Pause / Resume Icon button for recurring tasks */}
+          {isAdminRole(currentUser.role) && task.type !== 'one-time' && (
+            <button
+              type="button"
+              onClick={toggleRecurringPause}
+              disabled={isUploading}
+              title={task.isPaused ? t('manageTasks.resumeRecurring') : t('manageTasks.pauseRecurring')}
+              className={`p-2 border rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50 ${
+                task.isPaused
+                  ? 'border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
+                  : 'border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60'
+              }`}
+            >
+              {task.isPaused ? <PlayCircle size={15} /> : <PauseCircle size={15} />}
             </button>
           )}
 
