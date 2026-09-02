@@ -445,36 +445,36 @@ const EmployeeDashboard: React.FC = () => {
 
       {/* Blocked / Issue Tasks Collapsible Accordion */}
       {issueTasks.length > 0 && (
-        <div className="mb-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 overflow-hidden shadow-sm transition-all">
+        <div className="mb-6 rounded-2xl border border-rose-500/30 dark:border-rose-500/25 bg-rose-500/[0.03] dark:bg-rose-950/20 overflow-hidden shadow-xs transition-all">
           <button
             type="button"
             onClick={() => setIsIssuesCollapsed(!isIssuesCollapsed)}
-            className="w-full flex items-center justify-between p-3.5 sm:px-4 text-left cursor-pointer border-none bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+            className="w-full flex items-center justify-between p-3.5 sm:px-4 text-left cursor-pointer border-none bg-transparent hover:bg-rose-500/[0.06] dark:hover:bg-rose-950/40 transition-colors"
           >
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
                 <AlertTriangle size={15} />
               </div>
-              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base tracking-tight">
+              <span className="font-bold text-slate-900 dark:text-rose-100 text-sm sm:text-base tracking-tight">
                 {t('app.blockedTasks')}
               </span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border border-slate-200 dark:border-slate-700">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-700 dark:text-rose-300 font-semibold border border-rose-500/20">
                 {issueTasks.length}
               </span>
             </div>
 
-            <div className="flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-medium transition-colors">
+            <div className="flex items-center gap-2 text-rose-600/70 dark:text-rose-300/70 hover:text-rose-700 dark:hover:text-rose-200 text-xs font-medium transition-colors">
               <span>{isIssuesCollapsed ? (t('common.show') || 'Show') : (t('common.hide') || 'Hide')}</span>
               {isIssuesCollapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
             </div>
           </button>
 
           {!isIssuesCollapsed && (
-            <div className="p-3.5 sm:p-4 pt-0 flex flex-col gap-2.5 border-t border-slate-100 dark:border-slate-800 mt-1">
+            <div className="p-3.5 sm:p-4 pt-0 flex flex-col gap-2.5 border-t border-rose-500/15 dark:border-rose-900/30 mt-1">
               {issueTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="cursor-pointer rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-950/60 p-3 sm:p-3.5 transition-all hover:bg-slate-100/70 dark:hover:bg-slate-950 shadow-2xs"
+                  className="cursor-pointer rounded-xl border border-rose-500/20 dark:border-rose-900/40 hover:border-rose-500/40 bg-white dark:bg-slate-900/95 p-3 sm:p-3.5 transition-all hover:bg-rose-50/40 dark:hover:bg-slate-900 shadow-2xs"
                   onClick={() => navigate(`/task/${task.id}`)}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -483,8 +483,8 @@ const EmployeeDashboard: React.FC = () => {
                   </div>
                   <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">{taskPreview(task)}</p>
                   {task.blockReason && (
-                    <div className="mt-2 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
-                      <span className="font-bold text-amber-600 dark:text-amber-400">{t('common.reason')}:</span> {task.blockReason}
+                    <div className="mt-2 rounded-lg border border-rose-500/20 dark:border-rose-900/40 bg-rose-500/[0.06] dark:bg-rose-950/30 px-2.5 py-1.5 text-xs font-medium text-slate-800 dark:text-slate-200">
+                      <span className="font-bold text-rose-600 dark:text-rose-400">{t('common.reason')}:</span> {task.blockReason}
                     </div>
                   )}
                 </div>
