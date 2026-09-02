@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
-import { PlusCircle, Edit, Trash2, PackageCheck, UserRoundCog, ArrowDownUp, ChevronRight, User, Search, LayoutGrid, Table, CheckCircle2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, PackageCheck, UserRoundCog, ArrowDownUp, ChevronRight, User, Search, LayoutGrid, Table, CheckCircle2, Repeat } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { materialStatusToneMap } from '../lib/taskOptions';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
@@ -264,18 +264,102 @@ const ManageTasks: React.FC = () => {
 
       {/* Active Tasks Bar */}
       <div>
+        {/* Top Header Row: Title & Search & View Mode */}
         <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <h2 className="font-bold text-slate-900 dark:text-slate-100 text-lg tracking-tight flex items-center gap-2">
-            {t('manageTasks.activeTasks')}
-            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
+          <div className="flex items-center gap-2.5">
+            <h2 className="font-bold text-slate-900 dark:text-slate-100 text-lg tracking-tight">
+              {t('manageTasks.activeTasks')}
+            </h2>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border border-slate-200 dark:border-slate-700">
               {filteredTasks.length}
             </span>
-          </h2>
+          </div>
           
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Free-Text Search Input */}
+            <div className="relative flex-1 sm:w-64">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder={t('manageTasks.searchPlaceholder') || "Search tasks..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+              />
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="inline-flex items-center p-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800/80 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setViewMode('excel')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all border-none cursor-pointer ${
+                  viewMode === 'excel'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 bg-transparent'
+                }`}
+              >
+                <Table size={13} /> <span>{t('common.excelTable')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all border-none cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 bg-transparent'
+                }`}
+              >
+                <LayoutGrid size={13} /> <span>{t('common.groupedCards')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter & Sort Controls Row */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          {/* Segmented Filter for All vs Recurring vs One-Time */}
+          <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setTypeFilter('all')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                typeFilter === 'all'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              {t('employeeDashboard.allTasksTab') || 'All Tasks'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTypeFilter('recurring')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                typeFilter === 'recurring'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <Repeat size={13} />
+              <span>{t('employeeDashboard.recurringTab') || 'Recurring Routines'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTypeFilter('one-time')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                typeFilter === 'one-time'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              {t('employeeDashboard.oneTimeTab') || 'One-Time Tasks'}
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
             {/* Filter by Employee */}
-            <div className="flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1 shadow-2xs">
-              <User size={13} className="text-slate-400" />
+            <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 shadow-2xs">
+              <User size={14} className="text-slate-400" />
               <select
                 value={employeeFilter}
                 onChange={(e) => setEmployeeFilter(e.target.value)}
@@ -290,64 +374,10 @@ const ManageTasks: React.FC = () => {
               </select>
             </div>
 
-            {/* Filter by Task Type / Frequency */}
-            <div className="flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1 shadow-2xs">
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="border-none bg-transparent py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
-                title="Filter by frequency / type"
-              >
-                <option value="all" className="dark:bg-slate-800">{t('common.allTypes') || 'All Types'}</option>
-                <option value="recurring" className="dark:bg-slate-800">{t('employeeDashboard.recurringTab') || 'Recurring Routines'}</option>
-                <option value="one-time" className="dark:bg-slate-800">{t('employeeDashboard.oneTimeTab') || 'One-Time Tasks'}</option>
-                <option value="daily" className="dark:bg-slate-800">📅 Daily</option>
-                <option value="weekly" className="dark:bg-slate-800">🗓️ Weekly</option>
-                <option value="monthly" className="dark:bg-slate-800">📆 Monthly</option>
-              </select>
-            </div>
-
-            {/* Free-Text Search Input */}
-            <div className="relative flex-1 sm:w-48">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder={t('manageTasks.searchPlaceholder') || "Search tasks..."}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center p-1 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
-              <button
-                onClick={() => setViewMode('excel')}
-                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all border-none cursor-pointer ${
-                  viewMode === 'excel'
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 bg-transparent'
-                }`}
-              >
-                <Table className="w-3.5 h-3.5" /> {t('common.excelTable')}
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all border-none cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 bg-transparent'
-                }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" /> {t('common.groupedCards')}
-              </button>
-            </div>
-
+            {/* Sort selector for Grid view */}
             {viewMode === 'grid' && (
-              <div className="flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1 shadow-2xs">
-                <label htmlFor="admin-sort" className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors" title={t('employeeDashboard.sortMyWork')}>
-                  <ArrowDownUp size={14} />
-                </label>
+              <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 shadow-2xs">
+                <ArrowDownUp size={14} className="text-slate-400" />
                 <select
                   id="admin-sort"
                   value={sortBy}
