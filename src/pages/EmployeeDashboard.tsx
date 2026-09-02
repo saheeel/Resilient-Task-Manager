@@ -7,11 +7,11 @@ import StatusBadge from '../components/StatusBadge';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
 import { usePersistentState } from '../hooks/usePersistentState';
 
-import { Pin, MoreVertical, ArrowDownUp, PlusCircle, CheckCircle2, CalendarClock } from 'lucide-react';
+import { Pin, MoreVertical, ArrowDownUp, CheckCircle2, Repeat, CalendarClock, PlusCircle } from 'lucide-react';
 
 const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { tasks, currentUser, editTask, users, addTaskUpdate, sendPushNotification, isLoading } = useTasks();
+  const { tasks, currentUser, editTask, users, addTaskUpdate, sendPushNotification, isLoading, updateTaskStatus } = useTasks();
   const {
     t,
     formatDateTime,
@@ -20,7 +20,8 @@ const EmployeeDashboard: React.FC = () => {
     taskTypeLabel,
     relativeDayLabel,
   } = useLanguage();
-  const [sortBy, setSortBy] = usePersistentState<'default' | 'priority' | 'dueDate'>('employeeDashboard_sortBy', 'default');
+  const [sortBy, setSortBy] = usePersistentState<'default' | 'priority' | 'dueDate' | 'frequency'>('employeeDashboard_sortBy', 'default');
+  const [taskTypeFilter, setTaskTypeFilter] = usePersistentState<'all' | 'recurring' | 'one-time'>('employeeDashboard_typeFilter', 'all');
   const [showTodayCompleted, setShowTodayCompleted] = usePersistentState('employeeDashboard_showToday', true);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [processingTasks, setProcessingTasks] = useState<Set<string>>(new Set());
@@ -79,8 +80,21 @@ const EmployeeDashboard: React.FC = () => {
     return 1;
   };
 
+  const getFrequencyWeight = (type: string) => {
+    if (type === 'daily') return 1;
+    if (type === 'weekly') return 2;
+    if (type === 'monthly') return 3;
+    return 4; // one-time
+  };
+
   const sortTasks = (taskList: Task[]) => {
-    const listCopy = [...taskList];
+    let listCopy = [...taskList];
+    if (taskTypeFilter === 'recurring') {
+      listCopy = listCopy.filter(t => t.type !== 'one-time');
+    } else if (taskTypeFilter === 'one-time') {
+      listCopy = listCopy.filter(t => t.type === 'one-time');
+    }
+
     if (sortBy === 'priority') {
       return listCopy.sort((a, b) => {
         if (a.pinned && !b.pinned) return -1;
@@ -95,6 +109,15 @@ const EmployeeDashboard: React.FC = () => {
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      });
+    }
+    if (sortBy === 'frequency') {
+      return listCopy.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        const diff = getFrequencyWeight(a.type) - getFrequencyWeight(b.type);
+        if (diff !== 0) return diff;
+        return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
       });
     }
     
@@ -116,6 +139,28 @@ const EmployeeDashboard: React.FC = () => {
       // If Due Dates are the same (or both null), sort by Priority
       return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
     });
+  };
+
+  const handleQuickComplete = (e: React.MouseEvent, task: Task) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setProcessingTasks(prev => new Set(prev).add(task.id));
+    try {
+      updateTaskStatus(task.id, 'completed', {
+        completedAt: new Date().toISOString(),
+        completionComment: 'Quick check-off',
+      });
+    } catch (err) {
+      console.error("Failed to quick complete task:", err);
+    } finally {
+      setTimeout(() => {
+        setProcessingTasks(prev => {
+          const next = new Set(prev);
+          next.delete(task.id);
+          return next;
+        });
+      }, 400);
+    }
   };
 
   const sortedActiveTasks = sortTasks(activeTasks);
@@ -257,20 +302,61 @@ const EmployeeDashboard: React.FC = () => {
         </p>
       </header>
 
-      <div className="mb-6 flex items-center justify-end">
-        <div className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 shadow-sm">
+      {/* Filter Tabs & Sorting */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        {/* Segmented Filter for All vs Recurring vs One-Time */}
+        <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setTaskTypeFilter('all')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              taskTypeFilter === 'all'
+                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+            }`}
+          >
+            {t('employeeDashboard.allTasksTab') || 'All Tasks'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTaskTypeFilter('recurring')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              taskTypeFilter === 'recurring'
+                ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+            }`}
+          >
+            <Repeat size={13} />
+            <span>{t('employeeDashboard.recurringTab') || 'Recurring Routines'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTaskTypeFilter('one-time')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              taskTypeFilter === 'one-time'
+                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+            }`}
+          >
+            {t('employeeDashboard.oneTimeTab') || 'One-Time Tasks'}
+          </button>
+        </div>
+
+        {/* Sort selector */}
+        <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 shadow-2xs">
           <label htmlFor="employee-sort" className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors" title={t('employeeDashboard.sortMyWork')}>
-            <ArrowDownUp size={16} />
+            <ArrowDownUp size={15} />
           </label>
           <select
             id="employee-sort"
             value={sortBy}
-            onChange={(event) => setSortBy(event.target.value as 'default' | 'priority' | 'dueDate')}
-            className="rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none transition-colors focus:border-slate-400"
+            onChange={(event) => setSortBy(event.target.value as 'default' | 'priority' | 'dueDate' | 'frequency')}
+            className="border-none bg-transparent py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
           >
-            <option value="default">{t('employeeDashboard.originalOrder')}</option>
-            <option value="priority">{t('employeeDashboard.priorityFirst')}</option>
-            <option value="dueDate">{t('employeeDashboard.dueDateSoon')}</option>
+            <option value="default" className="dark:bg-slate-800">{t('employeeDashboard.originalOrder')}</option>
+            <option value="dueDate" className="dark:bg-slate-800">{t('employeeDashboard.dueDateSoon')}</option>
+            <option value="priority" className="dark:bg-slate-800">{t('employeeDashboard.priorityFirst')}</option>
+            <option value="frequency" className="dark:bg-slate-800">{t('employeeDashboard.frequency') || 'Frequency (Daily/Weekly/Monthly)'}</option>
           </select>
         </div>
       </div>
@@ -403,6 +489,18 @@ const EmployeeDashboard: React.FC = () => {
                     <p className="line-clamp-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{taskPreview(task)}</p>
                   </div>
                   <div className="flex items-center gap-2">
+                    {task.type !== 'one-time' && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleQuickComplete(e, task)}
+                        disabled={processingTasks.has(task.id)}
+                        className="group/check flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+                        title={t('employeeDashboard.quickComplete') || 'Quick Check-off (Done)'}
+                      >
+                        <CheckCircle2 size={15} className="group-hover/check:scale-110 transition-transform" />
+                        <span className="hidden xs:inline sm:inline">Done</span>
+                      </button>
+                    )}
                     <StatusBadge status={task.status} />
                     <div className="relative" onClick={(e) => e.stopPropagation()}>
                       <button

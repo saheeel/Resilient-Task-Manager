@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks, type Task } from '../contexts/TaskContext';
 import StatusBadge from '../components/StatusBadge';
@@ -11,12 +11,15 @@ import { usePersistentState } from '../hooks/usePersistentState';
 
 const ManageTasks: React.FC = () => {
   const navigate = useNavigate();
-  const [sortBy, setSortBy] = usePersistentState<'default' | 'employee'>('manageTasks_sortBy', 'employee');
+  const [sortBy, setSortBy] = usePersistentState<'default' | 'employee' | 'dueDate' | 'priority' | 'frequency'>('manageTasks_sortBy', 'employee');
+  const [employeeFilter, setEmployeeFilter] = usePersistentState<string>('manageTasks_employeeFilter', 'all');
+  const [typeFilter, setTypeFilter] = usePersistentState<string>('manageTasks_typeFilter', 'all');
   const [viewMode, setViewMode] = usePersistentState<'grid' | 'excel'>('manageTasks_viewMode', 'excel');
   const [searchQuery, setSearchQuery] = usePersistentState<string>('manageTasks_searchQuery', '');
   const [collapsedSectionsArray, setCollapsedSectionsArray] = usePersistentState<string[]>('manageTasks_collapsed', []);
+  const [processingTasks, setProcessingTasks] = useState<Set<string>>(new Set());
   const collapsedSections = new Set(collapsedSectionsArray);
-  const { tasks, users, currentUser, deleteTask, isLoading } = useTasks();
+  const { tasks, users, currentUser, deleteTask, updateTaskStatus, isLoading } = useTasks();
   const { t, formatDateTime, formatTime, taskTypeLabel, weekdayLabel, monthDayOrdinalLabel } = useLanguage();
 
   const toggleSection = (sectionId: string) => {
@@ -31,6 +34,20 @@ const ManageTasks: React.FC = () => {
   if (!currentUser) return null;
 
   const filteredTasks = tasks.filter(t => {
+    if (employeeFilter !== 'all') {
+      if (employeeFilter === 'unassigned') {
+        if (t.assignedTo.length > 0) return false;
+      } else if (!t.assignedTo.includes(employeeFilter)) {
+        return false;
+      }
+    }
+    if (typeFilter !== 'all') {
+      if (typeFilter === 'recurring' && t.type === 'one-time') return false;
+      if (typeFilter === 'one-time' && t.type !== 'one-time') return false;
+      if (typeFilter === 'daily' && t.type !== 'daily') return false;
+      if (typeFilter === 'weekly' && t.type !== 'weekly') return false;
+      if (typeFilter === 'monthly' && t.type !== 'monthly') return false;
+    }
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     const titleMatch = t.title.toLowerCase().includes(q);
@@ -46,16 +63,38 @@ const ManageTasks: React.FC = () => {
     if (t.activeFrom && new Date(t.activeFrom) > new Date()) return false;
     return true;
   });
+
   const getPriorityWeight = (priority: string) => {
     if (priority === 'high') return 3;
     if (priority === 'medium') return 2;
     return 1;
   };
 
+  const getFrequencyWeight = (type: string) => {
+    if (type === 'daily') return 1;
+    if (type === 'weekly') return 2;
+    if (type === 'monthly') return 3;
+    return 4; // one-time
+  };
+
   const sortTasks = (taskList: Task[]) => {
     return [...taskList].sort((a, b) => {
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
+
+      if (sortBy === 'priority') {
+        return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
+      }
+      if (sortBy === 'frequency') {
+        const diff = getFrequencyWeight(a.type) - getFrequencyWeight(b.type);
+        if (diff !== 0) return diff;
+        return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
+      }
+      if (sortBy === 'dueDate') {
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      }
 
       if (a.dueDate && b.dueDate) {
         const timeDiff = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
@@ -68,6 +107,28 @@ const ManageTasks: React.FC = () => {
 
       return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
     });
+  };
+
+  const handleQuickComplete = (e: React.MouseEvent, task: Task) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setProcessingTasks(prev => new Set(prev).add(task.id));
+    try {
+      updateTaskStatus(task.id, 'completed', {
+        completedAt: new Date().toISOString(),
+        completionComment: 'Quick check-off',
+      });
+    } catch (err) {
+      console.error("Failed to quick complete task:", err);
+    } finally {
+      setTimeout(() => {
+        setProcessingTasks(prev => {
+          const next = new Set(prev);
+          next.delete(task.id);
+          return next;
+        });
+      }, 400);
+    }
   };
 
   const sortedActiveTasks = sortTasks(activeTasks);
@@ -212,15 +273,49 @@ const ManageTasks: React.FC = () => {
           </h2>
           
           <div className="flex flex-wrap items-center gap-2">
+            {/* Filter by Employee */}
+            <div className="flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1 shadow-2xs">
+              <User size={13} className="text-slate-400" />
+              <select
+                value={employeeFilter}
+                onChange={(e) => setEmployeeFilter(e.target.value)}
+                className="border-none bg-transparent py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+                title="Filter by employee"
+              >
+                <option value="all" className="dark:bg-slate-800">{t('common.allEmployees') || 'All Employees'}</option>
+                <option value="unassigned" className="dark:bg-slate-800">{t('common.unassigned')}</option>
+                {users.map(u => (
+                  <option key={u.id} value={u.id} className="dark:bg-slate-800">{u.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter by Task Type / Frequency */}
+            <div className="flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1 shadow-2xs">
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="border-none bg-transparent py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+                title="Filter by frequency / type"
+              >
+                <option value="all" className="dark:bg-slate-800">{t('common.allTypes') || 'All Types'}</option>
+                <option value="recurring" className="dark:bg-slate-800">{t('employeeDashboard.recurringTab') || 'Recurring Routines'}</option>
+                <option value="one-time" className="dark:bg-slate-800">{t('employeeDashboard.oneTimeTab') || 'One-Time Tasks'}</option>
+                <option value="daily" className="dark:bg-slate-800">📅 Daily</option>
+                <option value="weekly" className="dark:bg-slate-800">🗓️ Weekly</option>
+                <option value="monthly" className="dark:bg-slate-800">📆 Monthly</option>
+              </select>
+            </div>
+
             {/* Free-Text Search Input */}
-            <div className="relative flex-1 sm:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <div className="relative flex-1 sm:w-48">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder={t('manageTasks.searchPlaceholder') || "Search tasks..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
@@ -249,18 +344,21 @@ const ManageTasks: React.FC = () => {
             </div>
 
             {viewMode === 'grid' && (
-              <div className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 shadow-xs">
+              <div className="flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1 shadow-2xs">
                 <label htmlFor="admin-sort" className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors" title={t('employeeDashboard.sortMyWork')}>
-                  <ArrowDownUp size={16} />
+                  <ArrowDownUp size={14} />
                 </label>
                 <select
                   id="admin-sort"
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'default' | 'employee')}
-                  className="rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none transition-colors focus:border-slate-400"
+                  onChange={(e) => setSortBy(e.target.value as 'default' | 'employee' | 'dueDate' | 'priority' | 'frequency')}
+                  className="border-none bg-transparent py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
                 >
-                  <option value="default">{t('employeeDashboard.originalOrder')}</option>
-                  <option value="employee">{t('employeeDashboard.byEmployee')}</option>
+                  <option value="employee" className="dark:bg-slate-800">{t('employeeDashboard.byEmployee')}</option>
+                  <option value="default" className="dark:bg-slate-800">{t('employeeDashboard.originalOrder')}</option>
+                  <option value="dueDate" className="dark:bg-slate-800">{t('employeeDashboard.dueDateSoon')}</option>
+                  <option value="priority" className="dark:bg-slate-800">{t('employeeDashboard.priorityFirst')}</option>
+                  <option value="frequency" className="dark:bg-slate-800">{t('employeeDashboard.frequency') || 'Frequency (Daily/Weekly/Monthly)'}</option>
                 </select>
               </div>
             )}
@@ -375,7 +473,18 @@ const ManageTasks: React.FC = () => {
                                      <StatusBadge status={task.status} />
                                    </td>
                                    <td className="px-5 py-3.5 text-right">
-                                     <div className="flex justify-end gap-2">
+                                     <div className="flex justify-end items-center gap-1.5">
+                                       {task.type !== 'one-time' && (
+                                         <button 
+                                           type="button"
+                                           onClick={(e) => handleQuickComplete(e, task)}
+                                           disabled={processingTasks.has(task.id)}
+                                           className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors border-none bg-transparent cursor-pointer disabled:opacity-50"
+                                           title={t('employeeDashboard.quickComplete') || 'Quick Check-off (Done)'}
+                                         >
+                                           <CheckCircle2 size={16} />
+                                         </button>
+                                       )}
                                        <button 
                                          onClick={(e) => {
                                            e.stopPropagation();
@@ -494,7 +603,18 @@ const ManageTasks: React.FC = () => {
                                   <StatusBadge status={task.status} />
                                 </td>
                                 <td className="px-5 py-3.5 text-right">
-                                  <div className="flex justify-end gap-2">
+                                  <div className="flex justify-end items-center gap-1.5">
+                                    {task.type !== 'one-time' && (
+                                      <button 
+                                        type="button"
+                                        onClick={(e) => handleQuickComplete(e, task)}
+                                        disabled={processingTasks.has(task.id)}
+                                        className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors border-none bg-transparent cursor-pointer disabled:opacity-50"
+                                        title={t('employeeDashboard.quickComplete') || 'Quick Check-off (Done)'}
+                                      >
+                                        <CheckCircle2 size={16} />
+                                      </button>
+                                    )}
                                     <button 
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -591,7 +711,18 @@ const ManageTasks: React.FC = () => {
                         <StatusBadge status={task.status} />
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end items-center gap-1.5">
+                          {task.type !== 'one-time' && (
+                            <button 
+                              type="button"
+                              onClick={(e) => handleQuickComplete(e, task)}
+                              disabled={processingTasks.has(task.id)}
+                              className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg transition-colors border-none bg-transparent cursor-pointer disabled:opacity-50"
+                              title={t('employeeDashboard.quickComplete') || 'Quick Check-off (Done)'}
+                            >
+                              <CheckCircle2 size={16} />
+                            </button>
+                          )}
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();

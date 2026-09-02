@@ -37,14 +37,12 @@ const TaskDetail: React.FC = () => {
 
   const updates = useQuery(api.taskUpdates.list, task?.id ? { taskId: task.id } : "skip") || [];
   const [updateText, setUpdateText] = useState('');
-  const [updatePhotoStorageId, setUpdatePhotoStorageId] = useState<string | null>(null);
-  const [updatePhotoPreviewUrl, setUpdatePhotoPreviewUrl] = useState<string | null>(null);
   const [isPostingUpdate, setIsPostingUpdate] = useState(false);
   const updatePhotoInputRef = React.useRef<HTMLInputElement>(null);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStage, setUploadStage] = useState<'compressing' | 'preparing' | 'uploading' | 'done'>('uploading');
+  const [uploadStage, setUploadStage] = useState<string>('uploading');
   const [uploadFileName, setUploadFileName] = useState('');
 
   useEffect(() => {
@@ -57,25 +55,45 @@ const TaskDetail: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isUploading]);
 
+  interface UpdatePhotoItem {
+    storageId: string;
+    previewUrl: string;
+    name: string;
+    isPdf: boolean;
+  }
+
+  const [updatePhotos, setUpdatePhotos] = useState<UpdatePhotoItem[]>([]);
+
   const handleUpdatePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      const localPreview = URL.createObjectURL(file);
-      setUpdatePhotoPreviewUrl(localPreview);
+      const files = Array.from(e.target.files);
       setIsUploading(true);
-      setUploadProgress(5);
-      setUploadStage('compressing');
-      setUploadFileName(file.name);
+      const newItems: UpdatePhotoItem[] = [];
       try {
-        const storageId = await uploadFile(file, (percent, stage) => {
-          setUploadProgress(percent);
-          setUploadStage(stage as any);
-        });
-        setUpdatePhotoStorageId(storageId);
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type.includes('pdf');
+          const localPreview = URL.createObjectURL(file);
+          setUploadFileName(files.length > 1 ? `${file.name} (${i + 1}/${files.length})` : file.name);
+          setUploadProgress(5);
+          setUploadStage('compressing');
+          const storageId = await uploadFile(file, (percent, stage) => {
+            setUploadProgress(percent);
+            setUploadStage(stage);
+          });
+          newItems.push({
+            storageId,
+            previewUrl: localPreview,
+            name: file.name,
+            isPdf,
+          });
+        }
+        if (newItems.length > 0) {
+          setUpdatePhotos(prev => [...prev, ...newItems]);
+        }
       } catch (error) {
-        console.error('Failed to prepare update photo:', error);
+        console.error('Failed to prepare update photos:', error);
         alert(error instanceof Error ? error.message : 'Unable to prepare this image. Please choose a smaller photo.');
-        setUpdatePhotoPreviewUrl(null);
       } finally {
         setIsUploading(false);
         setUploadProgress(0);
@@ -85,9 +103,8 @@ const TaskDetail: React.FC = () => {
     }
   };
 
-  const handleRemoveUpdatePhoto = () => {
-    setUpdatePhotoStorageId(null);
-    setUpdatePhotoPreviewUrl(null);
+  const handleRemoveUpdatePhoto = (indexToRemove: number) => {
+    setUpdatePhotos(prev => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   const [resolvedPdfUrls, setResolvedPdfUrls] = useState<Record<string, boolean>>({});
@@ -145,7 +162,7 @@ const TaskDetail: React.FC = () => {
           setUploadStage('compressing');
           const storageId = await uploadFile(file, (percent, stage) => {
             setUploadProgress(percent);
-            setUploadStage(stage as any);
+            setUploadStage(stage);
           });
           newItems.push({ storageId, previewUrl: localPreview });
         }
@@ -939,13 +956,23 @@ const TaskDetail: React.FC = () => {
           <form 
             onSubmit={async (e) => {
               e.preventDefault();
-              if (!updateText.trim()) return;
+              if (!updateText.trim() && updatePhotos.length === 0) return;
               setIsPostingUpdate(true);
               try {
-                await addTaskUpdate(task.id, updateText, updatePhotoStorageId || undefined);
+                if (updatePhotos.length > 0) {
+                  for (let i = 0; i < updatePhotos.length; i++) {
+                    const item = updatePhotos[i];
+                    await addTaskUpdate(
+                      task.id,
+                      i === 0 ? updateText || 'Uploaded attachment' : `(Attachment ${i + 1})`,
+                      item.storageId
+                    );
+                  }
+                } else {
+                  await addTaskUpdate(task.id, updateText);
+                }
                 setUpdateText('');
-                setUpdatePhotoStorageId(null);
-                setUpdatePhotoPreviewUrl(null);
+                setUpdatePhotos([]);
               } catch (err) {
                 console.error("Failed to add progress update:", err);
                 alert('Unable to send this update right now. If you attached a large image, please try a smaller photo.');
@@ -966,55 +993,61 @@ const TaskDetail: React.FC = () => {
               />
               
               <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <input
                     type="file"
                     accept="image/*,.pdf,.doc,.docx"
+                    multiple
                     className="hidden"
                     ref={updatePhotoInputRef}
                     onChange={handleUpdatePhotoChange}
                     disabled={isPostingUpdate || isUploading}
                   />
                   
-                  {!updatePhotoPreviewUrl && !updatePhotoStorageId ? (
-                    <button
-                      type="button"
-                      onClick={() => updatePhotoInputRef.current?.click()}
-                      disabled={isPostingUpdate || isUploading}
-                      className="task-action-secondary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      <Paperclip size={13} className="text-slate-400" />
-                      <span>Attach Photo or PDF</span>
-                    </button>
-                  ) : (
-                    <div className="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs">
-                      {isPdfFile(updatePhotoPreviewUrl || updatePhotoStorageId || '') ? (
-                        <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold text-[10px]">{t('common.pdfDocument')}</span>
-                      ) : (
-                        <img
-                          src={updatePhotoPreviewUrl || updatePhotoStorageId || ''}
-                          alt="Update attachment preview"
-                          loading="lazy"
-                          className="w-8 h-8 object-cover rounded border border-slate-200 shadow-sm cursor-zoom-in"
-                          onClick={() => setActiveZoomUrl(updatePhotoPreviewUrl || updatePhotoStorageId)}
-                        />
-                      )}
-                      <button
-                        type="button"
-                        onClick={handleRemoveUpdatePhoto}
-                        disabled={isPostingUpdate || isUploading}
-                        className="text-slate-400 hover:text-red-600 transition-colors border-none bg-transparent p-0 cursor-pointer disabled:opacity-50"
-                        title={t('taskDetail.removePhoto')}
-                      >
-                        <X size={14} />
-                      </button>
+                  <button
+                    type="button"
+                    onClick={() => updatePhotoInputRef.current?.click()}
+                    disabled={isPostingUpdate || isUploading}
+                    className="task-action-secondary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <Paperclip size={13} className="text-slate-400" />
+                    <span>{updatePhotos.length > 0 ? t('common.addMoreFiles') : 'Attach Photos / PDF'}</span>
+                  </button>
+
+                  {updatePhotos.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {updatePhotos.map((item, idx) => (
+                        <div key={idx} className="relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs shadow-2xs">
+                          {item.isPdf ? (
+                            <span className="px-1 py-0.5 rounded bg-rose-600 text-white font-bold text-[9px]">{t('common.pdfDocument')}</span>
+                          ) : (
+                            <img
+                              src={item.previewUrl}
+                              alt={item.name}
+                              loading="lazy"
+                              className="w-6 h-6 object-cover rounded border border-slate-200 shrink-0 cursor-zoom-in"
+                              onClick={() => setActiveZoomUrl(item.previewUrl)}
+                            />
+                          )}
+                          <span className="truncate max-w-[100px] text-[11px]">{item.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveUpdatePhoto(idx)}
+                            disabled={isPostingUpdate || isUploading}
+                            className="text-slate-400 hover:text-red-600 transition-colors border-none bg-transparent p-0 cursor-pointer disabled:opacity-50 shrink-0 ml-0.5"
+                            title={t('taskDetail.removePhoto')}
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
 
                 <button
                   type="submit"
-                  disabled={isPostingUpdate || isUploading || !updateText.trim()}
+                  disabled={isPostingUpdate || isUploading || (!updateText.trim() && updatePhotos.length === 0)}
                   className="task-action-primary inline-flex items-center justify-center text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isPostingUpdate ? t('taskDetail.posting') : t('taskDetail.sendUpdate')}
@@ -1112,6 +1145,23 @@ const TaskDetail: React.FC = () => {
 
           {!showBlockReason ? (
             <div className="flex flex-col gap-2">
+              {task.status === 'open' && task.type !== 'one-time' && (
+                <button 
+                  onClick={() => {
+                    updateTaskStatus(task.id, 'completed', {
+                      completedAt: new Date().toISOString(),
+                      completionComment: comment.trim() || 'Quick check-off',
+                    });
+                    navigate(-1);
+                  }}
+                  disabled={isUploading}
+                  className="task-action-success inline-flex items-center justify-center gap-2 w-full rounded-lg py-2.5 font-bold text-sm shadow-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed mb-1"
+                >
+                  <CheckCircle size={18} />
+                  <span>{t('employeeDashboard.quickComplete') || 'Quick Check-off (Done)'}</span>
+                </button>
+              )}
+
               {task.status === 'open' ? (
                 <button 
                   onClick={handleStart}

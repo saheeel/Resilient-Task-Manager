@@ -36,16 +36,12 @@ const EditTask: React.FC = () => {
   const [inCharge, setInCharge] = useState('');
   const [materialStatus, setMaterialStatus] = useState<(typeof MATERIAL_STATUS_OPTIONS)[number] | ''>('');
   const [assignedTo, setAssignedTo] = useState<string[]>([]);
-  const [attachment, setAttachment] = useState<File | null>(null);
   const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
-  const [attachmentStorageId, setAttachmentStorageId] = useState<string | null>(null);
-  const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState<string | null>(null);
-  const [attachmentFileName, setAttachmentFileName] = useState<string | null>(null);
   const [activeZoomUrl, setActiveZoomUrl] = useState<string | null>(null);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStage, setUploadStage] = useState<'compressing' | 'preparing' | 'uploading' | 'done'>('uploading');
+  const [uploadStage, setUploadStage] = useState<string>('uploading');
   const [uploadFileName, setUploadFileName] = useState('');
 
   useEffect(() => {
@@ -147,32 +143,27 @@ const EditTask: React.FC = () => {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      setAttachment(file);
-      setAttachmentFileName(file.name);
-      
-      const isImg = file.type.startsWith('image/');
-      const localPreview = isImg ? URL.createObjectURL(file) : null;
-      setAttachmentPreviewUrl(localPreview);
-
+      const files = Array.from(e.target.files);
       setIsUploading(true);
-      setUploadProgress(5);
-      setUploadStage('compressing');
-      setUploadFileName(file.name);
-
+      const newStorageIds: string[] = [];
       try {
-        const storageId = await uploadFile(file, (percent, stage) => {
-          setUploadProgress(percent);
-          setUploadStage(stage as any);
-        });
-        setAttachmentStorageId(storageId);
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          setUploadFileName(files.length > 1 ? `${file.name} (${i + 1}/${files.length})` : file.name);
+          setUploadProgress(5);
+          setUploadStage('compressing');
+          const storageId = await uploadFile(file, (percent, stage) => {
+            setUploadProgress(percent);
+            setUploadStage(stage);
+          });
+          newStorageIds.push(storageId);
+        }
+        if (newStorageIds.length > 0) {
+          setExistingAttachments(prev => [...prev, ...newStorageIds]);
+        }
       } catch (error) {
-        console.error('Failed to prepare task attachment:', error);
+        console.error('Failed to prepare task attachments:', error);
         alert(error instanceof Error ? error.message : 'Unable to prepare this file. Please choose a smaller file.');
-        setAttachment(null);
-        setAttachmentStorageId(null);
-        setAttachmentPreviewUrl(null);
-        setAttachmentFileName(null);
       } finally {
         setIsUploading(false);
         setUploadProgress(0);
@@ -180,13 +171,6 @@ const EditTask: React.FC = () => {
         if (e.target) e.target.value = '';
       }
     }
-  };
-
-  const handleRemoveAttachment = () => {
-    setAttachment(null);
-    setAttachmentStorageId(null);
-    setAttachmentPreviewUrl(null);
-    setAttachmentFileName(null);
   };
 
   const formatDisplayTime = (time: string) => {
@@ -224,21 +208,7 @@ const EditTask: React.FC = () => {
       }
     }
 
-    let uploadedAttachment: string | undefined;
-    if (attachmentStorageId) {
-      uploadedAttachment = attachmentStorageId;
-    } else if (attachment) {
-      try {
-        uploadedAttachment = await uploadFile(attachment);
-      } catch (error) {
-        console.error('Failed to prepare task attachment:', error);
-        alert(error instanceof Error ? error.message : 'Unable to prepare this file. Please choose a smaller file.');
-        return;
-      }
-    }
-    const newAttachments = uploadedAttachment
-      ? [...existingAttachments, uploadedAttachment]
-      : existingAttachments;
+    const newAttachments = existingAttachments;
 
     const finalAssignedTo = isEmployee && currentUser ? [currentUser.id] : assignedTo;
 
@@ -748,48 +718,25 @@ const EditTask: React.FC = () => {
                       ref={fileInputRef}
                       onChange={handleFileChange}
                       accept="image/*,.pdf,.doc,.docx"
+                      multiple
                       disabled={isUploading}
                     />
                   </div>
-
-                  {attachmentFileName && (
-                    <div className="flex items-center gap-3 mt-1 flex-wrap">
-                      {attachmentPreviewUrl && (
-                        <img
-                          src={attachmentPreviewUrl}
-                          alt="Attachment preview"
-                          loading="lazy"
-                          className="w-12 h-12 object-cover rounded-lg border border-slate-200 shadow-sm cursor-zoom-in"
-                          onClick={() => setActiveZoomUrl(attachmentPreviewUrl)}
-                        />
-                      )}
-                      <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg max-w-[240px]">
-                        <span className="truncate">{attachmentFileName}</span>
-                        <button 
-                          type="button" 
-                          onClick={handleRemoveAttachment}
-                          disabled={isUploading}
-                          className="text-slate-400 hover:text-red-500 cursor-pointer border-none bg-transparent p-0 disabled:opacity-50"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
                 {existingAttachments.length > 0 && (
                   <div className="mt-3">
-                    <span className="block text-xs text-slate-500 mb-1.5 font-medium">{t('common.existingFiles')}:</span>
+                    <span className="block text-xs text-slate-500 mb-1.5 font-medium">{t('common.existingFiles')} ({existingAttachments.length}):</span>
                     <div className="flex flex-wrap gap-2">
                       {existingAttachments.map((_url, idx) => (
-                        <div key={idx} className="flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-800 text-xs px-2.5 py-1 rounded-lg">
-                          <span className="truncate max-w-[120px]">{t('taskDetail.referenceFile', { index: idx + 1 })}</span>
+                        <div key={idx} className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 text-xs px-2.5 py-1.5 rounded-lg shadow-xs">
+                          <span className="truncate max-w-[160px] font-medium">{t('taskDetail.referenceFile', { index: idx + 1 })}</span>
                           <button
                             type="button"
                             onClick={() => setExistingAttachments(prev => prev.filter((_, i) => i !== idx))}
-                            className="text-blue-400 hover:text-red-500 cursor-pointer"
+                            className="text-blue-400 hover:text-red-500 cursor-pointer border-none bg-transparent p-0 shrink-0"
+                            title="Remove file"
                           >
-                            <X size={12} />
+                            <X size={13} />
                           </button>
                         </div>
                       ))}

@@ -86,13 +86,16 @@ const ExcelTaskTable: React.FC<ExcelTaskTableProps> = ({ tasks, users }) => {
         } else if (sortField === 'creator') {
           valA = (a.createdByName || '').toLowerCase();
           valB = (b.createdByName || '').toLowerCase();
+        } else if (sortField === 'assignee') {
+          valA = (a.assignedTo && a.assignedTo.length > 0 ? getUserName(a.assignedTo[0]) : '').toLowerCase();
+          valB = (b.assignedTo && b.assignedTo.length > 0 ? getUserName(b.assignedTo[0]) : '').toLowerCase();
         }
 
         if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
         if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
         return 0;
       });
-  }, [tasks, statusFilter, priorityFilter, sortField, sortOrder]);
+  }, [tasks, statusFilter, priorityFilter, sortField, sortOrder, users]);
 
   const toggleExpand = (id: string) => {
     setExpandedTaskId(expandedTaskId === id ? null : id);

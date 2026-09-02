@@ -61,15 +61,19 @@ const CreateTask: React.FC = () => {
       setAssignedTo([currentUser.id]);
     }
   }, [isEmployee, currentUser]);
-  const [attachment, setAttachment] = useState<File | null>(null);
-  const [attachmentStorageId, setAttachmentStorageId] = useState<string | null>(null);
-  const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState<string | null>(null);
-  const [attachmentFileName, setAttachmentFileName] = useState<string | null>(null);
+  interface UploadedAttachment {
+    storageId: string;
+    name: string;
+    previewUrl?: string | null;
+    isImage: boolean;
+  }
+
+  const [attachments, setAttachments] = useState<UploadedAttachment[]>([]);
   const [activeZoomUrl, setActiveZoomUrl] = useState<string | null>(null);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStage, setUploadStage] = useState<'compressing' | 'preparing' | 'uploading' | 'done'>('uploading');
+  const [uploadStage, setUploadStage] = useState<string>('uploading');
   const [uploadFileName, setUploadFileName] = useState('');
 
   useEffect(() => {
@@ -107,32 +111,34 @@ const CreateTask: React.FC = () => {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      setAttachment(file);
-      setAttachmentFileName(file.name);
-      
-      const isImg = file.type.startsWith('image/');
-      const localPreview = isImg ? URL.createObjectURL(file) : null;
-      setAttachmentPreviewUrl(localPreview);
-
+      const files = Array.from(e.target.files);
       setIsUploading(true);
-      setUploadProgress(5);
-      setUploadStage('compressing');
-      setUploadFileName(file.name);
-
+      const newItems: UploadedAttachment[] = [];
       try {
-        const storageId = await uploadFile(file, (percent, stage) => {
-          setUploadProgress(percent);
-          setUploadStage(stage as any);
-        });
-        setAttachmentStorageId(storageId);
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const isImg = file.type.startsWith('image/');
+          const localPreview = isImg ? URL.createObjectURL(file) : null;
+          setUploadFileName(files.length > 1 ? `${file.name} (${i + 1}/${files.length})` : file.name);
+          setUploadProgress(5);
+          setUploadStage('compressing');
+          const storageId = await uploadFile(file, (percent, stage) => {
+            setUploadProgress(percent);
+            setUploadStage(stage);
+          });
+          newItems.push({
+            storageId,
+            name: file.name,
+            previewUrl: localPreview,
+            isImage: isImg,
+          });
+        }
+        if (newItems.length > 0) {
+          setAttachments(prev => [...prev, ...newItems]);
+        }
       } catch (error) {
-        console.error('Failed to prepare task attachment:', error);
+        console.error('Failed to prepare task attachments:', error);
         alert(error instanceof Error ? error.message : 'Unable to prepare this file. Please choose a smaller file.');
-        setAttachment(null);
-        setAttachmentStorageId(null);
-        setAttachmentPreviewUrl(null);
-        setAttachmentFileName(null);
       } finally {
         setIsUploading(false);
         setUploadProgress(0);
@@ -142,11 +148,8 @@ const CreateTask: React.FC = () => {
     }
   };
 
-  const handleRemoveAttachment = () => {
-    setAttachment(null);
-    setAttachmentStorageId(null);
-    setAttachmentPreviewUrl(null);
-    setAttachmentFileName(null);
+  const handleRemoveAttachment = (indexToRemove: number) => {
+    setAttachments(prev => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   const formatDisplayTime = (time: string) => {
@@ -184,18 +187,7 @@ const CreateTask: React.FC = () => {
       }
     }
 
-    let attachmentUrls: string[] | undefined;
-    if (attachmentStorageId) {
-      attachmentUrls = [attachmentStorageId];
-    } else if (attachment) {
-      try {
-        attachmentUrls = [await uploadFile(attachment)];
-      } catch (error) {
-        console.error('Failed to prepare task attachment:', error);
-        alert(error instanceof Error ? error.message : 'Unable to prepare this file. Please choose a smaller file.');
-        return;
-      }
-    }
+    const attachmentUrls = attachments.length > 0 ? attachments.map(a => a.storageId) : undefined;
 
     const finalAssignedTo = isEmployee && currentUser ? [currentUser.id] : assignedTo;
 
@@ -701,7 +693,7 @@ const CreateTask: React.FC = () => {
                 </div>
               )}
 
-              {/* Attachment */}
+              {/* Attachments */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
                   {t('createTask.attachReference')}
@@ -715,7 +707,7 @@ const CreateTask: React.FC = () => {
                       className="inline-flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <Paperclip size={16} />
-                      {attachmentFileName ? t('common.changeFile') : t('common.uploadFile')}
+                      {attachments.length > 0 ? t('common.addMoreFiles') : t('common.uploadFile')}
                     </button>
                     <input
                       type="file"
@@ -723,32 +715,36 @@ const CreateTask: React.FC = () => {
                       ref={fileInputRef}
                       onChange={handleFileChange}
                       accept="image/*,.pdf,.doc,.docx"
+                      multiple
                       disabled={isUploading}
                     />
                   </div>
 
-                  {attachmentFileName && (
-                    <div className="flex items-center gap-3 mt-1 flex-wrap">
-                      {attachmentPreviewUrl && (
-                        <img
-                          src={attachmentPreviewUrl}
-                          alt="Attachment preview"
-                          loading="lazy"
-                          className="w-12 h-12 object-cover rounded-lg border border-slate-200 shadow-sm cursor-zoom-in"
-                          onClick={() => setActiveZoomUrl(attachmentPreviewUrl)}
-                        />
-                      )}
-                      <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg max-w-[240px]">
-                        <span className="truncate">{attachmentFileName}</span>
-                        <button 
-                          type="button" 
-                          onClick={handleRemoveAttachment}
-                          disabled={isUploading}
-                          className="text-slate-400 hover:text-red-500 cursor-pointer border-none bg-transparent p-0 disabled:opacity-50"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
+                  {attachments.length > 0 && (
+                    <div className="flex flex-wrap gap-2.5 mt-1">
+                      {attachments.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs text-slate-700 bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 max-w-[260px] shadow-xs">
+                          {item.isImage && item.previewUrl && (
+                            <img
+                              src={item.previewUrl}
+                              alt={item.name}
+                              loading="lazy"
+                              className="w-7 h-7 object-cover rounded border border-slate-200 shrink-0 cursor-zoom-in"
+                              onClick={() => setActiveZoomUrl(item.previewUrl!)}
+                            />
+                          )}
+                          <span className="truncate flex-1 font-medium">{item.name}</span>
+                          <button 
+                            type="button" 
+                            onClick={() => handleRemoveAttachment(idx)}
+                            disabled={isUploading}
+                            className="text-slate-400 hover:text-red-500 cursor-pointer border-none bg-transparent p-0 disabled:opacity-50 shrink-0"
+                            title="Remove attachment"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
