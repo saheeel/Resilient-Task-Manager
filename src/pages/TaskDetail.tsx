@@ -455,7 +455,7 @@ const TaskDetail: React.FC = () => {
               type="button"
               onClick={() => setShowTransfer(!showTransfer)}
               title={t('taskDetail.transferTask')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 border text-xs font-medium rounded-xl shadow-2xs transition-colors cursor-pointer ${
                 showTransfer 
                   ? 'border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50' 
                   : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750'
