@@ -7,7 +7,7 @@ import StatusBadge from '../components/StatusBadge';
 import { TaskListSkeleton } from '../components/TaskSkeleton';
 import { usePersistentState } from '../hooks/usePersistentState';
 
-import { Pin, MoreVertical, ArrowDownUp, CheckCircle2, Repeat, CalendarClock, PlusCircle } from 'lucide-react';
+import { Pin, MoreVertical, ArrowDownUp, CheckCircle2, Repeat, CalendarClock, PlusCircle, Check } from 'lucide-react';
 
 const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -478,52 +478,58 @@ const EmployeeDashboard: React.FC = () => {
               <div
                 key={task.id}
                 onClick={() => navigate(`/task/${task.id}`)}
-                className="cursor-pointer rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700 hover:shadow"
+                className="group cursor-pointer rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700 hover:shadow"
               >
-                <div className="flex items-start justify-between gap-3 relative">
+                <div className="flex items-start gap-3.5 relative">
+                  {/* Left-hand interactive check circle for recurring routines */}
+                  {task.type !== 'one-time' && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleQuickComplete(e, task)}
+                      disabled={processingTasks.has(task.id)}
+                      title={t('employeeDashboard.quickComplete') || 'Als erledigt abhaken'}
+                      className="mt-0.5 shrink-0 w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-emerald-500 dark:hover:border-emerald-400 bg-slate-50/50 dark:bg-slate-800 flex items-center justify-center transition-all cursor-pointer shadow-2xs hover:scale-110 active:scale-95 disabled:opacity-50 group/check"
+                    >
+                      <Check
+                        size={13}
+                        className="stroke-[3] text-transparent group-hover/check:text-emerald-500 dark:group-hover/check:text-emerald-400 transition-colors"
+                      />
+                    </button>
+                  )}
+
                   <div className="min-w-0 flex-1">
-                    <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                      {task.pinned && <Pin size={14} className="text-blue-600 dark:text-blue-400 shrink-0" fill="currentColor" />}
-                      {task.title}
-                    </h3>
-                    <p className="line-clamp-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{taskPreview(task)}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {task.type !== 'one-time' && (
-                      <button
-                        type="button"
-                        onClick={(e) => handleQuickComplete(e, task)}
-                        disabled={processingTasks.has(task.id)}
-                        className="group/check flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold transition-all shadow-2xs cursor-pointer disabled:opacity-50"
-                        title={t('employeeDashboard.quickComplete') || 'Quick Check-off (Done)'}
-                      >
-                        <CheckCircle2 size={15} className="group-hover/check:scale-110 transition-transform" />
-                        <span className="hidden xs:inline sm:inline">Done</span>
-                      </button>
-                    )}
-                    <StatusBadge status={task.status} />
-                    <div className="relative" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setOpenMenuId(openMenuId === task.id ? null : task.id);
-                        }}
-                        className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer border-none bg-transparent"
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-                      {openMenuId === task.id && (
-                        <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-lg shadow-lg border border-slate-150 py-1.5 z-20 overflow-hidden">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        {task.pinned && <Pin size={14} className="text-blue-600 dark:text-blue-400 shrink-0" fill="currentColor" />}
+                        {task.title}
+                      </h3>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <StatusBadge status={task.status} />
+                        <div className="relative" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={(e) => handlePinClick(e, task)}
-                            className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer border-none bg-transparent"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setOpenMenuId(openMenuId === task.id ? null : task.id);
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer border-none bg-transparent"
                           >
-                            <Pin size={14} className={task.pinned ? 'text-blue-600' : 'text-slate-400'} fill={task.pinned ? "currentColor" : "none"} />
-                            {task.pinned ? 'Unpin task' : 'Pin task'}
+                            <MoreVertical size={16} />
                           </button>
+                          {openMenuId === task.id && (
+                            <div className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-150 dark:border-slate-700 py-1.5 z-20 overflow-hidden">
+                              <button
+                                onClick={(e) => handlePinClick(e, task)}
+                                className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer border-none bg-transparent"
+                              >
+                                <Pin size={14} className={task.pinned ? 'text-blue-600' : 'text-slate-400'} fill={task.pinned ? "currentColor" : "none"} />
+                                {task.pinned ? 'Unpin task' : 'Pin task'}
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
+                    <p className="line-clamp-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{taskPreview(task)}</p>
                   </div>
                 </div>
 
