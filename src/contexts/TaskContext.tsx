@@ -24,6 +24,7 @@ export interface User {
   authType?: string;
   notificationsEnabled?: boolean;
   isPrimarySupervisor?: boolean;
+  language?: string;
 }
 
 export interface Task {
@@ -44,6 +45,9 @@ export interface Task {
   dueDate?: string; // ISO date string
   startDate?: string;
   reminderSentAt?: string;
+  sameDayReminderSentAt?: string;
+  startReminderSentAt?: string;
+  dueReminderSentAt?: string;
   remarks?: string;
   inCharge?: string;
   materialStatus?: MaterialStatus;
@@ -88,7 +92,7 @@ interface TaskContextType {
   deleteUserAccount: (userId: string) => Promise<void>;
   editTask: (taskId: string, updatedFields: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
-  updateUser: (userId: string, updatedFields: Partial<User>) => void;
+  updateUser: (userId: string, updatedFields: Partial<User>) => Promise<void>;
   logout: () => void;
   addTaskUpdate: (taskId: string, text: string, photoUrl?: string, silent?: boolean) => Promise<void>;
   isBackendConnected: boolean;
@@ -245,6 +249,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       authType: u.authType,
       notificationsEnabled: u.notificationsEnabled ?? true,
       isPrimarySupervisor: u.isPrimarySupervisor ?? (u.name.toLowerCase().includes('diana') || u.role === 'superadmin'),
+      language: u.language,
     }));
   }, [dbUsersRaw, cachedUsersRaw]);
 
@@ -258,7 +263,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (
         latestUserRecord.id !== currentUser.id ||
         latestUserRecord.role !== currentUser.role ||
-        latestUserRecord.notificationsEnabled !== currentUser.notificationsEnabled
+        latestUserRecord.notificationsEnabled !== currentUser.notificationsEnabled ||
+        latestUserRecord.language !== currentUser.language
       ) {
         handleSetCurrentUser(latestUserRecord);
         console.log("Synchronized session for user:", latestUserRecord.name);
@@ -288,6 +294,9 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       dueDate: t.dueDate,
       startDate: t.startDate,
       reminderSentAt: t.reminderSentAt,
+      sameDayReminderSentAt: t.sameDayReminderSentAt,
+      startReminderSentAt: t.startReminderSentAt,
+      dueReminderSentAt: t.dueReminderSentAt,
       remarks: t.remarks,
       inCharge: t.inCharge,
       materialStatus: t.materialStatus as MaterialStatus | undefined,
@@ -711,9 +720,9 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  const updateUser = (userId: string, updatedFields: Partial<User>) => {
+  const updateUser = async (userId: string, updatedFields: Partial<User>) => {
     const { id, ...fields } = updatedFields;
-    dbUpdateUser({
+    await dbUpdateUser({
       id: userId as any,
       ...fields,
     });

@@ -5,10 +5,17 @@ import { useLanguage } from '../contexts/LanguageContext';
 import NotificationCenter from './NotificationCenter';
 
 const TopHeader: React.FC = () => {
-  const { currentUser, logout } = useTasks();
+  const { currentUser, logout, updateUser } = useTasks();
   const { language, setLanguage, t } = useLanguage();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  const handleLanguageChange = (nextLang: 'en' | 'de') => {
+    setLanguage(nextLang);
+    if (currentUser?.id) {
+      updateUser(currentUser.id, { language: nextLang }).catch(console.error);
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,7 +67,7 @@ const TopHeader: React.FC = () => {
           >
             <button
               type="button"
-              onClick={() => setLanguage('en')}
+              onClick={() => handleLanguageChange('en')}
               className={`rounded-full px-2 py-1 text-[11px] font-semibold transition-colors cursor-pointer ${
                 language === 'en' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
@@ -69,7 +76,7 @@ const TopHeader: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => setLanguage('de')}
+              onClick={() => handleLanguageChange('de')}
               className={`rounded-full px-2 py-1 text-[11px] font-semibold transition-colors cursor-pointer ${
                 language === 'de' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
@@ -109,7 +116,7 @@ const TopHeader: React.FC = () => {
                     <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">{t('app.language')}</p>
                     <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-900/50 p-1 rounded-lg">
                       <button
-                        onClick={() => { setLanguage('en'); setShowMobileMenu(false); }}
+                        onClick={() => { handleLanguageChange('en'); setShowMobileMenu(false); }}
                         className={`flex-1 rounded-md py-1 text-xs font-semibold transition-colors ${
                           language === 'en' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500'
                         }`}
@@ -117,7 +124,7 @@ const TopHeader: React.FC = () => {
                         EN
                       </button>
                       <button
-                        onClick={() => { setLanguage('de'); setShowMobileMenu(false); }}
+                        onClick={() => { handleLanguageChange('de'); setShowMobileMenu(false); }}
                         className={`flex-1 rounded-md py-1 text-xs font-semibold transition-colors ${
                           language === 'de' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500'
                         }`}

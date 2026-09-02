@@ -55,6 +55,7 @@ export const insert = mutation({
     title: v.string(),
     body: v.string(),
     url: v.optional(v.string()),
+    type: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("notifications", {
@@ -64,6 +65,7 @@ export const insert = mutation({
       url: args.url,
       isRead: false,
       createdAt: new Date().toISOString(),
+      type: args.type,
     });
 
     // Cleanup to prevent storage bloat (keep only last 50)

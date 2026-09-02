@@ -28,6 +28,7 @@ export const sendNotification = action({
     title: v.string(),
     body: v.string(),
     url: v.optional(v.string()),
+    type: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     // Call the queries in pushMutations to fetch tokens!
@@ -37,6 +38,7 @@ export const sendNotification = action({
       title: args.title,
       body: args.body,
       url: args.url || "/",
+      type: args.type,
     });
 
     // Save notification to history
@@ -45,6 +47,7 @@ export const sendNotification = action({
       title: args.title,
       body: args.body,
       url: args.url || "/",
+      type: args.type,
     });
 
     for (const sub of subscriptions) {
@@ -77,6 +80,7 @@ export const notifyAdmins = action({
     excludeUserId: v.optional(v.string()),
     title: v.optional(v.string()),
     body: v.optional(v.string()),
+    type: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     const adminIds: string[] = await ctx.runQuery(api.pushMutations.getAdminIds);
@@ -85,6 +89,7 @@ export const notifyAdmins = action({
       title: args.title || "✅ Task Completed",
       body: args.body || `${args.employeeName} completed: ${args.taskTitle}`,
       url: `/task/${args.taskId}`,
+      type: args.type || "completion",
     });
 
     for (const adminId of adminIds) {
@@ -96,6 +101,7 @@ export const notifyAdmins = action({
         title: args.title || "✅ Task Completed",
         body: args.body || `${args.employeeName} completed: ${args.taskTitle}`,
         url: `/task/${args.taskId}`,
+        type: args.type || "completion",
       });
 
       const subscriptions = await ctx.runQuery(api.pushMutations.getSubscriptions, { userId: adminId });

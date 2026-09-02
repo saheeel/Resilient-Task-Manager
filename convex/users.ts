@@ -230,6 +230,7 @@ export const update = mutation({
     authType: v.optional(v.string()),
     notificationsEnabled: v.optional(v.boolean()),
     isPrimarySupervisor: v.optional(v.boolean()),
+    language: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     const { id, ...fields } = args;

@@ -14,6 +14,7 @@ export default defineSchema({
     authType: v.optional(v.string()),
     notificationsEnabled: v.optional(v.boolean()),
     isPrimarySupervisor: v.optional(v.boolean()),
+    language: v.optional(v.string()), // "en" | "de"
   }).index("by_username", ["username"]).index("by_email", ["email"]).index("by_authUserId", ["authUserId"]).index("by_role", ["role"]),
 
   tasks: defineTable({
@@ -33,6 +34,9 @@ export default defineSchema({
     dueDate: v.optional(v.string()),
     startDate: v.optional(v.string()),
     reminderSentAt: v.optional(v.string()),
+    sameDayReminderSentAt: v.optional(v.string()),
+    startReminderSentAt: v.optional(v.string()),
+    dueReminderSentAt: v.optional(v.string()),
     remarks: v.optional(v.string()),
     inCharge: v.optional(v.string()),
     materialStatus: v.optional(v.string()),
@@ -87,5 +91,6 @@ export default defineSchema({
     url: v.optional(v.string()),
     isRead: v.boolean(),
     createdAt: v.string(), // ISO date string
+    type: v.optional(v.string()), // "start_reminder" | "due_reminder" | "same_day_reminder" | "assignment" | "completion" | "issue" | "general"
   }).index("by_userId", ["userId"]),
 });

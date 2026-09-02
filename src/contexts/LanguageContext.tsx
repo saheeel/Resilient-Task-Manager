@@ -133,6 +133,18 @@ const translations: Record<Language, TranslationTree> = {
       openFullCalendar: 'Open full calendar',
       scheduledThisWeek: 'Scheduled tasks',
     },
+    notifications: {
+      title: 'Notifications',
+      allCaughtUp: "You're all caught up!",
+      markAllRead: 'Mark all read',
+      clearAll: 'Clear all',
+      startReminder: 'Starts in 15m',
+      dueReminder: 'Due in 15m',
+      sameDayReminder: 'Scheduled Today',
+      taskAssigned: 'New Task',
+      taskCompleted: 'Completed',
+      taskIssue: 'Issue Reported',
+    },
     login: {
       subtitle: 'Please enter your credentials to access your dashboard.',
       invalidCredentials: 'Invalid username or password.',
@@ -526,6 +538,18 @@ const translations: Record<Language, TranslationTree> = {
       openFullCalendar: 'Vollen Kalender öffnen',
       scheduledThisWeek: 'Geplante Aufgaben',
     },
+    notifications: {
+      title: 'Benachrichtigungen',
+      allCaughtUp: 'Alles erledigt!',
+      markAllRead: 'Alle als gelesen markieren',
+      clearAll: 'Alle löschen',
+      startReminder: 'Startet in 15 Min.',
+      dueReminder: 'Fällig in 15 Min.',
+      sameDayReminder: 'Heute geplant',
+      taskAssigned: 'Neue Aufgabe',
+      taskCompleted: 'Erledigt',
+      taskIssue: 'Problem gemeldet',
+    },
     login: {
       subtitle: 'Bitte gib deine Zugangsdaten ein, um dein Dashboard zu öffnen.',
       invalidCredentials: 'Benutzername oder Passwort ist falsch.',
@@ -883,7 +907,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     const updateLanguage = (nextLanguage: Language) => {
       try {
         localStorage.setItem('rtm_language', nextLanguage);
-      } catch (err) {
+      } catch {
         console.warn('Failed to save language (quota exceeded?)');
       }
       setLanguage(nextLanguage);
@@ -902,7 +926,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
         return new Intl.DateTimeFormat(locale, options).format(d);
       },
-      formatDateTime: (value, _options) => {
+      formatDateTime: (value) => {
         const d = new Date(value);
         if (isNaN(d.getTime())) return '';
         const dateStr = formatDDMMYYYY(d);
