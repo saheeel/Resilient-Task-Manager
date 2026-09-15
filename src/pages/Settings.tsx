@@ -154,6 +154,8 @@ const Settings: React.FC = () => {
               <ChevronRight size={18} />
             </div>
           </div>
+
+
         </div>
       </section>
 

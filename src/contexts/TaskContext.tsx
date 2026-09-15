@@ -135,6 +135,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const dbAddTask = useMutation(api.tasks.create);
   const dbRolloverRecurringTask = useMutation(api.tasks.rolloverRecurringTask);
+  const dbCleanupGhostIssues = useMutation(api.tasks.cleanupGhostRecurringIssues);
   const dbUpdateTask = useMutation(api.tasks.update).withOptimisticUpdate(
     (localStore, args) => {
       const { id, ...updates } = args;
@@ -165,6 +166,11 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [cachedUsersRaw, setCachedUsersRaw] = useState<any[] | undefined>(() => readCachedCollection(USERS_CACHE_KEY));
   const [cachedTasksRaw, setCachedTasksRaw] = useState<any[] | undefined>(() => readCachedCollection(TASKS_CACHE_KEY));
   const isBackendConnected = dbUsersRaw !== undefined && dbTasksRaw !== undefined;
+
+  // Clean up any historical phantom auto-rollover tasks
+  useEffect(() => {
+    dbCleanupGhostIssues().catch(console.error);
+  }, [dbCleanupGhostIssues]);
 
   // Trigger Convex Auto-Seeding ONLY if database tables are completely empty
   useEffect(() => {

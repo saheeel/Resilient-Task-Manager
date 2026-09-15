@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useTasks } from '../contexts/TaskContext';
-import { LogOut, MoreVertical } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useTasks, isAdminRole } from '../contexts/TaskContext';
+import { LogOut, MoreVertical, Settings } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import NotificationCenter from './NotificationCenter';
 
 const TopHeader: React.FC = () => {
+  const navigate = useNavigate();
   const { currentUser, logout, updateUser } = useTasks();
   const { language, setLanguage, t } = useLanguage();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -59,7 +61,7 @@ const TopHeader: React.FC = () => {
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Desktop Language Selector */}
           <div
             className="hidden sm:flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-1 shadow-xs"
@@ -87,22 +89,34 @@ const TopHeader: React.FC = () => {
 
           <NotificationCenter userId={currentUser.id} />
 
+          {/* Settings Button near Bell Icon */}
+          {isAdminRole(currentUser.role) && (
+            <button 
+              id="top-header-settings-btn"
+              onClick={() => navigate('/settings')}
+              title={t('nav.settings') || 'Settings'}
+              className="flex items-center justify-center p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 transition-colors cursor-pointer rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80"
+            >
+              <Settings size={20} />
+            </button>
+          )}
+
           {/* Desktop Logout */}
           <button 
             onClick={() => setShowLogoutConfirm(true)}
             title={t('common.signOut')}
-            className="hidden sm:flex items-center justify-center p-2 text-slate-500 hover:text-red-600 transition-colors cursor-pointer"
+            className="hidden sm:flex items-center justify-center p-2 text-slate-500 hover:text-red-600 transition-colors cursor-pointer rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80"
           >
-            <LogOut size={22} />
+            <LogOut size={20} />
           </button>
 
           {/* Mobile Menu Toggle */}
           <div className="relative sm:hidden">
             <button 
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="flex items-center justify-center p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              className="flex items-center justify-center p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80"
             >
-              <MoreVertical size={22} />
+              <MoreVertical size={20} />
             </button>
             
             {showMobileMenu && (
@@ -133,6 +147,17 @@ const TopHeader: React.FC = () => {
                       </button>
                     </div>
                   </div>
+
+                  {isAdminRole(currentUser.role) && (
+                    <button
+                      onClick={() => { setShowMobileMenu(false); navigate('/settings'); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors border-b border-slate-100 dark:border-slate-800"
+                    >
+                      <Settings size={16} />
+                      <span className="font-semibold">{t('nav.settings')}</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => { setShowMobileMenu(false); setShowLogoutConfirm(true); }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-left transition-colors"

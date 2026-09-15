@@ -4,6 +4,7 @@ import { TaskProvider, useTasks, isAdminRole } from './contexts/TaskContext';
 import BottomNav from './components/BottomNav';
 import TopHeader from './components/TopHeader';
 import NotificationListener from './components/NotificationListener';
+import FeatureTourGuide from './components/FeatureTourGuide';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { useMutation } from 'convex/react';
@@ -25,6 +26,7 @@ const EmployeeDashboard = React.lazy(() => import('./pages/EmployeeDashboard'));
 const AllTasks = React.lazy(() => import('./pages/AllTasks'));
 const CompletedHistory = React.lazy(() => import('./pages/CompletedHistory'));
 const AdminTaskHistory = React.lazy(() => import('./pages/AdminTaskHistory'));
+const CalendarView = React.lazy(() => import('./pages/CalendarView'));
 const Login = React.lazy(() => import('./pages/Login'));
 
 const PageLoader = () => (
@@ -59,6 +61,7 @@ const AppContent = () => {
     >
       <TopHeader />
       <NotificationListener />
+      <FeatureTourGuide />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={isAdminRole(currentUser.role) ? <ManageTasks /> : <EmployeeDashboard />} />
@@ -73,6 +76,7 @@ const AppContent = () => {
           <Route path="/settings/employee/:id/edit" element={<EditEmployee />} />
           <Route path="/settings/admin/:id/edit" element={<EditAdmin />} />
           <Route path="/settings/employee/:id/history" element={<EmployeeHistory />} />
+          <Route path="/calendar" element={<CalendarView />} />
           {/* Employee: completed tasks history page */}
           <Route path="/history" element={currentUser.role === 'employee' ? <CompletedHistory /> : <Navigate to="/" replace />} />
           <Route path="/admin-history" element={isAdminRole(currentUser.role) ? <AdminTaskHistory /> : <Navigate to="/" replace />} />

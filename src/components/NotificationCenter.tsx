@@ -144,21 +144,21 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-84 sm:w-96 max-h-[85vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-          <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md">
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">{t('notifications.title')}</h3>
+        <div className="absolute right-0 mt-3 w-88 sm:w-96 max-h-[85vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+          <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md gap-2">
+            <div className="flex items-center gap-2 shrink-0">
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm whitespace-nowrap">{t('notifications.title')}</h3>
               {unreadCount > 0 && (
                 <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
                   {unreadCount}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 shrink-0">
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center gap-1 cursor-pointer border-none bg-transparent p-0"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center gap-1 cursor-pointer border-none bg-transparent p-0 whitespace-nowrap"
                 >
                   <Check size={14} />
                   {t('notifications.markAllRead')}
@@ -167,7 +167,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
               {notifications.length > 0 && (
                 <button
                   onClick={handleClearAll}
-                  className="text-xs font-semibold text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer border-none bg-transparent p-0"
+                  className="text-xs font-semibold text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer border-none bg-transparent p-0 whitespace-nowrap"
                 >
                   <Trash2 size={14} />
                   {t('notifications.clearAll')}

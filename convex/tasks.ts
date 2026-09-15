@@ -267,28 +267,42 @@ export const remove = mutation({
   },
 });
 
-// Rollover recurring task
+// Clean up phantom auto-rollover uncompleted records that have no user reason
+export const cleanupGhostRecurringIssues = mutation({
+  args: {},
+  handler: async (ctx: any) => {
+    const allTasks = await ctx.db.query("tasks").collect();
+    let deleted = 0;
+    for (const t of allTasks) {
+      if (
+        t.status === "could_not_complete" &&
+        !t.blockReason &&
+        !t.markedIssueBy &&
+        !t.completionComment
+      ) {
+        await ctx.db.delete(t._id);
+        deleted++;
+      }
+    }
+    return deleted;
+  },
+});
+
+// Rollover recurring task - advances in-place to the next occurrence without creating ghost issue tasks
 export const rolloverRecurringTask = mutation({
   args: { id: v.id("tasks"), newActiveFrom: v.string(), newNextOccurrence: v.string() },
   handler: async (ctx: any, args: any) => {
     const task = await ctx.db.get(args.id);
     if (!task || task.status !== "open") return;
     
-    // Mark old as could_not_complete and change to one-time
+    // Advance the existing open recurring task in place
     await ctx.db.patch(args.id, {
-      status: "could_not_complete",
-      type: "one-time",
-      isArchived: true
-    });
-    
-    // Create new recurring task
-    const { _id, _creationTime, reminderSentAt, ...taskData } = task;
-    await ctx.db.insert("tasks", {
-      ...taskData,
-      status: "open",
       activeFrom: args.newActiveFrom,
       nextOccurrence: args.newNextOccurrence,
-      isArchived: false
+      reminderSentAt: undefined,
+      startReminderSentAt: undefined,
+      dueReminderSentAt: undefined,
+      sameDayReminderSentAt: undefined,
     });
   },
 });
