@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useTasks, isAdminRole } from '../contexts/TaskContext';
+import { useTasks } from '../contexts/TaskContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Settings, Calendar, ArrowRight, ArrowLeft, Check, X } from 'lucide-react';
+import { Calendar, ArrowRight, ArrowLeft, Check, X } from 'lucide-react';
 
 interface TourStep {
   id: string;
@@ -19,19 +19,6 @@ interface TourStep {
 }
 
 const ALL_TOUR_STEPS: TourStep[] = [
-  {
-    id: 'settings_moved',
-    targetId: 'top-header-settings-btn',
-    badgeEn: 'Navigation Update',
-    badgeDe: 'Navigations-Update',
-    titleEn: 'Settings Moved to the Top Bar',
-    titleDe: 'Einstellungen in die Kopfzeile verschoben',
-    descriptionEn: 'You can now access System Settings, employee accounts, and app preferences directly from the top-right header on any page.',
-    descriptionDe: 'Sie können nun Systemeinstellungen, Mitarbeiterkonten und Präferenzen direkt über die obere Kopfzeile von jeder Seite aus aufrufen.',
-    icon: Settings,
-    iconBg: 'bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/20',
-    iconColor: 'text-indigo-600 dark:text-indigo-400',
-  },
   {
     id: 'calendar_view',
     targetId: 'bottom-nav-calendar-btn',
@@ -59,14 +46,9 @@ export const FeatureTourGuide: React.FC = () => {
   // Storage key is scoped to the user ID
   const storageKey = currentUser ? `rtm_feature_tour_v1_seen_${currentUser.id}` : 'rtm_feature_tour_v1_seen';
 
-  // Filter steps based on role: Admins get Settings + Calendar, Employees get Calendar
   const tourSteps = useMemo(() => {
     if (!currentUser) return [];
-    if (isAdminRole(currentUser.role)) {
-      return ALL_TOUR_STEPS;
-    }
-    // Employee only sees Calendar step
-    return ALL_TOUR_STEPS.filter((step) => step.id === 'calendar_view');
+    return ALL_TOUR_STEPS;
   }, [currentUser]);
 
   useEffect(() => {

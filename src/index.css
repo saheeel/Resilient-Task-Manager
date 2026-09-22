@@ -524,6 +524,22 @@ body.theme-dark {
   color: #64748b;
 }
 
+.task-calendar .fc-daygrid-day,
+.task-calendar .fc-timegrid-col {
+  cursor: pointer !important;
+  transition: background-color 0.15s ease;
+}
+
+.task-calendar .fc-daygrid-day:hover,
+.task-calendar .fc-timegrid-col:hover {
+  background-color: rgba(59, 130, 246, 0.04);
+}
+
+.theme-dark .task-calendar .fc-daygrid-day:hover,
+.theme-dark .task-calendar .fc-timegrid-col:hover {
+  background-color: rgba(59, 130, 246, 0.08);
+}
+
 .task-calendar .fc-daygrid-day-frame {
   min-height: 60px !important;
   padding: 2px !important;
