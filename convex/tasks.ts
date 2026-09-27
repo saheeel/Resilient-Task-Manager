@@ -274,12 +274,8 @@ export const cleanupGhostRecurringIssues = mutation({
     const allTasks = await ctx.db.query("tasks").collect();
     let deleted = 0;
     for (const t of allTasks) {
-      if (
-        t.status === "could_not_complete" &&
-        !t.blockReason &&
-        !t.markedIssueBy &&
-        !t.completionComment
-      ) {
+      const hasReason = typeof t.blockReason === "string" && t.blockReason.trim().length > 0;
+      if (t.status === "could_not_complete" && !hasReason) {
         await ctx.db.delete(t._id);
         deleted++;
       }

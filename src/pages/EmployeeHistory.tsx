@@ -75,7 +75,7 @@ const EmployeeHistory: React.FC = () => {
 
   const activeTasks = employeeTasks.filter(t => t.status === 'open' || t.status === 'in_progress');
   const completedTasks = employeeTasks.filter(t => t.status === 'completed');
-  const issueTasks = employeeTasks.filter(t => t.status === 'could_not_complete' || t.status === 'blocked');
+  const issueTasks = employeeTasks.filter(t => (t.status === 'could_not_complete' || t.status === 'blocked') && Boolean(t.blockReason && t.blockReason.trim()));
 
 
   const formatDate = (isoString?: string) => {

@@ -26,7 +26,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const body = document.body;
 
     root.classList.toggle('theme-dark', resolvedTheme === 'dark');
+    root.classList.toggle('dark', resolvedTheme === 'dark');
     body.classList.toggle('theme-dark', resolvedTheme === 'dark');
+    body.classList.toggle('dark', resolvedTheme === 'dark');
     root.style.colorScheme = resolvedTheme;
   }, [resolvedTheme]);
 

@@ -28,7 +28,13 @@ const AdminTaskHistory: React.FC = () => {
     task.completedAt || task.markedIssueAt || task.createdAt;
 
   const historyTasks = tasks
-    .filter((task) => task.status === 'completed' || task.status === 'could_not_complete' || task.status === 'blocked')
+    .filter((task) => {
+      if (task.status === 'completed') return true;
+      if (task.status === 'could_not_complete' || task.status === 'blocked') {
+        return Boolean(task.blockReason && task.blockReason.trim());
+      }
+      return false;
+    })
     .filter((task) => {
       if (!selectedDate) return true;
       const time = eventTime(task);

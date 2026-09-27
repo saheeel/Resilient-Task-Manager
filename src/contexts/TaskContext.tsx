@@ -167,10 +167,18 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [cachedTasksRaw, setCachedTasksRaw] = useState<any[] | undefined>(() => readCachedCollection(TASKS_CACHE_KEY));
   const isBackendConnected = dbUsersRaw !== undefined && dbTasksRaw !== undefined;
 
-  // Clean up any historical phantom auto-rollover tasks
+  // Clean up any historical phantom auto-rollover tasks both via mutation and direct purge
   useEffect(() => {
     dbCleanupGhostIssues().catch(console.error);
-  }, [dbCleanupGhostIssues]);
+    if (dbTasksRaw && Array.isArray(dbTasksRaw)) {
+      dbTasksRaw.forEach((task: any) => {
+        const hasReason = typeof task.blockReason === 'string' && task.blockReason.trim().length > 0;
+        if (task.status === 'could_not_complete' && !hasReason) {
+          dbRemoveTask({ id: task._id }).catch(console.error);
+        }
+      });
+    }
+  }, [dbTasksRaw, dbCleanupGhostIssues, dbRemoveTask]);
 
   // Trigger Convex Auto-Seeding ONLY if database tables are completely empty
   useEffect(() => {
@@ -229,7 +237,10 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     if (dbTasksRaw === undefined) return;
-    const tasksSnapshot = dbTasksRaw as any[];
+    const tasksSnapshot = (dbTasksRaw as any[]).filter((t: any) => {
+      const hasReason = typeof t.blockReason === 'string' && t.blockReason.trim().length > 0;
+      return !(t.status === 'could_not_complete' && !hasReason);
+    });
     setCachedTasksRaw(tasksSnapshot);
     try {
       localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(tasksSnapshot));
@@ -282,52 +293,58 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const mappedDbTasks = useMemo(() => {
     const taskSource = (dbTasksRaw as any[] | undefined) ?? cachedTasksRaw;
     if (!taskSource) return [];
-    return taskSource.map((t: any) => ({
-      id: t._id,
-      title: t.title,
-      description: t.description,
-      type: t.type as TaskType,
-      status: t.status as TaskStatus,
-      priority: t.priority as Priority,
-      assignedTo: t.assignedTo || [],
-      assignedById: t.assignedById,
-      assignedByName: t.assignedByName,
-      createdById: t.createdById || t.assignedById,
-      createdByName: t.createdByName || t.assignedByName || "System",
-      isSelfAssigned: t.isSelfAssigned || (t.assignedTo && currentUser && t.assignedTo.includes(currentUser.id) && (t.createdById === currentUser.id || t.assignedById === currentUser.id)),
-      followUpFromId: t.followUpFromId,
-      actualDuration: t.actualDuration,
-      dueDate: t.dueDate,
-      startDate: t.startDate,
-      reminderSentAt: t.reminderSentAt,
-      sameDayReminderSentAt: t.sameDayReminderSentAt,
-      startReminderSentAt: t.startReminderSentAt,
-      dueReminderSentAt: t.dueReminderSentAt,
-      remarks: t.remarks,
-      inCharge: t.inCharge,
-      materialStatus: t.materialStatus as MaterialStatus | undefined,
-      attachments: t.attachments || [],
-      completedAt: t.completedAt,
-      completionComment: t.completionComment,
-      blockReason: t.blockReason,
-      proofPhotoUrl: t.proofPhotoUrl,
-      proofPhotoUrls: t.proofPhotoUrls || [],
-      createdAt: t.createdAt,
-      markedIssueAt: t.markedIssueAt,
-      startedAt: t.startedAt,
-      recurringDay: t.recurringDay,
-      recurringTime: t.recurringTime,
-      isPaused: t.isPaused,
-      pausedAt: t.pausedAt,
-      pinned: t.pinned,
-      pendingTransferTo: t.pendingTransferTo,
-      pendingTransferFrom: t.pendingTransferFrom,
-      pendingTransferComment: t.pendingTransferComment,
-      transferResult: t.transferResult,
-      transferResultSeen: t.transferResultSeen,
-      activeFrom: t.activeFrom,
-      nextOccurrence: t.nextOccurrence,
-    }));
+    return taskSource
+      .filter((t: any) => {
+        // Discard any phantom uncompleted issues without a reason
+        const hasReason = typeof t.blockReason === 'string' && t.blockReason.trim().length > 0;
+        return !(t.status === 'could_not_complete' && !hasReason);
+      })
+      .map((t: any) => ({
+        id: t._id,
+        title: t.title,
+        description: t.description,
+        type: t.type as TaskType,
+        status: t.status as TaskStatus,
+        priority: t.priority as Priority,
+        assignedTo: t.assignedTo || [],
+        assignedById: t.assignedById,
+        assignedByName: t.assignedByName,
+        createdById: t.createdById || t.assignedById,
+        createdByName: t.createdByName || t.assignedByName || "System",
+        isSelfAssigned: t.isSelfAssigned || (t.assignedTo && currentUser && t.assignedTo.includes(currentUser.id) && (t.createdById === currentUser.id || t.assignedById === currentUser.id)),
+        followUpFromId: t.followUpFromId,
+        actualDuration: t.actualDuration,
+        dueDate: t.dueDate,
+        startDate: t.startDate,
+        reminderSentAt: t.reminderSentAt,
+        sameDayReminderSentAt: t.sameDayReminderSentAt,
+        startReminderSentAt: t.startReminderSentAt,
+        dueReminderSentAt: t.dueReminderSentAt,
+        remarks: t.remarks,
+        inCharge: t.inCharge,
+        materialStatus: t.materialStatus as MaterialStatus | undefined,
+        attachments: t.attachments || [],
+        completedAt: t.completedAt,
+        completionComment: t.completionComment,
+        blockReason: t.blockReason,
+        proofPhotoUrl: t.proofPhotoUrl,
+        proofPhotoUrls: t.proofPhotoUrls || [],
+        createdAt: t.createdAt,
+        markedIssueAt: t.markedIssueAt,
+        startedAt: t.startedAt,
+        recurringDay: t.recurringDay,
+        recurringTime: t.recurringTime,
+        isPaused: t.isPaused,
+        pausedAt: t.pausedAt,
+        pinned: t.pinned,
+        pendingTransferTo: t.pendingTransferTo,
+        pendingTransferFrom: t.pendingTransferFrom,
+        pendingTransferComment: t.pendingTransferComment,
+        transferResult: t.transferResult,
+        transferResultSeen: t.transferResultSeen,
+        activeFrom: t.activeFrom,
+        nextOccurrence: t.nextOccurrence,
+      }));
   }, [dbTasksRaw, cachedTasksRaw, currentUser]);
 
   const createTemporaryEmail = (name: string) => {

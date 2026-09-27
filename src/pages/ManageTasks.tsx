@@ -58,7 +58,7 @@ const ManageTasks: React.FC = () => {
     return titleMatch || descMatch || creatorMatch || remarksMatch;
   });
 
-  const issues = filteredTasks.filter(t => t.status === 'could_not_complete' || t.status === 'blocked');
+  const issues = filteredTasks.filter(t => (t.status === 'could_not_complete' || t.status === 'blocked') && Boolean(t.blockReason && t.blockReason.trim()));
   const activeTasks = filteredTasks.filter((t) => {
     if (t.status !== 'open' && t.status !== 'in_progress') return false;
     if (t.activeFrom && new Date(t.activeFrom) > new Date()) return false;

@@ -170,7 +170,7 @@ const EmployeeDashboard: React.FC = () => {
     return dueDate.getTime() > today.getTime();
   });
 
-  const issueTasks = myTasks.filter((task) => !task.isPaused && (task.status === 'blocked' || task.status === 'could_not_complete'));
+  const issueTasks = myTasks.filter((task) => !task.isPaused && (task.status === 'blocked' || task.status === 'could_not_complete') && Boolean(task.blockReason && task.blockReason.trim()));
 
   const todayCompleted = myTasks.filter((task) => {
     if (task.status !== 'completed' || !task.completedAt) return false;
@@ -421,7 +421,7 @@ const EmployeeDashboard: React.FC = () => {
             onClick={() => setViewMode('list')}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               viewMode === 'list'
-                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
@@ -433,12 +433,12 @@ const EmployeeDashboard: React.FC = () => {
             onClick={() => setViewMode('calendar')}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               viewMode === 'calendar'
-                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <Calendar size={14} />
-            <span>{t('calendar.title') || 'Calendar'}</span>
+            <span>{t('calendar.calendarView') || t('calendar.title') || 'Calendar'}</span>
           </button>
         </div>
       </header>
@@ -463,21 +463,21 @@ const EmployeeDashboard: React.FC = () => {
                 isActive
                   ? item.isDanger
                     ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
-                    : 'bg-slate-900 dark:bg-blue-600 text-white border-slate-900 dark:border-blue-600 shadow-xs'
+                    : 'bg-blue-600 text-white border-blue-600 shadow-xs'
                   : item.isDanger && item.count > 0
                     ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900 hover:bg-rose-100'
-                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-2xs'
               }`}
             >
-              <Icon size={14} />
+              <Icon size={14} className={isActive ? 'text-white' : item.isDanger ? 'text-rose-500' : 'text-slate-400 dark:text-slate-400'} />
               <span>{item.label}</span>
               <span
-                className={`ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                className={`ml-0.5 min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[11px] font-bold ${
                   isActive
-                    ? 'bg-white/20 text-white'
+                    ? 'bg-white/25 text-white'
                     : item.isDanger && item.count > 0
-                      ? 'bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-200'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                      ? 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300'
+                      : 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100'
                 }`}
               >
                 {item.count}
@@ -489,7 +489,7 @@ const EmployeeDashboard: React.FC = () => {
 
       {/* Cadence Filter Chips & Sorting Dropdown */}
       {viewMode === 'list' && (
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
           {/* Cadence filter (Daily / Weekly / Monthly / One-Time / All) */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">
@@ -500,10 +500,10 @@ const EmployeeDashboard: React.FC = () => {
                 key={type}
                 type="button"
                 onClick={() => setTaskTypeFilter(type)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
                   taskTypeFilter === type
-                    ? 'bg-slate-900 text-white dark:bg-blue-600 dark:text-white shadow-xs'
-                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
                 {type === 'all'
