@@ -712,9 +712,31 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       ...fields,
     });
 
-    // Notify Diana of edit
     const taskToEdit = mappedDbTasks.find(t => t.id === taskId);
+
+    // Notify users newly added to the assignment (e.g. task reassigned to someone else)
+    const notifiedIds = new Set<string>();
+    if (taskToEdit && fields.assignedTo) {
+      const previousAssignees = new Set(taskToEdit.assignedTo);
+      fields.assignedTo.forEach((userId) => {
+        if (previousAssignees.has(userId)) return;
+        if (currentUser && userId === currentUser.id) return;
+        notifiedIds.add(userId);
+        const title = fields.title ?? taskToEdit.title;
+        const priority = fields.priority ?? taskToEdit.priority;
+        const assignedByName = assignmentMetadata.assignedByName ?? taskToEdit.assignedByName;
+        sendPushNotification({
+          userId,
+          title: "New Task Assigned! 🚀",
+          body: `${title}\nPriority: ${priority.toUpperCase()}${assignedByName ? `\nAssigned by: ${assignedByName}` : ''}`,
+          url: `/task/${taskId}`
+        }).catch((err) => console.error("Push notification action trigger error:", err));
+      });
+    }
+
+    // Notify Diana of edit
     mappedDbUsers.filter((u: User) => u.name.toLowerCase().includes('diana')).forEach(diana => {
+      if (notifiedIds.has(diana.id)) return; // Already notified as a new assignee
       if (currentUser && diana.id === currentUser.id) return;
       if (currentUser && (currentUser.name.toLowerCase().includes('saheel') || currentUser.name.toLowerCase().includes('admin'))) return;
       sendPushNotification({
